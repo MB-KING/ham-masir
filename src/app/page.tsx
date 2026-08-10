@@ -23,7 +23,17 @@ async function getHomeData() {
       include: {
         _count: {
           select: { registrations: { where: { status: "REGISTERED" } } }
-        }
+        },
+        registrations: currentUser
+          ? {
+              where: {
+                userId: currentUser.id,
+                status: { in: ["REGISTERED", "WAITLISTED"] }
+              },
+              select: { status: true },
+              take: 1
+            }
+          : false
       }
     }),
     prisma.community.findFirst({
@@ -92,7 +102,17 @@ export default async function Home() {
             فعلا برنامه‌ای برای ثبت‌نام منتشر نشده است.
           </div>
         ) : (
-          events.map((event) => <EventCard key={event.id} event={event} />)
+          events.map((event) => (
+            <EventCard
+              key={event.id}
+              event={event}
+              registrationStatus={
+                Array.isArray(event.registrations)
+                  ? event.registrations[0]?.status
+                  : undefined
+              }
+            />
+          ))
         )}
       </section>
     </UserPageShell>

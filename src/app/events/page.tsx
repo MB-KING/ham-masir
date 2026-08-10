@@ -3,10 +3,12 @@ import { EventCard } from "@/components/user/event-card";
 import { UserCard, UserPageHeader } from "@/components/user/user-card";
 import { UserPageShell } from "@/components/user/user-shell";
 import { prisma } from "@/lib/prisma";
+import { getOptionalCurrentUser } from "@/modules/auth/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function EventsPage() {
+  const currentUser = await getOptionalCurrentUser();
   const events = await prisma.event.findMany({
     where: {
       status: { in: ["PUBLISHED", "REGISTRATION_CLOSED"] },
@@ -14,7 +16,17 @@ export default async function EventsPage() {
     },
     orderBy: { date: "asc" },
     include: {
-      _count: { select: { registrations: { where: { status: "REGISTERED" } } } }
+      _count: { select: { registrations: { where: { status: "REGISTERED" } } } },
+      registrations: currentUser
+        ? {
+            where: {
+              userId: currentUser.id,
+              status: { in: ["REGISTERED", "WAITLISTED"] }
+            },
+            select: { status: true },
+            take: 1
+          }
+        : false
     }
   });
 
@@ -54,7 +66,17 @@ export default async function EventsPage() {
             </p>
           </UserCard>
         ) : (
-          events.map((event) => <EventCard key={event.id} event={event} />)
+          events.map((event) => (
+            <EventCard
+              key={event.id}
+              event={event}
+              registrationStatus={
+                Array.isArray(event.registrations)
+                  ? event.registrations[0]?.status
+                  : undefined
+              }
+            />
+          ))
         )}
       </div>
     </UserPageShell>
