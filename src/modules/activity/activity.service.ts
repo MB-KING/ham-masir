@@ -46,8 +46,9 @@ export async function notifyUser(input: {
     select: { telegramId: true, deletedAt: true }
   });
 
+  let telegramDelivered = false;
   if (user && !user.deletedAt) {
-    await sendTelegramMessage({
+    const result = await sendTelegramMessage({
       chatId: user.telegramId,
       text: formatNotificationHtml(input.title, input.body),
       parseMode: "HTML",
@@ -55,7 +56,8 @@ export async function notifyUser(input: {
       eventPath: input.eventPath,
       buttonText: input.buttonText ?? "باز کردن هم مسیر"
     });
+    telegramDelivered = result.ok;
   }
 
-  return notification;
+  return { notification, telegramDelivered };
 }

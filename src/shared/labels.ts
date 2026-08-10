@@ -34,6 +34,13 @@ export const rewardStatusLabels: Record<string, string> = {
   DISABLED: "غیرفعال"
 };
 
+export const rewardRedemptionStatusLabels: Record<string, string> = {
+  RESERVED: "رزرو شده",
+  REDEEMED: "استفاده شده",
+  CANCELLED: "لغو شده",
+  EXPIRED: "منقضی"
+};
+
 export const rewardTypeLabels: Record<string, string> = {
   DISCOUNT: "کد تخفیف",
   FREE_ITEM: "هدیه",

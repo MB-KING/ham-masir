@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { pathFromStartParam } from "@/lib/telegram-format";
 
+const START_PARAM_KEY = "ham_masir_start_param";
+
 declare global {
   interface Window {
     Telegram?: {
@@ -39,6 +41,30 @@ async function loginWithInitData(initData: string) {
   }
 }
 
+function resolveStartPath(webApp: NonNullable<Window["Telegram"]>["WebApp"]) {
+  const fromUnsafe = webApp?.initDataUnsafe?.start_param?.trim();
+  if (fromUnsafe) {
+    try {
+      sessionStorage.setItem(START_PARAM_KEY, fromUnsafe);
+    } catch {
+      // ignore storage failures in restricted WebViews
+    }
+    return pathFromStartParam(fromUnsafe);
+  }
+
+  try {
+    const cached = sessionStorage.getItem(START_PARAM_KEY);
+    if (cached) {
+      sessionStorage.removeItem(START_PARAM_KEY);
+      return pathFromStartParam(cached);
+    }
+  } catch {
+    // ignore
+  }
+
+  return null;
+}
+
 export function TelegramProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [scriptReady, setScriptReady] = useState(false);
@@ -63,8 +89,7 @@ export function TelegramProvider({ children }: { children: React.ReactNode }) {
 
     try {
       await loginWithInitData(initData);
-      const startParam = webApp.initDataUnsafe?.start_param;
-      const deepPath = startParam ? pathFromStartParam(startParam) : null;
+      const deepPath = resolveStartPath(webApp);
       if (deepPath && deepPath !== "/") {
         router.replace(deepPath as never);
       } else {

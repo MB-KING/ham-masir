@@ -9,8 +9,40 @@ import { prisma } from "@/lib/prisma";
 import { hasRole } from "@/modules/auth/authorization";
 import { requireEventManagerPage } from "@/modules/auth/admin-session";
 
-export default async function AdminEventsPage() {
+function announceBanner(params: {
+  announce?: string;
+  sent?: string;
+  failed?: string;
+}) {
+  if (!params.announce) return null;
+  if (params.announce === "sent") {
+    const sent = params.sent ?? "1";
+    const failed = params.failed ? ` — ${params.failed} مورد ناموفق` : "";
+    return `اعلان برنامه به ${sent} گروه/کانال ارسال شد${failed}.`;
+  }
+  if (params.announce === "already") {
+    return "اعلان این برنامه قبلاً ارسال شده بود.";
+  }
+  if (params.announce === "disabled") {
+    return "اعلان خودکار جامعه خاموش است؛ پیام به گروه ارسال نشد.";
+  }
+  if (params.announce === "no_targets") {
+    return "هیچ گروه/کانال فعالی برای اعلان تنظیم نشده است.";
+  }
+  if (params.announce === "failed") {
+    return "ارسال اعلان به تلگرام ناموفق بود. دسترسی ربات در گروه را چک کن.";
+  }
+  return null;
+}
+
+export default async function AdminEventsPage({
+  searchParams
+}: {
+  searchParams: Promise<{ announce?: string; sent?: string; failed?: string }>;
+}) {
   const admin = await requireEventManagerPage();
+  const params = await searchParams;
+  const banner = announceBanner(params);
   const isSuperAdmin = hasRole(admin, Role.SUPER_ADMIN);
   const events = await prisma.event.findMany({
     where: { deletedAt: null },
@@ -39,6 +71,12 @@ export default async function AdminEventsPage() {
           </Link>
         }
       />
+      {banner ? (
+        <AdminCard className="mb-4 border border-[#F59E0B]/35 bg-[#F59E0B]/10">
+          <p className="text-sm font-bold leading-7 text-[#FDE68A]">{banner}</p>
+        </AdminCard>
+      ) : null}
+
       <details className="mb-4 rounded-xl border border-[#F59E0B]/25 bg-[#0B1E43] p-4">
         <summary className="cursor-pointer font-black text-white">
           معنی وضعیت‌ها

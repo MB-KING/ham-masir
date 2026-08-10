@@ -33,7 +33,31 @@ async function findSuperAdminByTelegramId(telegramId: number) {
 
 function groupLink(chat: Chat) {
   if (chat.username) return `https://t.me/${chat.username}`;
-  return `https://t.me/c/${String(chat.id).replace("-100", "")}`;
+  const raw = String(chat.id);
+  if (raw.startsWith("-100")) {
+    return `https://t.me/c/${raw.slice(4)}`;
+  }
+  return `https://t.me/c/${raw.replace(/^-/, "")}`;
+}
+
+export async function deactivateTelegramResourceByChatId(chatId: number) {
+  try {
+    const updated = await prisma.telegramResource.updateMany({
+      where: { telegramChatId: BigInt(chatId) },
+      data: { isActive: false, receiveAnnouncements: false }
+    });
+    if (updated.count > 0) {
+      logger.info("telegram_resource_deactivated_bot_left", {
+        chatId,
+        count: updated.count
+      });
+    }
+  } catch (error) {
+    logger.warn("telegram_resource_deactivate_failed", {
+      chatId,
+      reason: error instanceof Error ? error.message : "unknown"
+    });
+  }
 }
 
 export async function handleGroupAdminCommand(input: {

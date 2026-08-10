@@ -128,6 +128,31 @@ async function sendKindReminders(input: {
   let sent = 0;
 
   for (const userId of input.userIds) {
+    const already = await prisma.eventReminder.findUnique({
+      where: {
+        eventId_userId_kind: {
+          eventId: input.eventId,
+          userId,
+          kind: input.kind
+        }
+      },
+      select: { id: true }
+    });
+    if (already) continue;
+
+    const { telegramDelivered } = await notifyUser({
+      userId,
+      type: `EVENT_REMINDER_${input.kind}`,
+      title: input.title,
+      body: input.body,
+      eventPath: input.eventPath,
+      buttonText: "مشاهده برنامه"
+    });
+
+    // Only lock the reminder after a successful Telegram delivery so
+    // blocked/never-started users can be retried on the next cron tick.
+    if (!telegramDelivered) continue;
+
     try {
       await prisma.eventReminder.create({
         data: {
@@ -136,20 +161,10 @@ async function sendKindReminders(input: {
           kind: input.kind
         }
       });
+      sent += 1;
     } catch {
-      // Unique constraint: already reminded for this kind.
-      continue;
+      // Race: another worker recorded the same reminder.
     }
-
-    await notifyUser({
-      userId,
-      type: `EVENT_REMINDER_${input.kind}`,
-      title: input.title,
-      body: input.body,
-      eventPath: input.eventPath,
-      buttonText: "مشاهده برنامه"
-    });
-    sent += 1;
   }
 
   return sent;

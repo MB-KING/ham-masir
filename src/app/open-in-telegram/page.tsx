@@ -3,11 +3,11 @@ import Link from "next/link";
 import { BrandMark } from "@/components/brand/brand-mark";
 import { UserCard } from "@/components/user/user-card";
 import { UserPageShell } from "@/components/user/user-shell";
-import { config } from "@/lib/config";
+import { botUsername } from "@/lib/telegram-format";
 
 export default function OpenInTelegramPage() {
-  const username = config.TELEGRAM_BOT_USERNAME?.replace(/^@/, "");
-  const botHref = username ? `https://t.me/${username}` : "https://t.me/";
+  const username = botUsername();
+  const botHref = `https://t.me/${username}`;
 
   return (
     <UserPageShell>

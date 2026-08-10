@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
-import { sendStartMessage } from "@/lib/telegram-bot";
+import { logger } from "@/lib/logger";
+import { sendHelpMessage, sendStartMessage } from "@/lib/telegram-bot";
 import {
+  deactivateTelegramResourceByChatId,
   handleGroupAdminCommand,
   trackMembershipUpdate
 } from "@/modules/telegram/group-commands";
@@ -12,8 +14,11 @@ type TelegramUpdate = {
     text?: string;
   };
   my_chat_member?: {
-    chat?: { id?: number };
-    new_chat_member?: { user?: { id?: number }; status?: string };
+    chat?: { id?: number; type?: string };
+    new_chat_member?: {
+      user?: { id?: number; is_bot?: boolean };
+      status?: string;
+    };
   };
   chat_member?: {
     chat?: { id?: number };
@@ -26,7 +31,9 @@ export async function POST(request: Request) {
     const update = (await request.json()) as TelegramUpdate;
     const message = update.message;
     const chatId = message?.chat?.id;
+    const chatType = message?.chat?.type;
     const text = message?.text?.trim() ?? "";
+    const isPrivate = chatType === "private";
 
     if (message?.chat && text) {
       const handled = await handleGroupAdminCommand({
@@ -50,20 +57,34 @@ export async function POST(request: Request) {
       }
     }
 
+    // Keep onboarding replies in private chats to avoid group spam.
+    if (chatId && isPrivate) {
+      if (/^\/help(?:@\w+)?/i.test(text)) {
+        await sendHelpMessage(chatId);
+      } else if (
+        /^\/start(?:@\w+)?/i.test(text) ||
+        /^\/app(?:@\w+)?/i.test(text)
+      ) {
+        await sendStartMessage(chatId);
+      }
+    }
+
+    const myMember = update.my_chat_member?.new_chat_member;
+    const myChatId = update.my_chat_member?.chat?.id;
     if (
-      chatId &&
-      (/^\/start(?:@\w+)?/i.test(text) ||
-        /^\/app(?:@\w+)?/i.test(text) ||
-        /^\/help(?:@\w+)?/i.test(text))
+      myChatId &&
+      myMember?.user?.is_bot &&
+      (myMember.status === "left" || myMember.status === "kicked")
     ) {
-      await sendStartMessage(chatId);
+      await deactivateTelegramResourceByChatId(myChatId);
     }
 
     const membership =
       update.chat_member?.new_chat_member ??
-      update.my_chat_member?.new_chat_member;
+      (myMember?.user && !myMember.user.is_bot ? myMember : undefined);
     const membershipChatId =
-      update.chat_member?.chat?.id ?? update.my_chat_member?.chat?.id;
+      update.chat_member?.chat?.id ??
+      (membership ? update.my_chat_member?.chat?.id : undefined);
     if (membership?.user?.id && membershipChatId && membership.status) {
       await trackMembershipUpdate({
         chatId: membershipChatId,
@@ -73,7 +94,11 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ ok: true });
-  } catch {
+  } catch (error) {
+    logger.warn("telegram_webhook_failed", {
+      reason: error instanceof Error ? error.message : "unknown"
+    });
+    // Still ack so Telegram does not retry forever on bad payloads.
     return NextResponse.json({ ok: true });
   }
 }

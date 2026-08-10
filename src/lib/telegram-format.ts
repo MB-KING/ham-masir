@@ -7,6 +7,20 @@ export function escapeHtml(value: string) {
     .replace(/>/g, "&gt;");
 }
 
+/** Strip HTML tags for plain-text Telegram fallback. */
+export function stripHtml(value: string) {
+  return value
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .trim();
+}
+
 export function pathFromStartParam(param: string): string | null {
   const value = param.trim();
   if (!value || value === "home") return "/";
@@ -20,6 +34,11 @@ export function pathFromStartParam(param: string): string | null {
 
   if (value.includes("__")) {
     return `/${value.replace(/__/g, "/")}`;
+  }
+
+  // Single-segment Mini App paths: me, rewards, members, events, ...
+  if (/^[a-z][a-z0-9_-]*$/i.test(value)) {
+    return `/${value}`;
   }
 
   return null;
@@ -50,6 +69,12 @@ const faTimeFormatter = new Intl.DateTimeFormat("fa-IR", {
   minute: "2-digit"
 });
 
+function truncatePlain(text: string, max: number) {
+  const trimmed = text.trim();
+  if (trimmed.length <= max) return trimmed;
+  return `${trimmed.slice(0, Math.max(0, max - 1)).trimEnd()}…`;
+}
+
 export function formatEventAnnounceHtml(event: {
   title: string;
   eventNumber: number;
@@ -61,7 +86,7 @@ export function formatEventAnnounceHtml(event: {
 }) {
   const lines = [
     "🥾 <b>برنامه جدید هم مسیر</b>",
-    "",
+    "────────────",
     `<b>${escapeHtml(event.title)}</b>`,
     `شماره ${escapeHtml(String(event.eventNumber))}`,
     "",
@@ -73,10 +98,10 @@ export function formatEventAnnounceHtml(event: {
 
   const description = event.description?.trim();
   if (description) {
-    lines.push("", escapeHtml(description.slice(0, 220)));
+    lines.push("", escapeHtml(truncatePlain(description, 180)));
   }
 
-  lines.push("", "برای مشاهده جزئیات و ثبت‌نام، دکمه زیر را بزن.");
+  lines.push("", "برای جزئیات و ثبت‌نام، دکمه زیر را بزن.");
   return lines.join("\n");
 }
 
@@ -87,6 +112,18 @@ export function formatStartMessageHtml() {
     "اینجا برنامه‌های پیاده‌روی و دورهمی‌ها را می‌بینی، ثبت‌نام می‌کنی و با بقیه همراه می‌شوی.",
     "",
     "برای ورود، دکمه زیر را بزن."
+  ].join("\n");
+}
+
+export function formatHelpMessageHtml() {
+  return [
+    "🧭 <b>راهنمای هم مسیر</b>",
+    "",
+    "• از دکمه زیر مینی‌اپ را باز کن",
+    "• برنامه‌ها را ببین و ثبت‌نام کن",
+    "• یادآوری قرار از همین ربات می‌آید",
+    "",
+    "اگر دکمه کار نکرد، منوی پایین چت را بزن."
   ].join("\n");
 }
 
@@ -112,4 +149,17 @@ export function telegramDeepLink(path?: string) {
 
   const compact = path.replace(/^\//, "").replace(/\//g, "__").slice(0, 64);
   return `https://t.me/${username}?startapp=${compact}`;
+}
+
+export function isPermanentTelegramChatError(reason: string) {
+  const text = reason.toLowerCase();
+  return (
+    text.includes("chat not found") ||
+    text.includes("bot is not a member") ||
+    text.includes("bot was kicked") ||
+    text.includes("have no rights to send") ||
+    text.includes("not enough rights") ||
+    text.includes("peer_id_invalid") ||
+    text.includes("group chat was upgraded")
+  );
 }

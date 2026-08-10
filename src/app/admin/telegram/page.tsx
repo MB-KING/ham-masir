@@ -45,9 +45,18 @@ export default async function AdminTelegramPage() {
             فعال
           </label>
           <label className="flex items-center gap-2 text-sm font-bold text-slate-200">
-            <input name="receiveAnnouncements" type="checkbox" className="accent-[#F59E0B]" />
+            <input
+              name="receiveAnnouncements"
+              type="checkbox"
+              defaultChecked
+              className="accent-[#F59E0B]"
+            />
             دریافت اعلان برنامه جدید
           </label>
+          <p className="text-xs leading-6 text-slate-400">
+            برای ارسال خودکار، Chat ID را پر کن (مثلاً از /addgroup داخل گروه) و
+            مطمئن شو ربات ادمین گروه است.
+          </p>
           <Button type="submit" className="w-full" pendingLabel="در حال ذخیره…">
             ذخیره
           </Button>

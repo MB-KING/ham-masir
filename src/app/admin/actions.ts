@@ -24,11 +24,20 @@ import {
   requireSuperAdminPage
 } from "@/modules/auth/admin-session";
 import { AttendanceService } from "@/modules/attendance/attendance.service";
-import { announcePublishedEvent } from "@/modules/events/announce.service";
+import {
+  announceFlashQuery,
+  announcePublishedEvent
+} from "@/modules/events/announce.service";
 import { EventService } from "@/modules/events/event.service";
 import { MediaService } from "@/modules/media/media.service";
 import { logActivity, notifyUser } from "@/modules/activity/activity.service";
 import { meetingTimeFromStart } from "@/shared/event-timing";
+import {
+  businessStatusLabels,
+  labelOf,
+  rewardRedemptionStatusLabels,
+  rewardStatusLabels
+} from "@/shared/labels";
 import { earnStepTypes } from "@/shared/steps";
 
 const optionalPositiveInt = z.preprocess(
@@ -178,13 +187,16 @@ export async function createEventAction(formData: FormData) {
         status: input.status
       }
     );
+    let announceQuery: string | null = null;
     if (event.status === EventStatus.PUBLISHED) {
-      await announcePublishedEvent(event);
+      announceQuery = announceFlashQuery(await announcePublishedEvent(event));
     }
     revalidatePath("/");
     revalidatePath("/admin");
     revalidatePath("/admin/events");
-    redirect("/admin/events");
+    redirect(
+      (announceQuery ? `/admin/events?${announceQuery}` : "/admin/events") as never
+    );
   } catch (error) {
     if (isRedirectError(error)) throw error;
     logger.warn("create_event_failed", {
@@ -235,13 +247,16 @@ export async function updateEventAction(formData: FormData) {
       entityId: eventId,
       metadata: { title: input.title }
     });
+    let announceQuery: string | null = null;
     if (event.status === EventStatus.PUBLISHED) {
-      await announcePublishedEvent(event);
+      announceQuery = announceFlashQuery(await announcePublishedEvent(event));
     }
 
     revalidatePath("/");
     revalidatePath("/admin/events");
-    redirect("/admin/events");
+    redirect(
+      (announceQuery ? `/admin/events?${announceQuery}` : "/admin/events") as never
+    );
   } catch (error) {
     if (isRedirectError(error)) throw error;
     logger.warn("update_event_failed", {
@@ -269,11 +284,15 @@ export async function setEventStatusAction(formData: FormData) {
     entityId: eventId,
     metadata: { status }
   });
+  let announceQuery: string | null = null;
   if (status === EventStatus.PUBLISHED) {
-    await announcePublishedEvent(event);
+    announceQuery = announceFlashQuery(await announcePublishedEvent(event));
   }
   revalidatePath("/");
   revalidatePath("/admin/events");
+  if (announceQuery) {
+    redirect(`/admin/events?${announceQuery}` as never);
+  }
 }
 
 export async function verifyAttendanceAction(formData: FormData) {
@@ -314,8 +333,10 @@ export async function setBusinessStatusAction(formData: FormData) {
     await notifyUser({
       userId: business.createdById,
       type: "BUSINESS_STATUS_CHANGED",
-      title: "وضعیت کسب‌وکار تغییر کرد",
-      body: `${business.name}: ${status}`
+      title: "وضعیت کسب‌وکار به‌روز شد",
+      body: `«${business.name}» الان ${labelOf(businessStatusLabels, status)} است.`,
+      eventPath: "/businesses",
+      buttonText: "مشاهده کسب‌وکارها"
     });
   await logActivity({
     actorUserId: admin.id,
@@ -372,8 +393,10 @@ export async function setRewardStatusAction(formData: FormData) {
     await notifyUser({
       userId: reward.createdById,
       type: "REWARD_STATUS_CHANGED",
-      title: "وضعیت مزیت تغییر کرد",
-      body: `${reward.title}: ${status}`
+      title: "وضعیت مزیت به‌روز شد",
+      body: `«${reward.title}» الان ${labelOf(rewardStatusLabels, status)} است.`,
+      eventPath: "/rewards",
+      buttonText: "مشاهده مزیت‌ها"
     });
   await logActivity({
     actorUserId: admin.id,
@@ -651,8 +674,10 @@ export async function setRedemptionStatusAction(formData: FormData) {
     notifyUser({
       userId: redemption.userId,
       type: "REDEMPTION_STATUS_CHANGED",
-      title: "وضعیت مزیت تغییر کرد",
-      body: `${redemption.reward.title}: ${status}`
+      title: "وضعیت دریافت مزیت به‌روز شد",
+      body: `«${redemption.reward.title}»: ${labelOf(rewardRedemptionStatusLabels, status)}`,
+      eventPath: "/me",
+      buttonText: "مشاهده پروفایل"
     })
   ]);
   revalidatePath(`/admin/rewards/${redemption.rewardId}/edit`);
@@ -690,7 +715,9 @@ export async function assignSpecialBadgeAction(formData: FormData) {
       userId,
       type: "BADGE_EARNED",
       title: "بج ویژه گرفتی",
-      body: badge.name
+      body: `بج «${badge.name}» به پروفایلت اضافه شد. دمت گرم!`,
+      eventPath: "/me",
+      buttonText: "مشاهده پروفایل"
     })
   ]);
   revalidatePath("/admin/users");
