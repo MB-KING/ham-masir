@@ -8,7 +8,10 @@ export const telegramUserSchema = z.object({
   first_name: z.string().optional(),
   last_name: z.string().optional(),
   username: z.string().optional(),
-  photo_url: z.string().url().optional(),
+  photo_url: z
+    .string()
+    .optional()
+    .transform((value) => (value && value.startsWith("http") ? value : undefined)),
   language_code: z.string().optional()
 });
 

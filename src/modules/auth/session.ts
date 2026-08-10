@@ -1,6 +1,10 @@
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import {
+  TELEGRAM_INIT_COOKIE,
+  TELEGRAM_INIT_HEADER
+} from "@/modules/auth/telegram-cookie";
 import { validateTelegramInitData } from "@/modules/auth/telegram";
 import { AppError } from "@/shared/errors";
 
@@ -27,13 +31,23 @@ async function resolveDevUser() {
   });
 }
 
+async function readInitData() {
+  const headerValue = (await headers()).get(TELEGRAM_INIT_HEADER)?.trim();
+  if (headerValue) {
+    return headerValue;
+  }
+
+  const cookieValue = (await cookies()).get(TELEGRAM_INIT_COOKIE)?.value;
+  return cookieValue?.trim() || null;
+}
+
 export async function requireCurrentUser() {
   const devUser = await resolveDevUser();
   if (devUser) {
     return devUser;
   }
 
-  const initData = (await headers()).get("x-telegram-init-data");
+  const initData = await readInitData();
   if (!initData) {
     throw new AppError("UNAUTHORIZED", "Missing Telegram init data", 401);
   }
@@ -48,7 +62,6 @@ export async function requireCurrentUser() {
     throw new AppError("UNAUTHORIZED", "User not found", 401);
   }
 
-  // Keep Telegram profile photo/name in sync for the profile screen.
   const nextPhotoUrl = telegramUser.photo_url ?? null;
   if (
     nextPhotoUrl !== user.photoUrl ||

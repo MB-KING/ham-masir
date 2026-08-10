@@ -19,8 +19,16 @@ export default function OpenInTelegramPage() {
           از داخل تلگرام باز کن
         </h1>
         <p className="mt-3 text-sm leading-7 text-slate-300">
-          برای دیدن پروفایل، ثبت‌نام و مزایای شخصی باید هم مسیر را از مینی‌اپ
-          تلگرام باز کنی.
+          ۱. ربات را باز کن و <span className="font-bold text-white">/start</span>{" "}
+          بزن.
+          <br />
+          ۲. دکمه <span className="font-bold text-white">باز کردن هم مسیر</span>{" "}
+          یا منوی پایین چت را بزن.
+          <br />
+          ۳. مینی‌اپ داخل تلگرام باز می‌شود و لاگین خودکار انجام می‌شود.
+        </p>
+        <p className="mt-3 text-xs leading-6 text-slate-400">
+          باز کردن سایت در مرورگر معمولی لاگین تلگرام ندارد.
         </p>
         <a
           href={botHref}
@@ -29,7 +37,7 @@ export default function OpenInTelegramPage() {
           className="mt-6 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#F59E0B] px-4 text-sm font-black text-[#061124]"
         >
           <Send size={17} aria-hidden="true" />
-          باز کردن ربات هم مسیر
+          باز کردن ربات @{username ?? "HamMasirClubBot"}
         </a>
         <Link
           href="/"
