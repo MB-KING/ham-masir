@@ -15,6 +15,7 @@ import {
 } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
@@ -52,16 +53,6 @@ const eventFormSchema = z.object({
   capacity: optionalPositiveInt,
   status: z.nativeEnum(EventStatus)
 });
-
-function isNextRedirect(error: unknown) {
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    "digest" in error &&
-    typeof (error as { digest?: unknown }).digest === "string" &&
-    String((error as { digest: string }).digest).startsWith("NEXT_REDIRECT")
-  );
-}
 
 function formErrorMessage(error: unknown) {
   if (error instanceof z.ZodError) {
@@ -195,7 +186,7 @@ export async function createEventAction(formData: FormData) {
     revalidatePath("/admin/events");
     redirect("/admin/events");
   } catch (error) {
-    if (isNextRedirect(error)) throw error;
+    if (isRedirectError(error)) throw error;
     logger.warn("create_event_failed", {
       reason: error instanceof Error ? error.message : "unknown"
     });
@@ -252,7 +243,7 @@ export async function updateEventAction(formData: FormData) {
     revalidatePath("/admin/events");
     redirect("/admin/events");
   } catch (error) {
-    if (isNextRedirect(error)) throw error;
+    if (isRedirectError(error)) throw error;
     logger.warn("update_event_failed", {
       eventId,
       reason: error instanceof Error ? error.message : "unknown"

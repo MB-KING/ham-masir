@@ -1,19 +1,15 @@
 import { Bell } from "lucide-react";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { requireCurrentUserPage } from "@/modules/auth/session";
+import { getOptionalCurrentUser } from "@/modules/auth/session";
 
 export async function NotificationsBell() {
-  let unreadCount = 0;
-
-  try {
-    const user = await requireCurrentUserPage();
-    unreadCount = await prisma.notification.count({
-      where: { userId: user.id, readAt: null }
-    });
-  } catch {
-    unreadCount = 0;
-  }
+  const user = await getOptionalCurrentUser();
+  const unreadCount = user
+    ? await prisma.notification.count({
+        where: { userId: user.id, readAt: null }
+      })
+    : 0;
 
   return (
     <Link
