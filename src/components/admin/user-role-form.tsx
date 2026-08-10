@@ -1,6 +1,7 @@
 "use client";
 
 import { Role } from "@prisma/client";
+import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { setUserRoleAction } from "@/app/admin/actions";
@@ -65,10 +66,18 @@ export function UserRoleForm({
       </p>
       <button
         disabled={disabled || pending}
-        className="min-h-11 rounded-xl bg-[#F59E0B] px-3 text-sm font-black text-[#061124] disabled:cursor-not-allowed disabled:opacity-50"
+        aria-busy={pending || undefined}
+        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#F59E0B] px-3 text-sm font-black text-[#061124] disabled:cursor-not-allowed disabled:opacity-70"
         type="submit"
       >
-        {pending ? "در حال ذخیره..." : "ذخیره نقش"}
+        {pending ? (
+          <>
+            <Loader2 size={16} className="animate-spin" aria-hidden="true" />
+            در حال ذخیره…
+          </>
+        ) : (
+          "ذخیره نقش"
+        )}
       </button>
       {message ? (
         <p className="text-xs font-bold text-emerald-300" role="status">

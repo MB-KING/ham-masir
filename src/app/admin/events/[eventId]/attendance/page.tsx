@@ -1,6 +1,7 @@
 import { AttendanceStatus } from "@prisma/client";
 import { verifyAttendanceAction } from "@/app/admin/actions";
 import { AdminCard, PageTitle } from "@/components/admin/admin-card";
+import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import { prisma } from "@/lib/prisma";
 import { requireEventManagerPage } from "@/modules/auth/admin-session";
 import { attendanceStatusLabels, labelOf, registrationStatusLabels } from "@/shared/labels";
@@ -111,13 +112,13 @@ function AttendanceButton({
       <input type="hidden" name="eventId" value={eventId} />
       <input type="hidden" name="userId" value={userId} />
       <input type="hidden" name="status" value={status} />
-      <button
-        className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-white/10 px-2 text-xs font-bold text-slate-200 transition hover:bg-white/15 disabled:cursor-not-allowed disabled:bg-[#F59E0B]/20 disabled:text-[#F59E0B]"
-        type="submit"
+      <PendingSubmitButton
+        className="w-full bg-white/10 px-2 text-xs font-bold text-slate-200 hover:bg-white/15 disabled:bg-[#F59E0B]/20 disabled:text-[#F59E0B]"
         disabled={isCurrent}
+        pendingLabel="…"
       >
         {isCurrent ? `${label} ✓` : label}
-      </button>
+      </PendingSubmitButton>
     </form>
   );
 }

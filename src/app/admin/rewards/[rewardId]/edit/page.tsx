@@ -10,6 +10,8 @@ import {
   updateRewardAction
 } from "@/app/admin/actions";
 import { AdminCard, PageTitle } from "@/components/admin/admin-card";
+import { Button } from "@/components/ui/button";
+import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import { prisma } from "@/lib/prisma";
 import { requireSuperAdminPage } from "@/modules/auth/admin-session";
 import { dateInputValue } from "@/shared/form-date";
@@ -160,12 +162,13 @@ export default async function EditRewardPage({
             />
           </label>
           <div>
-            <button
-              className="min-h-11 w-full rounded-xl bg-[#F59E0B] px-5 text-sm font-black text-[#061124]"
+            <Button
+              className="w-full"
               type="submit"
+              pendingLabel="در حال ذخیره…"
             >
               ذخیره تغییرات
-            </button>
+            </Button>
           </div>
         </form>
       </AdminCard>
@@ -211,13 +214,13 @@ export default async function EditRewardPage({
                           value={item.id}
                         />
                         <input type="hidden" name="status" value={status} />
-                        <button
-                          type="submit"
+                        <PendingSubmitButton
                           disabled={item.status === status}
-                          className="rounded-lg bg-white/10 px-2 py-1 text-xs text-slate-300 disabled:bg-[#F59E0B]/15 disabled:text-[#F59E0B]"
+                          className="min-h-8 rounded-lg bg-white/10 px-2 py-1 text-xs font-bold text-slate-300 disabled:bg-[#F59E0B]/15 disabled:text-[#F59E0B]"
+                          pendingLabel="…"
                         >
                           {redemptionStatusLabel(status)}
-                        </button>
+                        </PendingSubmitButton>
                       </form>
                     ))}
                   </div>
@@ -265,12 +268,9 @@ export default async function EditRewardPage({
               placeholder={"CODE-101\nCODE-102"}
             />
           </label>
-          <button
-            type="submit"
-            className="h-11 w-fit rounded-xl bg-[#F59E0B] px-5 text-sm font-black text-[#061124]"
-          >
+          <Button type="submit" pendingLabel="در حال افزودن…">
             افزودن کدها
-          </button>
+          </Button>
         </form>
       </AdminCard>
     </>

@@ -3,6 +3,8 @@ import {
   upsertTelegramResourceAction
 } from "@/app/admin/actions";
 import { AdminCard, PageTitle } from "@/components/admin/admin-card";
+import { Button } from "@/components/ui/button";
+import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import { prisma } from "@/lib/prisma";
 import { requireSuperAdminPage } from "@/modules/auth/admin-session";
 
@@ -46,12 +48,9 @@ export default async function AdminTelegramPage() {
             <input name="receiveAnnouncements" type="checkbox" className="accent-[#F59E0B]" />
             دریافت اعلان برنامه جدید
           </label>
-          <button
-            type="submit"
-            className="inline-flex h-11 items-center justify-center rounded-xl bg-[#F59E0B] text-sm font-black text-[#061124]"
-          >
+          <Button type="submit" className="w-full" pendingLabel="در حال ذخیره…">
             ذخیره
-          </button>
+          </Button>
         </form>
       </AdminCard>
       <div className="grid gap-3">
@@ -111,22 +110,23 @@ export default async function AdminTelegramPage() {
                 دریافت اعلان
               </label>
               <div className="flex gap-2">
-                <button
+                <Button
                   type="submit"
-                  className="inline-flex h-11 flex-1 items-center justify-center rounded-xl bg-white/10 text-sm font-bold text-white"
+                  className="w-full flex-1 bg-white/10 text-white shadow-none hover:bg-white/15"
+                  pendingLabel="در حال ذخیره…"
                 >
                   به‌روزرسانی
-                </button>
+                </Button>
               </div>
             </form>
             <form action={deleteTelegramResourceAction} className="mt-2">
               <input type="hidden" name="id" value={resource.id} />
-              <button
-                type="submit"
-                className="inline-flex h-11 w-full items-center justify-center rounded-xl border border-red-400/30 text-sm font-bold text-red-200"
+              <PendingSubmitButton
+                className="w-full border border-red-400/30 text-sm font-bold text-red-200"
+                pendingLabel="در حال غیرفعال‌سازی…"
               >
                 غیرفعال‌سازی
-              </button>
+              </PendingSubmitButton>
             </form>
           </AdminCard>
         ))}

@@ -1,6 +1,7 @@
 import { BadgeType } from "@prisma/client";
 import { createBadgeAction, updateBadgeAction } from "@/app/admin/actions";
 import { AdminCard, PageTitle } from "@/components/admin/admin-card";
+import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/prisma";
 import { requireSuperAdminPage } from "@/modules/auth/admin-session";
 
@@ -105,9 +106,9 @@ function BadgeForm({
         فعال باشد
       </label>
       <div>
-        <button className="h-11 rounded-xl bg-[#F59E0B] px-5 text-sm font-black text-[#061124]" type="submit">
+        <Button type="submit" pendingLabel="در حال ذخیره…">
           {submitLabel}
-        </button>
+        </Button>
       </div>
     </form>
   );

@@ -5,6 +5,8 @@ import {
 } from "@/app/admin/actions";
 import { AdminCard, PageTitle } from "@/components/admin/admin-card";
 import { UserRoleForm } from "@/components/admin/user-role-form";
+import { Button } from "@/components/ui/button";
+import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import { prisma } from "@/lib/prisma";
 import { requireSuperAdminPage } from "@/modules/auth/admin-session";
 import { hasRole } from "@/modules/auth/authorization";
@@ -129,13 +131,13 @@ export default async function AdminUsersPage() {
                               value={item.badgeId}
                             />
                             <span>{item.badge.name}</span>
-                            <button
-                              type="submit"
+                            <PendingSubmitButton
                               title="پس گرفتن بج"
-                              className="text-red-300"
+                              className="min-h-8 px-1 text-red-300 shadow-none"
+                              pendingLabel="…"
                             >
                               ×
-                            </button>
+                            </PendingSubmitButton>
                           </form>
                         ))
                     )}
@@ -156,12 +158,13 @@ export default async function AdminUsersPage() {
                           </option>
                         ))}
                       </select>
-                      <button
+                      <Button
                         type="submit"
-                        className="h-10 rounded-xl bg-[#F59E0B] px-3 text-sm font-black text-[#061124]"
+                        className="h-10"
+                        pendingLabel="…"
                       >
                         اختصاص بج
-                      </button>
+                      </Button>
                     </form>
                   ) : (
                     <p className="mt-2 text-xs text-slate-500">

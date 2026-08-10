@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, Share2 } from "lucide-react";
+import { Download, Loader2, Share2 } from "lucide-react";
 import { useState } from "react";
 import { BottomSheet } from "@/components/user/bottom-sheet";
 import { secondaryActionClass } from "@/components/user/user-shell";
@@ -40,7 +40,12 @@ export function ShareCardButton({ eventId }: { eventId: string }) {
           });
         };
         reader.readAsDataURL(blob);
-      } else if (navigator.share && navigator.canShare?.({ files: [new File([blob], filename, { type: "image/png" })] })) {
+      } else if (
+        navigator.share &&
+        navigator.canShare?.({
+          files: [new File([blob], filename, { type: "image/png" })]
+        })
+      ) {
         await navigator.share({
           files: [new File([blob], filename, { type: "image/png" })],
           title: "هم مسیر"
@@ -54,7 +59,10 @@ export function ShareCardButton({ eventId }: { eventId: string }) {
       URL.revokeObjectURL(objectUrl);
       setOpen(false);
     } catch {
-      window.open(`/api/events/${eventId}/share-card?format=${format}`, "_blank");
+      window.open(
+        `/api/events/${eventId}/share-card?format=${format}`,
+        "_blank"
+      );
     } finally {
       setBusy(null);
     }
@@ -70,20 +78,32 @@ export function ShareCardButton({ eventId }: { eventId: string }) {
         <Share2 size={16} aria-hidden="true" />
         کارت اشتراک
       </button>
-      <BottomSheet open={open} onClose={() => setOpen(false)} title="ساخت کارت اشتراک">
+      <BottomSheet
+        open={open}
+        onClose={() => setOpen(false)}
+        title="ساخت کارت اشتراک"
+      >
         <div className="grid gap-2">
-          {formats.map((format) => (
-            <button
-              key={format.id}
-              type="button"
-              disabled={busy === format.id}
-              onClick={() => handleFormat(format.id)}
-              className="flex min-h-12 items-center justify-between rounded-xl bg-white/[0.06] px-4 text-sm font-bold text-white disabled:opacity-60"
-            >
-              <span>{format.label}</span>
-              <Download size={16} className="text-[#F59E0B]" />
-            </button>
-          ))}
+          {formats.map((format) => {
+            const isBusy = busy === format.id;
+            return (
+              <button
+                key={format.id}
+                type="button"
+                disabled={Boolean(busy)}
+                aria-busy={isBusy || undefined}
+                onClick={() => handleFormat(format.id)}
+                className="flex min-h-12 items-center justify-between rounded-xl bg-white/[0.06] px-4 text-sm font-bold text-white disabled:opacity-60"
+              >
+                <span>{isBusy ? "در حال ساخت…" : format.label}</span>
+                {isBusy ? (
+                  <Loader2 size={16} className="animate-spin text-[#F59E0B]" />
+                ) : (
+                  <Download size={16} className="text-[#F59E0B]" />
+                )}
+              </button>
+            );
+          })}
         </div>
       </BottomSheet>
     </>

@@ -6,6 +6,7 @@ import {
   registerForEventAction
 } from "@/app/actions";
 import { Button } from "@/components/ui/button";
+import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import { secondaryActionClass } from "@/components/user/user-shell";
 
 export function EventActions({
@@ -36,15 +37,15 @@ export function EventActions({
     return (
       <form action={cancelEventRegistrationAction}>
         <input type="hidden" name="eventId" value={eventId} />
-        <button
+        <PendingSubmitButton
           className={`${secondaryActionClass} border-red-400/30 text-red-200 hover:border-red-400/50 hover:bg-red-500/10`}
-          type="submit"
+          pendingLabel="در حال لغو…"
+          idleIcon={<LogOut size={16} aria-hidden="true" />}
         >
-          <LogOut size={16} aria-hidden="true" />
           {registrationStatus === RegistrationStatus.WAITLISTED
             ? "خروج از لیست انتظار"
             : "لغو ثبت‌نام"}
-        </button>
+        </PendingSubmitButton>
       </form>
     );
   }
@@ -52,7 +53,11 @@ export function EventActions({
   return (
     <form action={registerForEventAction}>
       <input type="hidden" name="eventId" value={eventId} />
-      <Button className="w-full" type="submit">
+      <Button
+        className="w-full"
+        type="submit"
+        pendingLabel="در حال ثبت‌نام…"
+      >
         <CalendarCheck2 size={17} aria-hidden="true" />
         ثبت‌نام و رزرو جا
       </Button>

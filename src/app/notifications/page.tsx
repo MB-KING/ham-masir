@@ -10,6 +10,7 @@ import {
   markAllNotificationsReadAction,
   markNotificationReadAction
 } from "@/app/actions";
+import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import { UserCard, UserPageHeader } from "@/components/user/user-card";
 import {
   secondaryActionClass,
@@ -65,10 +66,13 @@ export default async function NotificationsPage() {
             </div>
             {unreadCount > 0 ? (
               <form action={markAllNotificationsReadAction}>
-                <button type="submit" className={secondaryActionClass}>
-                  <CheckCheck size={16} aria-hidden="true" />
+                <PendingSubmitButton
+                  className={secondaryActionClass}
+                  pendingLabel="در حال به‌روزرسانی…"
+                  idleIcon={<CheckCheck size={16} aria-hidden="true" />}
+                >
                   همه را خواندم
-                </button>
+                </PendingSubmitButton>
               </form>
             ) : null}
           </div>
@@ -133,12 +137,12 @@ export default async function NotificationsPage() {
                             name="notificationId"
                             value={notification.id}
                           />
-                          <button
-                            type="submit"
-                            className="inline-flex min-h-11 items-center rounded-lg px-2 text-sm font-bold text-sky-300 transition active:scale-95 hover:text-sky-200"
+                          <PendingSubmitButton
+                            className="min-h-11 rounded-lg bg-transparent px-2 text-sm font-bold text-sky-300 shadow-none hover:text-sky-200"
+                            pendingLabel="…"
                           >
                             خواندم
-                          </button>
+                          </PendingSubmitButton>
                         </form>
                       ) : null}
                     </div>

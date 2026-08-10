@@ -1,5 +1,6 @@
 import { Star } from "lucide-react";
 import { submitEventFeedbackAction } from "@/app/actions";
+import { Button } from "@/components/ui/button";
 
 export function FeedbackForm({
   eventId,
@@ -37,13 +38,14 @@ export function FeedbackForm({
           placeholder="تجربه‌ات از این برنامه را بنویس"
         />
       </label>
-      <button
+      <Button
         type="submit"
-        className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#F59E0B] text-sm font-black text-[#061124]"
+        className="w-full"
+        pendingLabel="در حال ثبت…"
       >
         <Star size={16} aria-hidden="true" />
         {existing ? "به‌روزرسانی نظر" : "ثبت نظر"}
-      </button>
+      </Button>
     </form>
   );
 }

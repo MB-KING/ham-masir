@@ -5,6 +5,8 @@ import {
   upsertStepRuleAction
 } from "@/app/admin/actions";
 import { AdminCard, PageTitle } from "@/components/admin/admin-card";
+import { Button } from "@/components/ui/button";
+import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import { prisma } from "@/lib/prisma";
 import { requireSuperAdminPage } from "@/modules/auth/admin-session";
 import {
@@ -77,13 +79,10 @@ export default async function AdminSettingsPage() {
             اعلان خودکار برنامه در گروه‌های تلگرام
           </label>
           <div>
-            <button
-              type="submit"
-              className="inline-flex h-11 items-center gap-2 rounded-xl bg-[#F59E0B] px-5 text-sm font-black text-[#061124]"
-            >
+            <Button type="submit" pendingLabel="در حال ذخیره…">
               <Save size={17} />
               ذخیره تنظیمات
-            </button>
+            </Button>
           </div>
         </form>
       </AdminCard>
@@ -110,12 +109,12 @@ export default async function AdminSettingsPage() {
                   className="h-11 rounded-xl border border-white/10 bg-[#061124] px-3 text-white"
                 />
               </label>
-              <button
-                type="submit"
-                className="inline-flex h-11 items-center justify-center rounded-xl bg-white/10 px-4 text-sm font-bold text-white"
+              <PendingSubmitButton
+                className="bg-white/10 px-4 text-sm font-bold text-white"
+                pendingLabel="…"
               >
                 ذخیره
-              </button>
+              </PendingSubmitButton>
             </form>
           ))}
         </div>
@@ -194,12 +193,9 @@ function LevelForm({
           />
           فعال
         </label>
-        <button
-          type="submit"
-          className="h-11 rounded-xl bg-[#F59E0B] px-4 text-sm font-black text-[#061124]"
-        >
+        <Button type="submit" className="w-full" pendingLabel="در حال ذخیره…">
           ذخیره
-        </button>
+        </Button>
       </div>
     </form>
   );

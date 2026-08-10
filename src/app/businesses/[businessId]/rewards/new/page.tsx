@@ -74,7 +74,11 @@ export default async function NewRewardPage({ params }: { params: Promise<{ busi
               <textarea name="codes" rows={5} className="rounded-xl border border-white/10 bg-[#061124] px-3 py-3 font-mono text-sm text-white outline-none focus:border-[#F59E0B]" placeholder={"CODE-001\nCODE-002"} />
             </label>
             <div>
-              <Button className="w-full" type="submit">
+              <Button
+                className="w-full"
+                type="submit"
+                pendingLabel="در حال ثبت…"
+              >
                 ارسال برای تأیید
               </Button>
             </div>

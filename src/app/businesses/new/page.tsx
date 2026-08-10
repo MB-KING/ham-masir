@@ -49,7 +49,7 @@ export default function NewBusinessPage() {
             label="اینستاگرام"
             placeholder="@your_business"
           />
-          <Button type="submit" className="w-full">
+          <Button type="submit" className="w-full" pendingLabel="در حال ثبت…">
             ارسال برای تأیید
           </Button>
         </form>

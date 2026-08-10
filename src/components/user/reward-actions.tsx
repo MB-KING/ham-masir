@@ -44,7 +44,11 @@ export function RewardActions({
   return (
     <form action={redeemRewardAction}>
       <input type="hidden" name="rewardId" value={rewardId} />
-      <Button className="w-full" type="submit">
+      <Button
+        className="w-full"
+        type="submit"
+        pendingLabel="در حال دریافت…"
+      >
         <TicketCheck size={17} aria-hidden="true" />
         دریافت این مزیت
       </Button>

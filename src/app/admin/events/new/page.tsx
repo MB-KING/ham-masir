@@ -1,6 +1,7 @@
 import { EventStatus } from "@prisma/client";
 import { createEventAction } from "@/app/admin/actions";
 import { AdminCard, PageTitle } from "@/components/admin/admin-card";
+import { Button } from "@/components/ui/button";
 import { requireEventManagerPage } from "@/modules/auth/admin-session";
 
 export default async function NewEventPage() {
@@ -101,12 +102,13 @@ export default async function NewEventPage() {
             />
           </label>
           <div>
-            <button
-              className="min-h-11 w-full rounded-xl bg-[#F59E0B] px-5 text-sm font-black text-[#061124]"
+            <Button
+              className="w-full"
               type="submit"
+              pendingLabel="در حال ساخت…"
             >
               ساخت برنامه
-            </button>
+            </Button>
           </div>
         </form>
       </AdminCard>

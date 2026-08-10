@@ -1,5 +1,6 @@
 import { Eye, Save, ShieldCheck } from "lucide-react";
 import { updateProfileAction } from "@/app/actions";
+import { Button } from "@/components/ui/button";
 import { UserCard, UserPageHeader } from "@/components/user/user-card";
 import { UserPageShell } from "@/components/user/user-shell";
 import { prisma } from "@/lib/prisma";
@@ -136,13 +137,14 @@ export default async function ProfileSettingsPage() {
               defaultChecked={profile?.showSocialLinks ?? true}
             />
           </div>
-          <button
+          <Button
             type="submit"
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#F59E0B] px-5 text-sm font-black text-[#061124]"
+            className="w-full"
+            pendingLabel="در حال ذخیره…"
           >
             <Save size={18} aria-hidden="true" />
             ذخیره تنظیمات
-          </button>
+          </Button>
         </form>
       </UserCard>
     </UserPageShell>

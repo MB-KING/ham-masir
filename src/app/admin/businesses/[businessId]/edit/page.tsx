@@ -2,6 +2,7 @@ import { BusinessStatus } from "@prisma/client";
 import { notFound } from "next/navigation";
 import { updateBusinessAction } from "@/app/admin/actions";
 import { AdminCard, PageTitle } from "@/components/admin/admin-card";
+import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/prisma";
 import { requireSuperAdminPage } from "@/modules/auth/admin-session";
 import { businessStatusLabels, labelOf } from "@/shared/labels";
@@ -44,9 +45,13 @@ export default async function EditBusinessPage({ params }: { params: Promise<{ b
             <textarea name="description" rows={4} defaultValue={business.description ?? ""} className="rounded-xl border border-white/10 bg-[#061124] px-3 py-3 text-white outline-none focus:border-[#F59E0B]" />
           </label>
           <div>
-            <button className="min-h-11 w-full rounded-xl bg-[#F59E0B] px-5 text-sm font-black text-[#061124]" type="submit">
+            <Button
+              className="w-full"
+              type="submit"
+              pendingLabel="در حال ذخیره…"
+            >
               ذخیره تغییرات
-            </button>
+            </Button>
           </div>
         </form>
       </AdminCard>

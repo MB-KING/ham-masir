@@ -1,5 +1,6 @@
 import { upsertWorkCategoryAction } from "@/app/admin/actions";
 import { AdminCard, PageTitle } from "@/components/admin/admin-card";
+import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/prisma";
 import { requireSuperAdminPage } from "@/modules/auth/admin-session";
 
@@ -26,12 +27,9 @@ export default async function AdminCategoriesPage() {
             <input name="isActive" type="checkbox" defaultChecked className="accent-[#F59E0B]" />
             فعال
           </label>
-          <button
-            type="submit"
-            className="inline-flex h-11 items-center justify-center rounded-xl bg-[#F59E0B] text-sm font-black text-[#061124]"
-          >
+          <Button type="submit" className="w-full" pendingLabel="در حال ذخیره…">
             ذخیره
-          </button>
+          </Button>
         </form>
       </AdminCard>
       <div className="grid gap-3">
@@ -56,12 +54,13 @@ export default async function AdminCategoriesPage() {
                 />
                 فعال
               </label>
-              <button
+              <Button
                 type="submit"
-                className="inline-flex h-11 items-center justify-center rounded-xl bg-white/10 text-sm font-bold text-white"
+                className="w-full bg-white/10 text-white shadow-none hover:bg-white/15"
+                pendingLabel="در حال ذخیره…"
               >
                 به‌روزرسانی
-              </button>
+              </Button>
             </form>
           </AdminCard>
         ))}
