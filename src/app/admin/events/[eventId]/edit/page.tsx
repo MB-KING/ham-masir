@@ -14,12 +14,15 @@ import { MEETING_OFFSET_MINUTES } from "@/shared/event-timing";
 import { dateInputValue, timeInputValue } from "@/shared/form-date";
 
 export default async function EditEventPage({
-  params
+  params,
+  searchParams
 }: {
   params: Promise<{ eventId: string }>;
+  searchParams: Promise<{ error?: string }>;
 }) {
   await requireSuperAdminPage();
   const { eventId } = await params;
+  const { error } = await searchParams;
   const event = await prisma.event.findUnique({
     where: { id: eventId },
     include: {
@@ -39,6 +42,11 @@ export default async function EditEventPage({
         title="ویرایش برنامه"
         subtitle="سوپرادمین می‌تواند اطلاعات اصلی، زمان، مکان، ظرفیت و وضعیت برنامه را اصلاح کند."
       />
+      {error ? (
+        <AdminCard className="mb-4 border-red-400/30 bg-red-500/10">
+          <p className="text-sm font-bold text-red-200">{error}</p>
+        </AdminCard>
+      ) : null}
       <div className="mb-4 flex flex-wrap gap-2">
         <Link
           href={`/admin/events/${eventId}/feedback` as Route}

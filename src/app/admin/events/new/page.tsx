@@ -3,11 +3,23 @@ import { createEventAction } from "@/app/admin/actions";
 import { AdminCard, PageTitle } from "@/components/admin/admin-card";
 import { PersianDateField } from "@/components/admin/persian-date-field";
 import { Button } from "@/components/ui/button";
+import { prisma } from "@/lib/prisma";
 import { requireEventManagerPage } from "@/modules/auth/admin-session";
 import { MEETING_OFFSET_MINUTES } from "@/shared/event-timing";
 
-export default async function NewEventPage() {
-  await requireEventManagerPage();
+export default async function NewEventPage({
+  searchParams
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const admin = await requireEventManagerPage();
+  const { error } = await searchParams;
+  const latest = await prisma.event.findFirst({
+    where: { communityId: admin.communityId, deletedAt: null },
+    orderBy: { eventNumber: "desc" },
+    select: { eventNumber: true }
+  });
+  const nextEventNumber = (latest?.eventNumber ?? 0) + 1;
 
   return (
     <>
@@ -17,6 +29,12 @@ export default async function NewEventPage() {
         title="برنامه جدید"
         subtitle="اطلاعاتی را وارد کن که عضو برای تصمیم‌گیری سریع و راحت نیاز دارد."
       />
+
+      {error ? (
+        <AdminCard className="mb-4 border-red-400/30 bg-red-500/10">
+          <p className="text-sm font-bold text-red-200">{error}</p>
+        </AdminCard>
+      ) : null}
 
       <AdminCard>
         <form action={createEventAction} className="grid gap-4">
@@ -32,6 +50,7 @@ export default async function NewEventPage() {
             type="number"
             required
             placeholder="120"
+            defaultValue={String(nextEventNumber)}
           />
           <PersianDateField name="date" required />
           <Field
@@ -118,7 +137,8 @@ function Field({
   required,
   placeholder,
   className,
-  step
+  step,
+  defaultValue
 }: {
   label: string;
   name: string;
@@ -127,6 +147,7 @@ function Field({
   placeholder?: string;
   className?: string;
   step?: string;
+  defaultValue?: string;
 }) {
   return (
     <label
@@ -139,6 +160,7 @@ function Field({
         required={required}
         placeholder={placeholder}
         step={step}
+        defaultValue={defaultValue}
         className="h-11 rounded-xl border border-white/10 bg-[#061124] px-3 text-white outline-none focus:border-[#F59E0B]"
       />
     </label>

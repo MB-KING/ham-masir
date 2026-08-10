@@ -5,6 +5,7 @@ import {
   BadgeType,
   BusinessStatus,
   EventStatus,
+  Prisma,
   RewardRedemptionStatus,
   RewardStatus,
   RewardType,
@@ -15,6 +16,7 @@ import {
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import {
   requireEventManagerPage,
@@ -38,18 +40,44 @@ const optionalNumber = z.preprocess(
 );
 
 const eventFormSchema = z.object({
-  title: z.string().min(3),
+  title: z.string().trim().min(3, "نام برنامه خیلی کوتاه است."),
   description: z.string().optional(),
-  eventNumber: z.coerce.number().int().positive(),
-  date: z.string().min(10),
-  startTime: z.string().min(5),
-  locationName: z.string().min(2),
+  eventNumber: z.coerce.number().int().positive("شماره برنامه باید عدد مثبت باشد."),
+  date: z.string().min(10, "تاریخ را انتخاب کن."),
+  startTime: z.string().min(4, "زمان شروع را وارد کن."),
+  locationName: z.string().trim().min(2, "نام محل قرار را وارد کن."),
   locationAddress: z.string().optional(),
   latitude: optionalNumber.pipe(z.number().min(-90).max(90).optional()),
   longitude: optionalNumber.pipe(z.number().min(-180).max(180).optional()),
   capacity: optionalPositiveInt,
   status: z.nativeEnum(EventStatus)
 });
+
+function isNextRedirect(error: unknown) {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "digest" in error &&
+    typeof (error as { digest?: unknown }).digest === "string" &&
+    String((error as { digest: string }).digest).startsWith("NEXT_REDIRECT")
+  );
+}
+
+function formErrorMessage(error: unknown) {
+  if (error instanceof z.ZodError) {
+    return error.issues[0]?.message || "اطلاعات فرم کامل نیست.";
+  }
+  if (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    error.code === "P2002"
+  ) {
+    return "این شماره برنامه قبلا ثبت شده. شماره دیگری بزن.";
+  }
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+  return "ساخت برنامه ناموفق بود.";
+}
 
 const businessFormSchema = z.object({
   name: z.string().min(2),
@@ -106,83 +134,133 @@ const badgeFormSchema = z.object({
   isActive: z.preprocess((value) => value === "on", z.boolean())
 });
 
+function normalizeTime(time: string) {
+  const match = /^(\d{1,2}):(\d{2})(?::(\d{2}))?$/.exec(time.trim());
+  if (!match) {
+    throw new Error("فرمت زمان شروع معتبر نیست.");
+  }
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  if (hours > 23 || minutes > 59) {
+    throw new Error("زمان شروع خارج از بازه مجاز است.");
+  }
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:00`;
+}
+
 function toDate(date: string, time = "00:00") {
-  return new Date(`${date}T${time.length === 5 ? `${time}:00` : time}`);
+  const normalizedTime =
+    time.includes(":") && time.length < 8 ? normalizeTime(time) : time;
+  const value = new Date(
+    `${date}T${normalizedTime.length === 5 ? `${normalizedTime}:00` : normalizedTime}`
+  );
+  if (Number.isNaN(value.getTime())) {
+    throw new Error("تاریخ یا ساعت معتبر نیست.");
+  }
+  return value;
 }
 
 export async function createEventAction(formData: FormData) {
   const admin = await requireEventManagerPage();
-  const input = eventFormSchema.parse(Object.fromEntries(formData));
-  const startTime = toDate(input.date, input.startTime);
-
-  const event = await new EventService().createEvent(
-    admin.communityId,
-    admin.id,
-    {
-      title: input.title,
-      description: input.description || undefined,
-      eventNumber: input.eventNumber,
-      date: toDate(input.date),
-      meetingTime: meetingTimeFromStart(startTime),
-      startTime,
-      locationName: input.locationName,
-      locationAddress: input.locationAddress || undefined,
-      latitude: input.latitude,
-      longitude: input.longitude,
-      capacity: input.capacity,
-      status: input.status
+  try {
+    const parsed = eventFormSchema.safeParse(Object.fromEntries(formData));
+    if (!parsed.success) {
+      throw parsed.error;
     }
-  );
-  if (event.status === EventStatus.PUBLISHED) {
-    void announcePublishedEvent(event);
+    const input = parsed.data;
+    const startTime = toDate(input.date, input.startTime);
+
+    const event = await new EventService().createEvent(
+      admin.communityId,
+      admin.id,
+      {
+        title: input.title,
+        description: input.description || undefined,
+        eventNumber: input.eventNumber,
+        date: toDate(input.date),
+        meetingTime: meetingTimeFromStart(startTime),
+        startTime,
+        locationName: input.locationName,
+        locationAddress: input.locationAddress || undefined,
+        latitude: input.latitude,
+        longitude: input.longitude,
+        capacity: input.capacity,
+        status: input.status
+      }
+    );
+    if (event.status === EventStatus.PUBLISHED) {
+      void announcePublishedEvent(event);
+    }
+    revalidatePath("/");
+    revalidatePath("/admin");
+    revalidatePath("/admin/events");
+    redirect("/admin/events");
+  } catch (error) {
+    if (isNextRedirect(error)) throw error;
+    logger.warn("create_event_failed", {
+      reason: error instanceof Error ? error.message : "unknown"
+    });
+    redirect(
+      `/admin/events/new?error=${encodeURIComponent(formErrorMessage(error))}` as never
+    );
   }
-  revalidatePath("/");
-  revalidatePath("/admin");
-  revalidatePath("/admin/events");
-  redirect("/admin/events");
 }
 
 export async function updateEventAction(formData: FormData) {
   const admin = await requireSuperAdminPage();
   const eventId = z.string().uuid().parse(formData.get("eventId"));
-  const input = eventFormSchema.parse(Object.fromEntries(formData));
-  const startTime = toDate(input.date, input.startTime);
-
-  const event = await prisma.event.update({
-    where: { id: eventId },
-    data: {
-      title: input.title,
-      description: input.description || null,
-      eventNumber: input.eventNumber,
-      date: toDate(input.date),
-      meetingTime: meetingTimeFromStart(startTime),
-      startTime,
-      endTime: null,
-      registrationDeadline: null,
-      checkInStartsAt: null,
-      checkInEndsAt: null,
-      locationName: input.locationName,
-      locationAddress: input.locationAddress || null,
-      latitude: input.latitude ?? null,
-      longitude: input.longitude ?? null,
-      capacity: input.capacity ?? null,
-      status: input.status
+  try {
+    const parsed = eventFormSchema.safeParse(Object.fromEntries(formData));
+    if (!parsed.success) {
+      throw parsed.error;
     }
-  });
-  await logActivity({
-    actorUserId: admin.id,
-    action: "EVENT_UPDATED",
-    entityType: "Event",
-    entityId: eventId,
-    metadata: { title: input.title }
-  });
-  if (event.status === EventStatus.PUBLISHED) {
-    void announcePublishedEvent(event);
-  }
+    const input = parsed.data;
+    const startTime = toDate(input.date, input.startTime);
 
-  revalidatePath("/");
-  revalidatePath("/admin/events");
-  redirect("/admin/events");
+    const event = await prisma.event.update({
+      where: { id: eventId },
+      data: {
+        title: input.title,
+        description: input.description || null,
+        eventNumber: input.eventNumber,
+        date: toDate(input.date),
+        meetingTime: meetingTimeFromStart(startTime),
+        startTime,
+        endTime: null,
+        registrationDeadline: null,
+        checkInStartsAt: null,
+        checkInEndsAt: null,
+        locationName: input.locationName,
+        locationAddress: input.locationAddress || null,
+        latitude: input.latitude ?? null,
+        longitude: input.longitude ?? null,
+        capacity: input.capacity ?? null,
+        status: input.status
+      }
+    });
+    await logActivity({
+      actorUserId: admin.id,
+      action: "EVENT_UPDATED",
+      entityType: "Event",
+      entityId: eventId,
+      metadata: { title: input.title }
+    });
+    if (event.status === EventStatus.PUBLISHED) {
+      void announcePublishedEvent(event);
+    }
+
+    revalidatePath("/");
+    revalidatePath("/admin/events");
+    redirect("/admin/events");
+  } catch (error) {
+    if (isNextRedirect(error)) throw error;
+    logger.warn("update_event_failed", {
+      eventId,
+      reason: error instanceof Error ? error.message : "unknown"
+    });
+    redirect(
+      `/admin/events/${eventId}/edit?error=${encodeURIComponent(formErrorMessage(error))}` as never
+    );
+  }
 }
 
 export async function setEventStatusAction(formData: FormData) {
