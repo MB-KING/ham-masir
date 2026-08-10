@@ -4,6 +4,7 @@ import {
   RewardRedemptionStatus,
   RewardStatus
 } from "@prisma/client";
+import { lockNextRewardCode, lockRewardRow } from "@/lib/db-lock";
 import { prisma } from "@/lib/prisma";
 import { AppError } from "@/shared/errors";
 import { notifyUser } from "@/modules/activity/activity.service";
@@ -32,9 +33,7 @@ export class RewardService {
 
   async redeem(userId: string, rewardId: string) {
     const result = await prisma.$transaction(async (tx) => {
-      const locked = await tx.$queryRaw<{ id: string }[]>`
-        SELECT id FROM \`Reward\` WHERE id = ${rewardId} FOR UPDATE
-      `;
+      const locked = await lockRewardRow(tx, rewardId);
       if (locked.length === 0) {
         throw new AppError(
           "NOT_ELIGIBLE_FOR_REWARD",
@@ -102,13 +101,7 @@ export class RewardService {
         );
       }
 
-      const codes = await tx.$queryRaw<{ id: string; code: string }[]>`
-        SELECT id, code FROM \`RewardCode\`
-        WHERE rewardId = ${rewardId} AND isRedeemed = false
-        ORDER BY createdAt ASC
-        LIMIT 1
-        FOR UPDATE
-      `;
+      const codes = await lockNextRewardCode(tx, rewardId);
       const code = codes[0] ?? null;
       const hasCodes =
         (await tx.rewardCode.count({ where: { rewardId } })) > 0;

@@ -1,14 +1,16 @@
 import { RegistrationStatus } from "@prisma/client";
+import { lockEventRow } from "@/lib/db-lock";
 import { prisma } from "@/lib/prisma";
 import { RegistrationRepository } from "@/modules/registrations/registration.repository";
 import { AppError } from "@/shared/errors";
 import { resolveRegistrationStatus } from "@/modules/registrations/registration.policy";
 import { notifyUser } from "@/modules/activity/activity.service";
 
-async function lockEvent(tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0], eventId: string) {
-  const rows = await tx.$queryRaw<{ id: string }[]>`
-    SELECT id FROM \`Event\` WHERE id = ${eventId} AND deletedAt IS NULL FOR UPDATE
-  `;
+async function lockEvent(
+  tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
+  eventId: string
+) {
+  const rows = await lockEventRow(tx, eventId);
   if (rows.length === 0) {
     throw new AppError("EVENT_NOT_FOUND", "Event not found", 404);
   }

@@ -19,6 +19,7 @@ import { prisma } from "@/lib/prisma";
 import { getOptionalCurrentUser } from "@/modules/auth/session";
 import { publicEventStatuses } from "@/modules/events/event.repository";
 import { MEETING_TIME_LABEL, START_TIME_LABEL } from "@/shared/copy";
+import { errorMessagesFa, type ErrorCode } from "@/shared/errors";
 
 export const dynamic = "force-dynamic";
 
@@ -39,12 +40,15 @@ const timeFormatter = new Intl.DateTimeFormat("fa-IR", {
 });
 
 export default async function EventDetailsPage({
-  params
+  params,
+  searchParams
 }: {
   params: Promise<{ eventId: string }>;
+  searchParams: Promise<{ error?: string; ok?: string }>;
 }) {
   const user = await getOptionalCurrentUser();
   const { eventId } = await params;
+  const { error, ok } = await searchParams;
   const event = await prisma.event.findFirst({
     where: {
       id: eventId,
@@ -84,6 +88,26 @@ export default async function EventDetailsPage({
         subtitle={event.description ?? undefined}
         backFallbackHref="/events"
       />
+
+      {error && error in errorMessagesFa ? (
+        <UserCard className="mb-4 border-red-400/30 bg-red-500/10">
+          <p className="text-sm font-bold text-red-200">
+            {errorMessagesFa[error as ErrorCode]}
+          </p>
+        </UserCard>
+      ) : null}
+      {ok === "registered" ? (
+        <UserCard className="mb-4 border-emerald-400/30 bg-emerald-500/10">
+          <p className="text-sm font-bold text-emerald-200">
+            ثبت‌نام با موفقیت انجام شد.
+          </p>
+        </UserCard>
+      ) : null}
+      {ok === "cancelled" ? (
+        <UserCard className="mb-4 border-sky-400/30 bg-sky-500/10">
+          <p className="text-sm font-bold text-sky-200">ثبت‌نام لغو شد.</p>
+        </UserCard>
+      ) : null}
 
       <UserCard className="mb-4 border-[#F59E0B]/25 bg-[#0B1E43]">
         <p className="text-sm font-bold text-[#F59E0B]">

@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
+import { redirect, unstable_rethrow } from "next/navigation";
 import {
   BusinessStatus,
   RewardStatus,
@@ -15,6 +15,7 @@ import { RegistrationService } from "@/modules/registrations/registration.servic
 import { RewardService } from "@/modules/rewards/reward.service";
 import { XPService } from "@/modules/gamification/xp.service";
 import { logActivity } from "@/modules/activity/activity.service";
+import { AppError } from "@/shared/errors";
 
 const createBusinessSchema = z.object({
   name: z.string().min(2),
@@ -61,23 +62,45 @@ function emptyToUndefined(value?: string) {
 }
 
 export async function registerForEventAction(formData: FormData) {
-  const user = await requireCurrentUserPage();
   const eventId = z.string().uuid().parse(formData.get("eventId"));
-  await new RegistrationService().register(user.id, eventId);
-  revalidatePath("/");
-  revalidatePath("/events");
-  revalidatePath(`/events/${eventId}`);
-  revalidatePath("/me");
+  try {
+    const user = await requireCurrentUserPage();
+    await new RegistrationService().register(user.id, eventId);
+    revalidatePath("/");
+    revalidatePath("/events");
+    revalidatePath(`/events/${eventId}`);
+    revalidatePath("/me");
+    redirect(`/events/${eventId}?ok=registered` as `/events/${string}`);
+  } catch (error) {
+    unstable_rethrow(error);
+    if (error instanceof AppError) {
+      redirect(
+        `/events/${eventId}?error=${error.code}` as `/events/${string}`
+      );
+    }
+    throw error;
+  }
 }
 
 export async function cancelEventRegistrationAction(formData: FormData) {
-  const user = await requireCurrentUserPage();
   const eventId = z.string().uuid().parse(formData.get("eventId"));
-  await new RegistrationService().cancel(user.id, eventId);
-  revalidatePath("/");
-  revalidatePath("/events");
-  revalidatePath(`/events/${eventId}`);
-  revalidatePath("/me");
+  try {
+    const user = await requireCurrentUserPage();
+    await new RegistrationService().cancel(user.id, eventId);
+    revalidatePath("/");
+    revalidatePath("/events");
+    revalidatePath(`/events/${eventId}`);
+    revalidatePath("/me");
+    redirect(`/events/${eventId}?ok=cancelled` as `/events/${string}`);
+  } catch (error) {
+    unstable_rethrow(error);
+    if (error instanceof AppError) {
+      redirect(
+        `/events/${eventId}?error=${error.code}` as `/events/${string}`
+      );
+    }
+    throw error;
+  }
 }
 
 export async function redeemRewardAction(formData: FormData) {
