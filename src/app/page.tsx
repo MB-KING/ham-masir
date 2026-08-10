@@ -8,12 +8,21 @@ import {
   secondaryActionClass,
   UserPageShell
 } from "@/components/user/user-shell";
+import { defaultCommunitySlug } from "@/lib/config";
 import { prisma } from "@/lib/prisma";
 import { hasAnyRole } from "@/modules/auth/authorization";
 import { requireCurrentUserPage } from "@/modules/auth/session";
 
+async function getOptionalUser() {
+  try {
+    return await requireCurrentUserPage();
+  } catch {
+    return null;
+  }
+}
+
 async function getHomeData() {
-  const currentUser = await requireCurrentUserPage();
+  const currentUser = await getOptionalUser();
   const [events, community] = await Promise.all([
     prisma.event.findMany({
       where: { status: "PUBLISHED", deletedAt: null },
@@ -25,8 +34,10 @@ async function getHomeData() {
         }
       }
     }),
-    prisma.community.findUnique({
-      where: { id: currentUser.communityId },
+    prisma.community.findFirst({
+      where: currentUser
+        ? { id: currentUser.communityId }
+        : { slug: defaultCommunitySlug, isActive: true },
       select: { name: true, tagline: true }
     })
   ]);
@@ -35,18 +46,15 @@ async function getHomeData() {
     events,
     communityName: community?.name ?? "هم مسیر",
     communityTagline: community?.tagline ?? "یک مسیر، هزار تجربه",
-    canOpenAdmin: hasAnyRole(currentUser, [Role.ADMIN, Role.SUPER_ADMIN])
+    canOpenAdmin: currentUser
+      ? hasAnyRole(currentUser, [Role.ADMIN, Role.SUPER_ADMIN])
+      : false
   };
 }
 
 export default async function Home() {
   const { events, communityName, communityTagline, canOpenAdmin } =
-    await getHomeData().catch(() => ({
-      events: [],
-      communityName: "هم مسیر",
-      communityTagline: "یک مسیر، هزار تجربه",
-      canOpenAdmin: false
-    }));
+    await getHomeData();
 
   return (
     <UserPageShell className="flex flex-col">
