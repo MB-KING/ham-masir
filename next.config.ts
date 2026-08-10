@@ -5,6 +5,11 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   output: "standalone",
   typedRoutes: true,
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "6mb"
+    }
+  },
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "t.me" },

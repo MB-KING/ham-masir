@@ -64,6 +64,16 @@ function storageChatId() {
   ).trim();
 }
 
+function sanitizeFilename(filename: string, contentType: string) {
+  const base = (filename || "photo").split(/[/\\]/).pop() || "photo";
+  const cleaned = base.replace(/[^\w.\-()+\u0600-\u06FF]/g, "_").slice(0, 80);
+  if (/\.(jpe?g|png|webp|gif)$/i.test(cleaned)) return cleaned;
+  if (contentType.includes("png")) return `${cleaned || "photo"}.png`;
+  if (contentType.includes("webp")) return `${cleaned || "photo"}.webp`;
+  if (contentType.includes("gif")) return `${cleaned || "photo"}.gif`;
+  return `${cleaned || "photo"}.jpg`;
+}
+
 export async function uploadPhotoToTelegramStorage(input: {
   buffer: Buffer;
   filename: string;
@@ -79,12 +89,15 @@ export async function uploadPhotoToTelegramStorage(input: {
   form.append("chat_id", chatId);
   if (input.caption) form.append("caption", input.caption);
 
-  // Blob + filename is the most reliable multipart shape on Node/Vercel.
-  const bytes = Uint8Array.from(input.buffer);
+  // Copy into a plain ArrayBuffer-backed Uint8Array so undici FormData
+  // reliably includes the binary payload on Node/Vercel.
+  const bytes = new Uint8Array(input.buffer.byteLength);
+  bytes.set(input.buffer);
+  const filename = sanitizeFilename(input.filename, input.contentType);
   form.append(
     "photo",
-    new Blob([bytes], { type: input.contentType }),
-    input.filename || "photo.jpg"
+    new Blob([bytes], { type: input.contentType || "image/jpeg" }),
+    filename
   );
 
   const message = await callTelegramForm<{

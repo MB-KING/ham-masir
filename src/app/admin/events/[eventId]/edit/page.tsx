@@ -2,13 +2,10 @@ import { EventStatus } from "@prisma/client";
 import type { Route } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import {
-  updateEventAction,
-  uploadEventImageAction
-} from "@/app/admin/actions";
+import { updateEventAction } from "@/app/admin/actions";
 import { AdminCard, PageTitle } from "@/components/admin/admin-card";
+import { EventImageUploadForm } from "@/components/admin/event-image-upload-form";
 import { Button } from "@/components/ui/button";
-import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import { prisma } from "@/lib/prisma";
 import { requireSuperAdminPage } from "@/modules/auth/admin-session";
 import { mediaPublicPath } from "@/modules/media/media.service";
@@ -19,15 +16,12 @@ import {
 } from "@/shared/form-date";
 
 export default async function EditEventPage({
-  params,
-  searchParams
+  params
 }: {
   params: Promise<{ eventId: string }>;
-  searchParams: Promise<{ error?: string; ok?: string }>;
 }) {
   await requireSuperAdminPage();
   const { eventId } = await params;
-  const { error, ok } = await searchParams;
   const event = await prisma.event.findUnique({
     where: { id: eventId },
     include: {
@@ -47,16 +41,6 @@ export default async function EditEventPage({
         title="ویرایش برنامه"
         subtitle="سوپرادمین می‌تواند اطلاعات اصلی، زمان، مکان، ظرفیت و وضعیت برنامه را اصلاح کند."
       />
-      {ok === "image" ? (
-        <AdminCard className="mb-4 border-emerald-400/30 bg-emerald-500/10">
-          <p className="text-sm font-bold text-emerald-200">تصویر با موفقیت اضافه شد.</p>
-        </AdminCard>
-      ) : null}
-      {error ? (
-        <AdminCard className="mb-4 border-red-400/30 bg-red-500/10">
-          <p className="text-sm font-bold text-red-200">{error}</p>
-        </AdminCard>
-      ) : null}
       <div className="mb-4 flex flex-wrap gap-2">
         <Link
           href={`/admin/events/${eventId}/feedback` as Route}
@@ -67,45 +51,30 @@ export default async function EditEventPage({
       </div>
       <AdminCard className="mb-4">
         <h2 className="mb-3 font-black text-white">تصاویر برنامه</h2>
-        <div className="mb-3 grid gap-2">
+        <div className="mb-3 grid grid-cols-2 gap-2">
           {event.images.map((image) => (
             <a
               key={image.id}
               href={mediaPublicPath(image.mediaAssetId)}
               target="_blank"
               rel="noreferrer"
-              className="truncate text-sm font-bold text-[#F59E0B]"
+              className="overflow-hidden rounded-xl border border-white/10 bg-black/20"
             >
-              {image.caption || image.mediaAssetId}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={mediaPublicPath(image.mediaAssetId)}
+                alt={image.caption || "تصویر برنامه"}
+                className="aspect-square w-full object-cover"
+              />
+              {image.caption ? (
+                <p className="truncate px-2 py-1 text-xs font-bold text-slate-300">
+                  {image.caption}
+                </p>
+              ) : null}
             </a>
           ))}
         </div>
-        <form action={uploadEventImageAction} className="grid gap-3">
-          <input type="hidden" name="eventId" value={event.id} />
-          <label className="grid gap-2 text-sm font-bold text-slate-200">
-            آپلود تصویر
-            <input
-              name="image"
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              required
-              className="text-sm text-slate-300"
-            />
-          </label>
-          <label className="grid gap-2 text-sm font-bold text-slate-200">
-            توضیح کوتاه
-            <input
-              name="caption"
-              className="h-11 rounded-xl border border-white/10 bg-[#061124] px-3 text-white"
-            />
-          </label>
-          <PendingSubmitButton
-            className="w-full bg-white/10 text-sm font-bold text-white"
-            pendingLabel="در حال آپلود…"
-          >
-            افزودن تصویر
-          </PendingSubmitButton>
-        </form>
+        <EventImageUploadForm eventId={event.id} />
       </AdminCard>
       <AdminCard>
         <form action={updateEventAction} className="grid gap-4">

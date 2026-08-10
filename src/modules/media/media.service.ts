@@ -55,11 +55,27 @@ export class MediaService {
       );
     }
 
+    // Telegram sendPhoto is happiest with JPEG/PNG; normalize odd types.
+    let uploadBuffer = input.buffer;
+    let uploadMime = mimeType;
+    let uploadName = input.filename || `upload-${Date.now()}.jpg`;
+    if (mimeType === "image/webp" || mimeType === "image/gif") {
+      try {
+        const sharp = (await import("sharp")).default;
+        uploadBuffer = await sharp(input.buffer).rotate().jpeg({ quality: 85 }).toBuffer();
+        uploadMime = "image/jpeg";
+        uploadName = uploadName.replace(/\.(webp|gif)$/i, ".jpg");
+        if (!/\.jpe?g$/i.test(uploadName)) uploadName = `${uploadName}.jpg`;
+      } catch {
+        // fall through with original bytes
+      }
+    }
+
     try {
       const uploaded = await uploadPhotoToTelegramStorage({
-        buffer: input.buffer,
-        filename: input.filename || `upload-${Date.now()}.jpg`,
-        contentType: mimeType
+        buffer: uploadBuffer,
+        filename: uploadName,
+        contentType: uploadMime
       });
       return prisma.mediaAsset.create({
         data: {
