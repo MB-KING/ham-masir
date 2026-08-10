@@ -9,6 +9,7 @@ export default function NewBusinessPage() {
       <UserPageHeader
         title="ثبت کسب‌وکار"
         subtitle="بعد از ثبت، درخواست برای تأیید به ادمین ارسال می‌شود."
+        backFallbackHref="/businesses"
       />
       <UserCard className="mb-4 border-[#F59E0B]/25 bg-[#0B1E43]">
         <h2 className="font-black text-white">چرا کسب‌وکارم را ثبت کنم؟</h2>

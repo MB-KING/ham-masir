@@ -6,10 +6,12 @@ import {
   History,
   KeyRound,
   Settings,
+  Store,
   Trophy,
   UsersRound
 } from "lucide-react";
 import { BadgeType } from "@prisma/client";
+import type { Route } from "next";
 import Link from "next/link";
 import { UserAvatar } from "@/components/user/user-avatar";
 import { UserCard, UserPageHeader } from "@/components/user/user-card";
@@ -210,6 +212,23 @@ export default async function MePage() {
           <ChevronLeft size={18} className="text-slate-400" aria-hidden="true" />
         </Link>
         <Link
+          href={"/businesses" as Route}
+          className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-[#0B1E43]/75 p-4 transition active:scale-[0.99] hover:border-[#F59E0B]/35"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#F59E0B]/15 text-[#F59E0B]">
+              <Store size={20} aria-hidden="true" />
+            </div>
+            <div>
+              <h2 className="font-black text-white">کسب‌وکار</h2>
+              <p className="mt-1 text-sm text-slate-400">
+                کسب‌وکارها و مزایای اعضا
+              </p>
+            </div>
+          </div>
+          <ChevronLeft size={18} className="text-slate-400" aria-hidden="true" />
+        </Link>
+        <Link
           href="/members"
           className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-[#0B1E43]/75 p-4 transition active:scale-[0.99] hover:border-[#F59E0B]/35"
         >
@@ -219,28 +238,15 @@ export default async function MePage() {
             </div>
             <div>
               <h2 className="font-black text-white">همراهان</h2>
-              <p className="mt-1 text-sm text-slate-400">اعضای جامعه</p>
+              <p className="mt-1 text-sm text-slate-400">
+                اعضا و رتبه‌بندی گام
+              </p>
             </div>
           </div>
           <ChevronLeft size={18} className="text-slate-400" aria-hidden="true" />
         </Link>
         <Link
-          href={"/leaderboard" as import("next").Route}
-          className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-[#0B1E43]/75 p-4 transition active:scale-[0.99] hover:border-[#F59E0B]/35"
-        >
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#F59E0B]/15 text-[#F59E0B]">
-              <Trophy size={20} aria-hidden="true" />
-            </div>
-            <div>
-              <h2 className="font-black text-white">جدول گام</h2>
-              <p className="mt-1 text-sm text-slate-400">رتبه‌بندی همراهان</p>
-            </div>
-          </div>
-          <ChevronLeft size={18} className="text-slate-400" aria-hidden="true" />
-        </Link>
-        <Link
-          href={"/community" as import("next").Route}
+          href={"/community" as Route}
           className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-[#0B1E43]/75 p-4 transition active:scale-[0.99] hover:border-[#F59E0B]/35"
         >
           <div className="flex items-center gap-3">

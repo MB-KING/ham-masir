@@ -24,6 +24,7 @@ export default async function MyBusinessesPage() {
       <UserPageHeader
         title="کسب‌وکارهای من"
         subtitle="درخواست‌های ثبت‌شده و مزیت‌هایی که برای اعضا گذاشته‌ای اینجا مدیریت می‌شوند."
+        backFallbackHref="/businesses"
       />
       <div className="mb-4">
         <Link href="/businesses/new">

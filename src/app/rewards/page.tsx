@@ -61,7 +61,7 @@ export default async function RewardsPage({
       <UserPageHeader
         title="مزایا"
         subtitle="پیشنهادهای فعال کسب‌وکارها را با شرط روشن دریافت کن."
-        backFallbackHref="/"
+        backFallbackHref="/businesses"
       />
       {received ? (
         <UserCard className="mb-4 border-emerald-400/30 bg-emerald-500/10">

@@ -1,4 +1,5 @@
-import { Store } from "lucide-react";
+import { Gift, Store } from "lucide-react";
+import type { Route } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { UserCard, UserPageHeader } from "@/components/user/user-card";
@@ -30,7 +31,26 @@ export default async function BusinessesPage() {
       <UserPageHeader
         title="کسب‌وکارهای اعضا"
         subtitle="کسب‌وکارهایی که به جامعه هم مسیر وصل شده‌اند و برای اعضا پیشنهاد ویژه دارند."
+        backFallbackHref="/me"
       />
+
+      <Link
+        href={"/rewards" as Route}
+        className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-[#F59E0B]/30 bg-[#F59E0B]/10 p-4 transition active:scale-[0.99]"
+      >
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#F59E0B]/20 text-[#F59E0B]">
+            <Gift size={20} aria-hidden="true" />
+          </div>
+          <div>
+            <h2 className="font-black text-white">مزایا</h2>
+            <p className="mt-1 text-sm text-slate-300">
+              پیشنهادهای فعال کسب‌وکارها
+            </p>
+          </div>
+        </div>
+        <span className="text-sm font-bold text-[#F59E0B]">مشاهده</span>
+      </Link>
 
       <UserCard className="mb-4 border-[#F59E0B]/25 bg-[#0B1E43]">
         <h2 className="font-black text-white">این بخش برای چیست؟</h2>
