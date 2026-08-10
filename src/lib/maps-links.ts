@@ -36,14 +36,15 @@ export function buildMapServiceLinks(
     {
       id: "neshan",
       name: "نشان",
-      deepLink: `neshan://?destination=${lat},${lng}`,
-      webFallback: `https://neshan.org/maps/@${lat},${lng},15z`
+      deepLink: `neshan://search?q=${lat},${lng}`,
+      // HTTPS opens outside Telegram via WebApp.openLink, then can hand off to the app.
+      webFallback: `https://neshan.org/maps/routing/car/destination/${lat},${lng}`
     },
     {
       id: "balad",
       name: "بلد",
       deepLink: `balad://direction?destination=${lat},${lng}`,
-      webFallback: `https://balad.ir/location?latitude=${lat}&longitude=${lng}`
+      webFallback: `https://balad.ir/directions/driving?destination=${lat}%2C${lng}`
     }
   ];
 }

@@ -8,22 +8,41 @@ import {
   buildMapServiceLinks,
   type MapServiceLink
 } from "@/lib/maps-links";
+import { openExternalHttps } from "@/lib/open-external";
+
+function isTelegramMiniApp() {
+  if (typeof window === "undefined") return false;
+  const tg = (
+    window as unknown as {
+      Telegram?: { WebApp?: { initData?: string } };
+    }
+  ).Telegram?.WebApp;
+  return Boolean(tg?.initData?.trim());
+}
 
 function openMapService(service: MapServiceLink) {
+  // Telegram WebView rejects most custom schemes (neshan://, waze://, …)
+  // and blocks window.open — always use HTTPS via openLink there.
+  if (isTelegramMiniApp()) {
+    openExternalHttps(service.webFallback);
+    return;
+  }
+
   const isMobile =
     typeof navigator !== "undefined" &&
     /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
 
   if (!isMobile) {
-    window.open(service.webFallback, "_blank", "noopener,noreferrer");
+    openExternalHttps(service.webFallback);
     return;
   }
 
+  // Outside Telegram: try native deep link, then HTTPS fallback.
   const started = Date.now();
   window.location.href = service.deepLink;
   window.setTimeout(() => {
     if (Date.now() - started < 2200) {
-      window.open(service.webFallback, "_blank", "noopener,noreferrer");
+      openExternalHttps(service.webFallback);
     }
   }, 1200);
 }
@@ -60,7 +79,10 @@ export function NavigationSheet({
             <button
               key={service.id}
               type="button"
-              onClick={() => openMapService(service)}
+              onClick={() => {
+                openMapService(service);
+                setOpen(false);
+              }}
               className="flex min-h-12 items-center justify-between rounded-xl bg-white/[0.06] px-4 text-sm font-bold text-white transition active:bg-white/10"
             >
               <span>{service.name}</span>
