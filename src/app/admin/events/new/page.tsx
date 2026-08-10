@@ -1,8 +1,10 @@
 import { EventStatus } from "@prisma/client";
 import { createEventAction } from "@/app/admin/actions";
 import { AdminCard, PageTitle } from "@/components/admin/admin-card";
+import { PersianDateField } from "@/components/admin/persian-date-field";
 import { Button } from "@/components/ui/button";
 import { requireEventManagerPage } from "@/modules/auth/admin-session";
+import { MEETING_OFFSET_MINUTES } from "@/shared/event-timing";
 
 export default async function NewEventPage() {
   await requireEventManagerPage();
@@ -31,25 +33,18 @@ export default async function NewEventPage() {
             required
             placeholder="120"
           />
-          <Field label="تاریخ برگزاری" name="date" type="date" required />
-          <Field label="زمان دورهمی" name="meetingTime" type="time" required />
-          <Field label="زمان شروع مسیر" name="startTime" type="time" required />
-          <Field label="زمان پایان تقریبی" name="endTime" type="time" />
+          <PersianDateField name="date" required />
           <Field
-            label="آخرین زمان ثبت‌نام"
-            name="registrationDeadline"
-            type="datetime-local"
+            label="زمان شروع مسیر"
+            name="startTime"
+            type="time"
+            required
           />
-          <Field
-            label="شروع بازه حضور و غیاب"
-            name="checkInStartsAt"
-            type="datetime-local"
-          />
-          <Field
-            label="پایان بازه حضور و غیاب"
-            name="checkInEndsAt"
-            type="datetime-local"
-          />
+          <p className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs leading-6 text-slate-300">
+            ساعت جمع شدن خودکار {MEETING_OFFSET_MINUTES} دقیقه قبل از شروع مسیر
+            ثبت می‌شود. ثبت‌نام تا وقتی وضعیت «بستن ثبت‌نام» نشود باز است و حضور
+            هم هر زمان قابل ثبت است.
+          </p>
           <Field
             label="نام محل قرار"
             name="locationName"

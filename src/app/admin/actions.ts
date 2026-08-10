@@ -25,6 +25,7 @@ import { announcePublishedEvent } from "@/modules/events/announce.service";
 import { EventService } from "@/modules/events/event.service";
 import { MediaService } from "@/modules/media/media.service";
 import { logActivity, notifyUser } from "@/modules/activity/activity.service";
+import { meetingTimeFromStart } from "@/shared/event-timing";
 import { earnStepTypes } from "@/shared/steps";
 
 const optionalPositiveInt = z.preprocess(
@@ -41,12 +42,7 @@ const eventFormSchema = z.object({
   description: z.string().optional(),
   eventNumber: z.coerce.number().int().positive(),
   date: z.string().min(10),
-  meetingTime: z.string().min(5),
   startTime: z.string().min(5),
-  endTime: z.string().optional(),
-  registrationDeadline: z.string().optional(),
-  checkInStartsAt: z.string().optional(),
-  checkInEndsAt: z.string().optional(),
   locationName: z.string().min(2),
   locationAddress: z.string().optional(),
   latitude: optionalNumber.pipe(z.number().min(-90).max(90).optional()),
@@ -114,13 +110,10 @@ function toDate(date: string, time = "00:00") {
   return new Date(`${date}T${time.length === 5 ? `${time}:00` : time}`);
 }
 
-function optionalDateTime(value?: string) {
-  return value ? new Date(value) : undefined;
-}
-
 export async function createEventAction(formData: FormData) {
   const admin = await requireEventManagerPage();
   const input = eventFormSchema.parse(Object.fromEntries(formData));
+  const startTime = toDate(input.date, input.startTime);
 
   const event = await new EventService().createEvent(
     admin.communityId,
@@ -130,12 +123,8 @@ export async function createEventAction(formData: FormData) {
       description: input.description || undefined,
       eventNumber: input.eventNumber,
       date: toDate(input.date),
-      meetingTime: toDate(input.date, input.meetingTime),
-      startTime: toDate(input.date, input.startTime),
-      endTime: input.endTime ? toDate(input.date, input.endTime) : undefined,
-      registrationDeadline: optionalDateTime(input.registrationDeadline),
-      checkInStartsAt: optionalDateTime(input.checkInStartsAt),
-      checkInEndsAt: optionalDateTime(input.checkInEndsAt),
+      meetingTime: meetingTimeFromStart(startTime),
+      startTime,
       locationName: input.locationName,
       locationAddress: input.locationAddress || undefined,
       latitude: input.latitude,
@@ -157,6 +146,7 @@ export async function updateEventAction(formData: FormData) {
   const admin = await requireSuperAdminPage();
   const eventId = z.string().uuid().parse(formData.get("eventId"));
   const input = eventFormSchema.parse(Object.fromEntries(formData));
+  const startTime = toDate(input.date, input.startTime);
 
   const event = await prisma.event.update({
     where: { id: eventId },
@@ -165,13 +155,12 @@ export async function updateEventAction(formData: FormData) {
       description: input.description || null,
       eventNumber: input.eventNumber,
       date: toDate(input.date),
-      meetingTime: toDate(input.date, input.meetingTime),
-      startTime: toDate(input.date, input.startTime),
-      endTime: input.endTime ? toDate(input.date, input.endTime) : null,
-      registrationDeadline:
-        optionalDateTime(input.registrationDeadline) ?? null,
-      checkInStartsAt: optionalDateTime(input.checkInStartsAt) ?? null,
-      checkInEndsAt: optionalDateTime(input.checkInEndsAt) ?? null,
+      meetingTime: meetingTimeFromStart(startTime),
+      startTime,
+      endTime: null,
+      registrationDeadline: null,
+      checkInStartsAt: null,
+      checkInEndsAt: null,
       locationName: input.locationName,
       locationAddress: input.locationAddress || null,
       latitude: input.latitude ?? null,

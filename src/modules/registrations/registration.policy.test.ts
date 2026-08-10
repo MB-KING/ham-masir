@@ -34,13 +34,11 @@ describe("resolveRegistrationStatus", () => {
     ).toThrow(AppError);
   });
 
-  it("rejects closed registration deadlines", () => {
+  it("rejects when registration is closed by status", () => {
     expect(() =>
       resolveRegistrationStatus({
-        eventStatus: EventStatus.PUBLISHED,
-        registeredCount: 0,
-        registrationDeadline: new Date("2026-01-01T00:00:00.000Z"),
-        now: new Date("2026-01-02T00:00:00.000Z")
+        eventStatus: EventStatus.REGISTRATION_CLOSED,
+        registeredCount: 0
       })
     ).toThrow(AppError);
   });

@@ -33,7 +33,6 @@ export class RegistrationService {
       const count = await repository.countRegistered(eventId);
       const status = resolveRegistrationStatus({
         eventStatus: event.status,
-        registrationDeadline: event.registrationDeadline,
         capacity: event.capacity,
         registeredCount: count,
         existingStatus: existing?.status

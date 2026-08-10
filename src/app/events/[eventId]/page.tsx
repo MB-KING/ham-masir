@@ -30,11 +30,6 @@ const dateFormatter = new Intl.DateTimeFormat("fa-IR", {
   month: "long",
   day: "numeric"
 });
-const shortDateFormatter = new Intl.DateTimeFormat("fa-IR", {
-  year: "numeric",
-  month: "2-digit",
-  day: "2-digit"
-});
 const timeFormatter = new Intl.DateTimeFormat("fa-IR", {
   hour: "2-digit",
   minute: "2-digit"
@@ -208,15 +203,6 @@ export default async function EventDetailsPage({
             value={timeFormatter.format(event.startTime)}
             tone="accent"
           />
-          <Info
-            icon={<Clock size={18} />}
-            label="پایان تقریبی"
-            value={
-              event.endTime
-                ? timeFormatter.format(event.endTime)
-                : "بعدا اعلام می‌شود"
-            }
-          />
         </div>
       </UserCard>
 
@@ -248,12 +234,8 @@ export default async function EventDetailsPage({
             }
           />
           <Info
-            label="آخرین زمان ثبت‌نام"
-            value={
-              event.registrationDeadline
-                ? `${shortDateFormatter.format(event.registrationDeadline)}، ساعت ${timeFormatter.format(event.registrationDeadline)}`
-                : "تا تکمیل ظرفیت"
-            }
+            label="ثبت‌نام"
+            value="تا وقتی ادمین ثبت‌نام را نبندد باز است"
           />
         </dl>
         <ParticipantsPreview

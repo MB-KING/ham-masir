@@ -5,15 +5,13 @@ import { notFound } from "next/navigation";
 import { updateEventAction } from "@/app/admin/actions";
 import { AdminCard, PageTitle } from "@/components/admin/admin-card";
 import { EventImageUploadForm } from "@/components/admin/event-image-upload-form";
+import { PersianDateField } from "@/components/admin/persian-date-field";
 import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/prisma";
 import { requireSuperAdminPage } from "@/modules/auth/admin-session";
 import { mediaPublicPath } from "@/modules/media/media.service";
-import {
-  dateInputValue,
-  dateTimeInputValue,
-  timeInputValue
-} from "@/shared/form-date";
+import { MEETING_OFFSET_MINUTES } from "@/shared/event-timing";
+import { dateInputValue, timeInputValue } from "@/shared/form-date";
 
 export default async function EditEventPage({
   params
@@ -92,19 +90,10 @@ export default async function EditEventPage({
             required
             defaultValue={String(event.eventNumber)}
           />
-          <Field
-            label="تاریخ برگزاری"
+          <PersianDateField
             name="date"
-            type="date"
             required
             defaultValue={dateInputValue(event.date)}
-          />
-          <Field
-            label="زمان دورهمی"
-            name="meetingTime"
-            type="time"
-            required
-            defaultValue={timeInputValue(event.meetingTime)}
           />
           <Field
             label="زمان شروع مسیر"
@@ -113,30 +102,10 @@ export default async function EditEventPage({
             required
             defaultValue={timeInputValue(event.startTime)}
           />
-          <Field
-            label="زمان پایان تقریبی"
-            name="endTime"
-            type="time"
-            defaultValue={timeInputValue(event.endTime)}
-          />
-          <Field
-            label="آخرین زمان ثبت‌نام"
-            name="registrationDeadline"
-            type="datetime-local"
-            defaultValue={dateTimeInputValue(event.registrationDeadline)}
-          />
-          <Field
-            label="شروع بازه حضور و غیاب"
-            name="checkInStartsAt"
-            type="datetime-local"
-            defaultValue={dateTimeInputValue(event.checkInStartsAt)}
-          />
-          <Field
-            label="پایان بازه حضور و غیاب"
-            name="checkInEndsAt"
-            type="datetime-local"
-            defaultValue={dateTimeInputValue(event.checkInEndsAt)}
-          />
+          <p className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs leading-6 text-slate-300">
+            ساعت جمع شدن فعلی: {timeInputValue(event.meetingTime)} — با ذخیره،
+            خودکار {MEETING_OFFSET_MINUTES} دقیقه قبل از شروع مسیر تنظیم می‌شود.
+          </p>
           <Field
             label="نام محل قرار"
             name="locationName"
