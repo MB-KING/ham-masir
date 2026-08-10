@@ -333,10 +333,10 @@ export async function setBusinessStatusAction(formData: FormData) {
     await notifyUser({
       userId: business.createdById,
       type: "BUSINESS_STATUS_CHANGED",
-      title: "وضعیت کسب‌وکار به‌روز شد",
+      title: "🏪 وضعیت کسب‌وکار به‌روز شد",
       body: `«${business.name}» الان ${labelOf(businessStatusLabels, status)} است.`,
       eventPath: "/businesses",
-      buttonText: "مشاهده کسب‌وکارها"
+      buttonText: "👀 مشاهده کسب‌وکارها"
     });
   await logActivity({
     actorUserId: admin.id,
@@ -393,10 +393,10 @@ export async function setRewardStatusAction(formData: FormData) {
     await notifyUser({
       userId: reward.createdById,
       type: "REWARD_STATUS_CHANGED",
-      title: "وضعیت مزیت به‌روز شد",
+      title: "🎁 وضعیت مزیت به‌روز شد",
       body: `«${reward.title}» الان ${labelOf(rewardStatusLabels, status)} است.`,
       eventPath: "/rewards",
-      buttonText: "مشاهده مزیت‌ها"
+      buttonText: "👀 مشاهده مزیت‌ها"
     });
   await logActivity({
     actorUserId: admin.id,
@@ -674,10 +674,10 @@ export async function setRedemptionStatusAction(formData: FormData) {
     notifyUser({
       userId: redemption.userId,
       type: "REDEMPTION_STATUS_CHANGED",
-      title: "وضعیت دریافت مزیت به‌روز شد",
+      title: "📦 وضعیت دریافت مزیت به‌روز شد",
       body: `«${redemption.reward.title}»: ${labelOf(rewardRedemptionStatusLabels, status)}`,
       eventPath: "/me",
-      buttonText: "مشاهده پروفایل"
+      buttonText: "👤 مشاهده پروفایل"
     })
   ]);
   revalidatePath(`/admin/rewards/${redemption.rewardId}/edit`);
@@ -714,10 +714,10 @@ export async function assignSpecialBadgeAction(formData: FormData) {
     notifyUser({
       userId,
       type: "BADGE_EARNED",
-      title: "بج ویژه گرفتی",
+      title: "🏅 بج ویژه گرفتی",
       body: `بج «${badge.name}» به پروفایلت اضافه شد. دمت گرم!`,
       eventPath: "/me",
-      buttonText: "مشاهده پروفایل"
+      buttonText: "👤 مشاهده پروفایل"
     })
   ]);
   revalidatePath("/admin/users");

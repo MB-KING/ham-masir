@@ -83,7 +83,7 @@ export async function handleGroupAdminCommand(input: {
   if (!input.from) {
     await sendTelegramMessage({
       chatId: input.chat.id,
-      text: "شناسه کاربر مشخص نیست.",
+      text: "⚠️ شناسه کاربر مشخص نیست.",
       parseMode: "HTML"
     });
     return true;
@@ -93,7 +93,7 @@ export async function handleGroupAdminCommand(input: {
   if (!admin) {
     await sendTelegramMessage({
       chatId: input.chat.id,
-      text: "فقط سوپرادمین معتبر هم مسیر می‌تواند این دستور را اجرا کند.",
+      text: "⛔ فقط سوپرادمین معتبر هم مسیر می‌تواند این دستور را اجرا کند.",
       parseMode: "HTML"
     });
     return true;
@@ -102,7 +102,7 @@ export async function handleGroupAdminCommand(input: {
   if (!isGroup) {
     await sendTelegramMessage({
       chatId: input.chat.id,
-      text: "این دستور را داخل گروه اجرا کن.",
+      text: "👥 این دستور را داخل گروه اجرا کن.",
       parseMode: "HTML"
     });
     return true;
@@ -142,7 +142,7 @@ export async function handleGroupAdminCommand(input: {
 
     await sendTelegramMessage({
       chatId: input.chat.id,
-      text: `✅ گروه «<b>${escapeHtml(resource.name)}</b>» در هم مسیر ثبت شد.\nاز این به بعد اعلان برنامه‌ها اینجا ارسال می‌شود.`,
+      text: `✅ گروه «<b>${escapeHtml(resource.name)}</b>» در هم مسیر ثبت شد.\n📢 از این به بعد اعلان برنامه‌ها اینجا ارسال می‌شود.`,
       parseMode: "HTML"
     });
     return true;
@@ -160,8 +160,8 @@ export async function handleGroupAdminCommand(input: {
       chatId: input.chat.id,
       text:
         updated.count > 0
-          ? "گروه از منابع فعال هم مسیر حذف (غیرفعال) شد."
-          : "این گروه در سیستم ثبت نشده بود.",
+          ? "❎ گروه از منابع فعال هم مسیر حذف (غیرفعال) شد."
+          : "ℹ️ این گروه در سیستم ثبت نشده بود.",
       parseMode: "HTML"
     });
     return true;
@@ -177,13 +177,13 @@ export async function handleGroupAdminCommand(input: {
     chatId: input.chat.id,
     text: resource
       ? [
-          "<b>وضعیت گروه</b>",
+          "📊 <b>وضعیت گروه</b>",
           "",
-          `وضعیت: ${resource.isActive ? "فعال" : "غیرفعال"}`,
-          `اعلان خودکار: ${resource.receiveAnnouncements ? "روشن" : "خاموش"}`,
+          `وضعیت: ${resource.isActive ? "✅ فعال" : "❎ غیرفعال"}`,
+          `اعلان خودکار: ${resource.receiveAnnouncements ? "🔔 روشن" : "🔕 خاموش"}`,
           `شناسه چت: <code>${escapeHtml(String(input.chat.id))}</code>`
         ].join("\n")
-      : `گروه ثبت نشده.\nChat ID: <code>${escapeHtml(String(input.chat.id))}</code>`,
+      : `ℹ️ گروه ثبت نشده.\nChat ID: <code>${escapeHtml(String(input.chat.id))}</code>`,
     parseMode: "HTML"
   });
   return true;

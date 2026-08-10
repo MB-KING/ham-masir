@@ -50,14 +50,14 @@ export class RegistrationService {
       type: "REGISTRATION_UPDATED",
       title:
         registration.status === RegistrationStatus.WAITLISTED
-          ? "در لیست انتظار قرار گرفتی"
-          : "ثبت‌نام انجام شد",
+          ? "⏳ در لیست انتظار قرار گرفتی"
+          : "✅ ثبت‌نام انجام شد",
       body:
         registration.status === RegistrationStatus.WAITLISTED
           ? `برای «${registration.eventTitle}» در لیست انتظاری. اگر جا باز شود خبرت می‌کنیم.`
-          : `ثبت‌نامت برای «${registration.eventTitle}» قطعی شد. منتظر دیدارت هستیم.`,
+          : `ثبت‌نامت برای «${registration.eventTitle}» قطعی شد. منتظر دیدارت هستیم. 🥾`,
       eventPath: `/events/${eventId}`,
-      buttonText: "مشاهده برنامه"
+      buttonText: "👀 مشاهده برنامه"
     });
 
     return registration.registration;
@@ -105,20 +105,20 @@ export class RegistrationService {
     await notifyUser({
       userId,
       type: "REGISTRATION_CANCELLED",
-      title: "ثبت‌نام لغو شد",
+      title: "↩️ ثبت‌نام لغو شد",
       body: `ثبت‌نامت برای «${result.eventTitle}» لغو شد.`,
       eventPath: `/events/${eventId}`,
-      buttonText: "مشاهده برنامه"
+      buttonText: "👀 مشاهده برنامه"
     });
 
     if (result.promotedUserId) {
       await notifyUser({
         userId: result.promotedUserId,
         type: "WAITLIST_PROMOTED",
-        title: "جای تو در برنامه قطعی شد",
-        body: `از لیست انتظار برای «${result.eventTitle}» به ثبت‌نام قطعی منتقل شدی.`,
+        title: "🎉 جای تو در برنامه قطعی شد",
+        body: `از لیست انتظار برای «${result.eventTitle}» به ثبت‌نام قطعی منتقل شدی. منتظر دیدارت هستیم!`,
         eventPath: `/events/${eventId}`,
-        buttonText: "مشاهده برنامه"
+        buttonText: "👀 مشاهده برنامه"
       });
     }
 

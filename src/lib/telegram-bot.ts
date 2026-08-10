@@ -55,7 +55,7 @@ function buildAppKeyboard(input: {
   eventPath?: string;
   buttonText?: string;
 }) {
-  const label = input.buttonText ?? "باز کردن هم مسیر";
+  const label = input.buttonText ?? "🥾 باز کردن هم مسیر";
   const httpsApp = appPublicUrl().startsWith("https://");
   const webAppUrl = input.eventPath
     ? `${appPublicUrl()}${input.eventPath}`
@@ -114,7 +114,7 @@ export async function sendStartMessage(chatId: number | string | bigint) {
     disable_web_page_preview: true,
     reply_markup: buildAppKeyboard({
       chatId: id,
-      buttonText: "باز کردن هم مسیر"
+      buttonText: "🥾 باز کردن هم مسیر"
     })
   });
 }
@@ -128,7 +128,7 @@ export async function sendHelpMessage(chatId: number | string | bigint) {
     disable_web_page_preview: true,
     reply_markup: buildAppKeyboard({
       chatId: id,
-      buttonText: "باز کردن هم مسیر"
+      buttonText: "🥾 باز کردن هم مسیر"
     })
   });
 }

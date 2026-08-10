@@ -117,7 +117,7 @@ export async function announcePublishedEvent(
             caption: text,
             openApp: true,
             eventPath: `/events/${event.id}`,
-            buttonText: "مشاهده و ثبت‌نام"
+            buttonText: "✅ مشاهده و ثبت‌نام"
           })
         : await sendTelegramMessage({
             chatId: resource.telegramChatId,
@@ -125,7 +125,7 @@ export async function announcePublishedEvent(
             parseMode: "HTML",
             openApp: true,
             eventPath: `/events/${event.id}`,
-            buttonText: "مشاهده و ثبت‌نام"
+            buttonText: "✅ مشاهده و ثبت‌نام"
           });
 
       if (!result.ok) {

@@ -54,7 +54,7 @@ export async function notifyUser(input: {
       parseMode: "HTML",
       openApp: true,
       eventPath: input.eventPath,
-      buttonText: input.buttonText ?? "باز کردن هم مسیر"
+      buttonText: input.buttonText ?? "🥾 باز کردن هم مسیر"
     });
     telegramDelivered = result.ok;
   }

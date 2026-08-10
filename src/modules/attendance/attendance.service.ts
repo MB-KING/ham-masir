@@ -86,14 +86,14 @@ export class AttendanceService {
         type: "ATTENDANCE_UPDATED",
         title:
           input.status === AttendanceStatus.PRESENT
-            ? "حضور تو تأیید شد"
-            : "وضعیت حضورت به‌روزرسانی شد",
+            ? "✅ حضور تو تأیید شد"
+            : "📋 وضعیت حضورت به‌روزرسانی شد",
         body:
           input.status === AttendanceStatus.PRESENT
-            ? `حضور تو در «${event?.title ?? "برنامه"}» ثبت شد. دمت گرم!`
+            ? `حضور تو در «${event?.title ?? "برنامه"}» ثبت شد. دمت گرم! 🥾`
             : `وضعیت حضور «${event?.title ?? "برنامه"}»: ${attendanceStatusText(input.status)}`,
         eventPath: `/events/${input.eventId}`,
-        buttonText: "مشاهده برنامه"
+        buttonText: "👀 مشاهده برنامه"
       })
     ]);
 

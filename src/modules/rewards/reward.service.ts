@@ -166,11 +166,11 @@ export class RewardService {
     await notifyUser({
       userId,
       type: "REWARD_REDEEMED",
-      title: "مزیت دریافت شد",
+      title: "🎁 مزیت دریافت شد",
       body: result.code
-        ? `«${result.rewardTitle}» فعال شد.\nکد: ${result.code}`
+        ? `«${result.rewardTitle}» فعال شد.\n🔑 کد: ${result.code}`
         : `«${result.rewardTitle}» برات ثبت شد.`,
-      buttonText: "مشاهده پروفایل",
+      buttonText: "👤 مشاهده پروفایل",
       eventPath: "/me"
     });
 

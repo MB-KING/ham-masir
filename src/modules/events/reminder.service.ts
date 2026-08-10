@@ -79,9 +79,9 @@ export async function processEventReminders(now = new Date()) {
         eventId: event.id,
         userIds,
         kind: EventReminderKind.DAY_OF,
-        title: "یادآوری برنامه امروز",
+        title: "🔔 یادآوری برنامه امروز",
         body: [
-          `امروز «${event.title}» داری.`,
+          `🥾 امروز «${event.title}» داری.`,
           `🕐 جمع شدن: ${faTimeFormatter.format(event.meetingTime)}`,
           `📍 ${event.locationName}`,
           "",
@@ -96,9 +96,9 @@ export async function processEventReminders(now = new Date()) {
         eventId: event.id,
         userIds,
         kind: EventReminderKind.TWO_HOURS_BEFORE,
-        title: "۲ ساعت تا برنامه",
+        title: "⏰ ۲ ساعت تا برنامه",
         body: [
-          `حدود ۲ ساعت دیگر قرار «${event.title}» است.`,
+          `🥾 حدود ۲ ساعت دیگر قرار «${event.title}» است.`,
           `📅 ${faDateFormatter.format(event.date)}`,
           `🕐 جمع شدن: ${faTimeFormatter.format(event.meetingTime)}`,
           `📍 ${event.locationName}`
@@ -146,7 +146,7 @@ async function sendKindReminders(input: {
       title: input.title,
       body: input.body,
       eventPath: input.eventPath,
-      buttonText: "مشاهده برنامه"
+      buttonText: "👀 مشاهده برنامه"
     });
 
     // Only lock the reminder after a successful Telegram delivery so
