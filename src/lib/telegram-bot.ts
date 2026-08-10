@@ -1,4 +1,5 @@
 import { config } from "@/lib/config";
+import { logger } from "@/lib/logger";
 
 const apiBase = `https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN}`;
 
@@ -35,9 +36,9 @@ export async function setupTelegramBot() {
 
   await callTelegram("setMyCommands", {
     commands: [
-      { command: "start", description: "شروع و باز کردن هم مسیر" },
-      { command: "app", description: "باز کردن مینی‌اپ هم مسیر" },
-      { command: "help", description: "راهنمای کوتاه" }
+      { command: "start", description: "Start Ham Masir" },
+      { command: "app", description: "Open Mini App" },
+      { command: "help", description: "Help" }
     ]
   });
 
@@ -57,10 +58,10 @@ export async function setupTelegramBot() {
   return { appUrl: url, webhook: `${url}/api/telegram/webhook` };
 }
 
-export async function sendStartMessage(chatId: number) {
+export async function sendStartMessage(chatId: number | string | bigint) {
   const url = appPublicUrl();
   return callTelegram("sendMessage", {
-    chat_id: chatId,
+    chat_id: chatId.toString(),
     text:
       "به هم مسیر خوش آمدی.\n\nبرای ورود و استفاده از اپ، دکمه زیر را بزن و مینی‌اپ را باز کن.",
     reply_markup: {
@@ -70,4 +71,35 @@ export async function sendStartMessage(chatId: number) {
       ]
     }
   });
+}
+
+export async function sendTelegramMessage(input: {
+  chatId: number | string | bigint;
+  text: string;
+  openApp?: boolean;
+  eventPath?: string;
+}) {
+  const url = appPublicUrl();
+  const appUrl = input.eventPath ? `${url}${input.eventPath}` : url;
+  const keyboard = input.openApp
+    ? {
+        inline_keyboard: [
+          [{ text: "باز کردن هم مسیر", web_app: { url: appUrl } }]
+        ]
+      }
+    : undefined;
+
+  try {
+    return await callTelegram("sendMessage", {
+      chat_id: input.chatId.toString(),
+      text: input.text,
+      reply_markup: keyboard
+    });
+  } catch (error) {
+    logger.warn("telegram_send_failed", {
+      chatId: input.chatId.toString(),
+      reason: error instanceof Error ? error.message : "unknown"
+    });
+    return null;
+  }
 }

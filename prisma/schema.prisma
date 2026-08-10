@@ -131,6 +131,7 @@ model User {
   redemptions         RewardRedemption[]
   auditLogs           AuditLog[]
   notifications       Notification[]
+  eventReminders      EventReminder[]
 
   @@index([communityId, username])
   @@index([communityId, joinedAt])
@@ -186,6 +187,7 @@ model Event {
   createdBy              User                @relation("EventCreatedBy", fields: [createdById], references: [id])
   registrations          EventRegistration[]
   attendance             Attendance[]
+  reminders              EventReminder[]
 
   @@unique([communityId, eventNumber])
   @@index([communityId, status, date])
@@ -401,4 +403,22 @@ model Notification {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, readAt, createdAt])
+}
+
+enum EventReminderKind {
+  DAY_OF
+  TWO_HOURS_BEFORE
+}
+
+model EventReminder {
+  id        String            @id @default(uuid())
+  eventId   String
+  userId    String
+  kind      EventReminderKind
+  sentAt    DateTime          @default(now())
+  event     Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId, kind])
+  @@index([kind, sentAt])
 }

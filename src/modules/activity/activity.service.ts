@@ -1,5 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { sendTelegramMessage } from "@/lib/telegram-bot";
 
 export async function logActivity(input: {
   actorUserId?: string | null;
@@ -24,6 +25,33 @@ export async function notifyUser(input: {
   type: string;
   title: string;
   body: string;
+  eventPath?: string;
+  telegramOnly?: boolean;
 }) {
-  return prisma.notification.create({ data: input });
+  const notification = input.telegramOnly
+    ? null
+    : await prisma.notification.create({
+        data: {
+          userId: input.userId,
+          type: input.type,
+          title: input.title,
+          body: input.body
+        }
+      });
+
+  const user = await prisma.user.findUnique({
+    where: { id: input.userId },
+    select: { telegramId: true, deletedAt: true }
+  });
+
+  if (user && !user.deletedAt) {
+    await sendTelegramMessage({
+      chatId: user.telegramId,
+      text: `${input.title}\n\n${input.body}`,
+      openApp: true,
+      eventPath: input.eventPath
+    });
+  }
+
+  return notification;
 }
