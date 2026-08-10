@@ -1,0 +1,243 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import {
+  BusinessStatus,
+  RewardStatus,
+  RewardType,
+  XPTransactionType
+} from "@prisma/client";
+import { z } from "zod";
+import { prisma } from "@/lib/prisma";
+import { requireCurrentUserPage } from "@/modules/auth/session";
+import { RegistrationService } from "@/modules/registrations/registration.service";
+import { RewardService } from "@/modules/rewards/reward.service";
+import { XPService } from "@/modules/gamification/xp.service";
+import { logActivity } from "@/modules/activity/activity.service";
+
+const createBusinessSchema = z.object({
+  name: z.string().min(2),
+  description: z.string().min(3),
+  website: z.string().url().optional().or(z.literal("")),
+  instagram: z.string().optional()
+});
+
+const optionalPositiveInt = z.preprocess((value) => {
+  if (value === "" || value === null) {
+    return undefined;
+  }
+  return value;
+}, z.coerce.number().int().positive().optional());
+
+const createRewardSchema = z.object({
+  businessId: z.string().uuid(),
+  title: z.string().min(3),
+  description: z.string().min(3),
+  type: z.nativeEnum(RewardType),
+  discountValue: z.string().optional(),
+  discountCode: z.string().optional(),
+  image: z.string().url().optional().or(z.literal("")),
+  minimumLevel: optionalPositiveInt,
+  minimumAttendance: optionalPositiveInt,
+  requiredXP: optionalPositiveInt,
+  startAt: z.string().min(10),
+  expireAt: z.string().min(10),
+  usageLimit: optionalPositiveInt,
+  perUserLimit: optionalPositiveInt,
+  codes: z.string().optional()
+});
+
+const profileSchema = z.object({
+  bio: z.string().max(400).optional(),
+  showInMembersDirectory: z.preprocess((value) => value === "on", z.boolean()),
+  showTelegramUsername: z.preprocess((value) => value === "on", z.boolean()),
+  showBusiness: z.preprocess((value) => value === "on", z.boolean()),
+  showAttendanceCount: z.preprocess((value) => value === "on", z.boolean())
+});
+
+function emptyToUndefined(value?: string) {
+  return value && value.trim().length > 0 ? value.trim() : undefined;
+}
+
+export async function registerForEventAction(formData: FormData) {
+  const user = await requireCurrentUserPage();
+  const eventId = z.string().uuid().parse(formData.get("eventId"));
+  await new RegistrationService().register(user.id, eventId);
+  revalidatePath("/");
+  revalidatePath("/events");
+  revalidatePath(`/events/${eventId}`);
+  revalidatePath("/me");
+}
+
+export async function cancelEventRegistrationAction(formData: FormData) {
+  const user = await requireCurrentUserPage();
+  const eventId = z.string().uuid().parse(formData.get("eventId"));
+  await new RegistrationService().cancel(user.id, eventId);
+  revalidatePath("/");
+  revalidatePath("/events");
+  revalidatePath(`/events/${eventId}`);
+  revalidatePath("/me");
+}
+
+export async function redeemRewardAction(formData: FormData) {
+  const user = await requireCurrentUserPage();
+  const rewardId = z.string().uuid().parse(formData.get("rewardId"));
+  await new RewardService().redeem(user.id, rewardId);
+  revalidatePath("/");
+  revalidatePath("/rewards");
+  revalidatePath("/me");
+  redirect("/rewards?received=1");
+}
+
+export async function updateProfileAction(formData: FormData) {
+  const user = await requireCurrentUserPage();
+  const input = profileSchema.parse(Object.fromEntries(formData));
+  const profile = await prisma.userProfile.upsert({
+    where: { userId: user.id },
+    update: input,
+    create: { userId: user.id, ...input }
+  });
+  await new XPService().award(
+    user.id,
+    XPTransactionType.COMPLETE_PROFILE,
+    "UserProfile",
+    profile.id,
+    "تکمیل تنظیمات پروفایل"
+  );
+  revalidatePath("/me");
+  revalidatePath("/members");
+  redirect("/me?profile=saved");
+}
+
+export async function markNotificationReadAction(formData: FormData) {
+  const user = await requireCurrentUserPage();
+  const notificationId = z
+    .string()
+    .uuid()
+    .parse(formData.get("notificationId"));
+  await prisma.notification.updateMany({
+    where: { id: notificationId, userId: user.id },
+    data: { readAt: new Date() }
+  });
+  revalidatePath("/notifications");
+  revalidatePath("/me");
+  revalidatePath("/");
+}
+
+export async function markAllNotificationsReadAction() {
+  const user = await requireCurrentUserPage();
+  await prisma.notification.updateMany({
+    where: { userId: user.id, readAt: null },
+    data: { readAt: new Date() }
+  });
+  revalidatePath("/notifications");
+  revalidatePath("/me");
+  revalidatePath("/");
+}
+
+export async function createBusinessAction(formData: FormData) {
+  const user = await requireCurrentUserPage();
+  const input = createBusinessSchema.parse(Object.fromEntries(formData));
+
+  const business = await prisma.business.create({
+    data: {
+      communityId: user.communityId,
+      name: input.name,
+      description: input.description,
+      website: emptyToUndefined(input.website),
+      instagram: emptyToUndefined(input.instagram),
+      status: BusinessStatus.PENDING,
+      createdById: user.id,
+      members: { create: { userId: user.id, role: "BUSINESS_OWNER" } }
+    }
+  });
+
+  await logActivity({
+    actorUserId: user.id,
+    action: "BUSINESS_CREATED",
+    entityType: "Business",
+    entityId: business.id,
+    metadata: { name: business.name }
+  });
+
+  revalidatePath("/businesses");
+  revalidatePath("/businesses/me");
+  revalidatePath("/admin/businesses");
+  redirect(`/businesses/${business.id}` as `/businesses/${string}`);
+}
+
+export async function createRewardAction(formData: FormData) {
+  const user = await requireCurrentUserPage();
+  const input = createRewardSchema.parse(Object.fromEntries(formData));
+
+  const business = await prisma.business.findFirst({
+    where: {
+      id: input.businessId,
+      status: BusinessStatus.APPROVED,
+      members: { some: { userId: user.id } }
+    }
+  });
+
+  if (!business) {
+    throw new Error(
+      "برای ثبت مزیت، کسب‌وکار باید تأیید شده و متعلق به شما باشد."
+    );
+  }
+
+  const codes = (input.codes ?? "")
+    .split(/\r?\n/)
+    .map((code) => code.trim())
+    .filter(Boolean);
+
+  const reward = await prisma.reward.create({
+    data: {
+      communityId: user.communityId,
+      businessId: business.id,
+      title: input.title,
+      description: input.description,
+      type: input.type,
+      discountValue: emptyToUndefined(input.discountValue),
+      discountCode: emptyToUndefined(input.discountCode),
+      image: emptyToUndefined(input.image),
+      minimumLevel: input.minimumLevel,
+      minimumAttendance: input.minimumAttendance,
+      requiredXP: input.requiredXP,
+      startAt: new Date(input.startAt),
+      expireAt: new Date(input.expireAt),
+      usageLimit: input.usageLimit,
+      perUserLimit: input.perUserLimit ?? 1,
+      status: RewardStatus.PENDING,
+      createdById: user.id,
+      codes:
+        codes.length > 0
+          ? { create: codes.map((code) => ({ code })) }
+          : undefined
+    }
+  });
+
+  await Promise.all([
+    new XPService().award(
+      user.id,
+      XPTransactionType.CREATE_REWARD,
+      "Reward",
+      reward.id,
+      "ثبت مزیت برای اعضا"
+    ),
+    logActivity({
+      actorUserId: user.id,
+      action: "REWARD_CREATED",
+      entityType: "Reward",
+      entityId: reward.id,
+      metadata: { businessId: business.id, title: reward.title }
+    })
+  ]);
+
+  revalidatePath("/businesses");
+  revalidatePath(`/businesses/${business.id}`);
+  revalidatePath("/businesses/me");
+  revalidatePath("/admin/rewards");
+  redirect(
+    `/businesses/${business.id}?reward=${reward.id}` as `/businesses/${string}`
+  );
+}

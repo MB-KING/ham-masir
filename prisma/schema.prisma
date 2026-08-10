@@ -1,0 +1,403 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+  SUPER_ADMIN
+  EVENT_MANAGER
+  BUSINESS_OWNER
+  MODERATOR
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  REGISTRATION_CLOSED
+  COMPLETED
+  CANCELLED
+}
+
+enum RegistrationStatus {
+  REGISTERED
+  CANCELLED
+  WAITLISTED
+}
+
+enum AttendanceStatus {
+  PENDING
+  PRESENT
+  ABSENT
+  REJECTED
+}
+
+enum AttendanceVerificationMethod {
+  ADMIN
+  QR_CODE
+  MANUAL
+}
+
+enum BadgeType {
+  ATTENDANCE_COUNT
+  XP
+  SPECIAL
+}
+
+enum XPTransactionType {
+  ATTEND_EVENT
+  REFER_USER
+  CREATE_REWARD
+  COMPLETE_PROFILE
+  ATTEND_SPECIAL_EVENT
+}
+
+enum BusinessStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  DISABLED
+}
+
+enum RewardType {
+  DISCOUNT
+  FREE_ITEM
+  SERVICE
+  OTHER
+}
+
+enum RewardStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  EXPIRED
+  DISABLED
+}
+
+enum RewardRedemptionStatus {
+  RESERVED
+  REDEEMED
+  CANCELLED
+  EXPIRED
+}
+
+model Community {
+  id          String    @id @default(uuid())
+  name        String
+  slug        String    @unique
+  tagline     String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  users       User[]
+  events      Event[]
+  businesses  Business[]
+  rewards     Reward[]
+  badges      Badge[]
+  levels      Level[]
+}
+
+model User {
+  id                  String              @id @default(uuid())
+  communityId         String
+  telegramId          BigInt              @unique
+  username            String?
+  firstName           String?
+  lastName            String?
+  photoUrl            String?
+  languageCode        String?
+  xp                  Int                 @default(0)
+  level               Int                 @default(1)
+  joinedAt            DateTime            @default(now())
+  deletedAt           DateTime?
+  community           Community           @relation(fields: [communityId], references: [id])
+  profile             UserProfile?
+  roles               UserRole[]
+  eventsCreated       Event[]             @relation("EventCreatedBy")
+  registrations       EventRegistration[]
+  attendance          Attendance[]        @relation("AttendanceUser")
+  attendanceVerified  Attendance[]        @relation("AttendanceVerifiedBy")
+  badges              UserBadge[]
+  xpTransactions      XPTransaction[]
+  businessMemberships BusinessMember[]
+  rewardsCreated      Reward[]            @relation("RewardCreatedBy")
+  rewardsApproved     Reward[]            @relation("RewardApprovedBy")
+  redemptions         RewardRedemption[]
+  auditLogs           AuditLog[]
+  notifications       Notification[]
+
+  @@index([communityId, username])
+  @@index([communityId, joinedAt])
+}
+
+model UserProfile {
+  id                      String   @id @default(uuid())
+  userId                  String   @unique
+  bio                     String?
+  showInMembersDirectory  Boolean  @default(true)
+  showTelegramUsername    Boolean  @default(true)
+  showBusiness            Boolean  @default(true)
+  showAttendanceCount     Boolean  @default(true)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+  user                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserRole {
+  id        String   @id @default(uuid())
+  userId    String
+  role      Role
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, role])
+}
+
+model Event {
+  id                     String              @id @default(uuid())
+  communityId            String
+  title                  String
+  description            String?
+  eventNumber            Int
+  date                   DateTime
+  meetingTime            DateTime
+  startTime              DateTime
+  endTime                DateTime?
+  registrationDeadline   DateTime?
+  locationName           String
+  locationAddress        String?
+  latitude               Decimal?            @db.Decimal(9, 6)
+  longitude              Decimal?            @db.Decimal(9, 6)
+  capacity               Int?
+  status                 EventStatus         @default(DRAFT)
+  checkInStartsAt        DateTime?
+  checkInEndsAt          DateTime?
+  createdById            String
+  createdAt              DateTime            @default(now())
+  updatedAt              DateTime            @updatedAt
+  deletedAt              DateTime?
+  community              Community           @relation(fields: [communityId], references: [id])
+  createdBy              User                @relation("EventCreatedBy", fields: [createdById], references: [id])
+  registrations          EventRegistration[]
+  attendance             Attendance[]
+
+  @@unique([communityId, eventNumber])
+  @@index([communityId, status, date])
+}
+
+model EventRegistration {
+  id            String             @id @default(uuid())
+  userId        String
+  eventId       String
+  status        RegistrationStatus @default(REGISTERED)
+  registeredAt  DateTime           @default(now())
+  cancelledAt   DateTime?
+  user          User               @relation(fields: [userId], references: [id])
+  event         Event              @relation(fields: [eventId], references: [id])
+
+  @@unique([userId, eventId])
+  @@index([eventId, status])
+}
+
+model Attendance {
+  id                  String                       @id @default(uuid())
+  userId              String
+  eventId             String
+  status              AttendanceStatus             @default(PENDING)
+  verificationMethod  AttendanceVerificationMethod?
+  verifiedById        String?
+  verifiedAt          DateTime?
+  createdAt           DateTime                     @default(now())
+  updatedAt           DateTime                     @updatedAt
+  user                User                         @relation("AttendanceUser", fields: [userId], references: [id])
+  event               Event                        @relation(fields: [eventId], references: [id])
+  verifiedBy          User?                        @relation("AttendanceVerifiedBy", fields: [verifiedById], references: [id])
+
+  @@unique([userId, eventId])
+  @@index([eventId, status])
+}
+
+model Badge {
+  id          String      @id @default(uuid())
+  communityId String
+  name        String
+  slug        String
+  description String?
+  icon        String?
+  type        BadgeType
+  threshold   Int
+  isActive    Boolean     @default(true)
+  sortOrder   Int         @default(0)
+  createdAt   DateTime    @default(now())
+  community   Community   @relation(fields: [communityId], references: [id])
+  users       UserBadge[]
+
+  @@unique([communityId, slug])
+  @@index([communityId, type, threshold])
+}
+
+model UserBadge {
+  id        String   @id @default(uuid())
+  userId    String
+  badgeId   String
+  earnedAt  DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge     Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeId])
+}
+
+model XPTransaction {
+  id             String            @id @default(uuid())
+  userId         String
+  amount         Int
+  type           XPTransactionType
+  referenceType  String
+  referenceId    String
+  description    String?
+  createdAt      DateTime          @default(now())
+  user           User              @relation(fields: [userId], references: [id])
+
+  @@unique([userId, type, referenceType, referenceId])
+  @@index([userId, createdAt])
+}
+
+model Level {
+  id          String    @id @default(uuid())
+  communityId String
+  level       Int
+  requiredXP  Int
+  name        String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  community   Community @relation(fields: [communityId], references: [id])
+
+  @@unique([communityId, level])
+  @@index([communityId, requiredXP])
+}
+
+model Business {
+  id          String           @id @default(uuid())
+  communityId String
+  name        String
+  description String?
+  website     String?
+  instagram   String?
+  status      BusinessStatus   @default(PENDING)
+  createdById String
+  approvedById String?
+  approvedAt  DateTime?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  deletedAt   DateTime?
+  community   Community       @relation(fields: [communityId], references: [id])
+  members     BusinessMember[]
+  rewards     Reward[]
+
+  @@index([communityId, status])
+}
+
+model BusinessMember {
+  id          String   @id @default(uuid())
+  businessId  String
+  userId      String
+  role        Role     @default(BUSINESS_OWNER)
+  createdAt   DateTime @default(now())
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([businessId, userId, role])
+}
+
+model Reward {
+  id                  String             @id @default(uuid())
+  communityId         String
+  businessId          String
+  title               String
+  description         String
+  image               String?
+  type                RewardType
+  discountValue       String?
+  discountCode        String?
+  minimumLevel        Int?
+  minimumAttendance   Int?
+  requiredXP          Int?
+  startAt             DateTime
+  expireAt            DateTime
+  usageLimit          Int?
+  perUserLimit        Int?
+  status              RewardStatus       @default(PENDING)
+  createdById         String
+  approvedById        String?
+  approvedAt          DateTime?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  community           Community          @relation(fields: [communityId], references: [id])
+  business            Business           @relation(fields: [businessId], references: [id])
+  createdBy           User               @relation("RewardCreatedBy", fields: [createdById], references: [id])
+  approvedBy          User?              @relation("RewardApprovedBy", fields: [approvedById], references: [id])
+  codes               RewardCode[]
+  redemptions         RewardRedemption[]
+
+  @@index([communityId, status, expireAt])
+}
+
+model RewardCode {
+  id          String              @id @default(uuid())
+  rewardId    String
+  code        String
+  isRedeemed  Boolean             @default(false)
+  createdAt   DateTime            @default(now())
+  reward      Reward              @relation(fields: [rewardId], references: [id], onDelete: Cascade)
+  redemption  RewardRedemption?
+
+  @@unique([rewardId, code])
+  @@index([rewardId, isRedeemed])
+}
+
+model RewardRedemption {
+  id          String                 @id @default(uuid())
+  rewardId    String
+  userId      String
+  rewardCodeId String?              @unique
+  status      RewardRedemptionStatus @default(RESERVED)
+  redeemedAt  DateTime?
+  createdAt   DateTime               @default(now())
+  reward      Reward                 @relation(fields: [rewardId], references: [id])
+  user        User                   @relation(fields: [userId], references: [id])
+  rewardCode  RewardCode?            @relation(fields: [rewardCodeId], references: [id])
+
+  @@index([rewardId, userId, status])
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  actorUserId String?
+  action      String
+  entityType  String
+  entityId    String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  actor       User?    @relation(fields: [actorUserId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([actorUserId, createdAt])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  type      String
+  title     String
+  body      String
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt, createdAt])
+}

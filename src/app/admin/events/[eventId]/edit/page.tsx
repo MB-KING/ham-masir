@@ -1,0 +1,200 @@
+import { EventStatus } from "@prisma/client";
+import { notFound } from "next/navigation";
+import { updateEventAction } from "@/app/admin/actions";
+import { AdminCard, PageTitle } from "@/components/admin/admin-card";
+import { prisma } from "@/lib/prisma";
+import { requireSuperAdminPage } from "@/modules/auth/admin-session";
+import {
+  dateInputValue,
+  dateTimeInputValue,
+  timeInputValue
+} from "@/shared/form-date";
+
+export default async function EditEventPage({
+  params
+}: {
+  params: Promise<{ eventId: string }>;
+}) {
+  await requireSuperAdminPage();
+  const { eventId } = await params;
+  const event = await prisma.event.findUnique({ where: { id: eventId } });
+
+  if (!event) {
+    notFound();
+  }
+
+  return (
+    <>
+      <PageTitle
+        showBack
+        backFallbackHref="/admin/events"
+        title="ویرایش برنامه"
+        subtitle="سوپرادمین می‌تواند اطلاعات اصلی، زمان، مکان، ظرفیت و وضعیت برنامه را اصلاح کند."
+      />
+      <AdminCard>
+        <form action={updateEventAction} className="grid gap-4">
+          <input type="hidden" name="eventId" value={event.id} />
+          <Field
+            label="نام برنامه"
+            name="title"
+            required
+            defaultValue={event.title}
+          />
+          <Field
+            label="شماره برنامه"
+            name="eventNumber"
+            type="number"
+            required
+            defaultValue={String(event.eventNumber)}
+          />
+          <Field
+            label="تاریخ برگزاری"
+            name="date"
+            type="date"
+            required
+            defaultValue={dateInputValue(event.date)}
+          />
+          <Field
+            label="زمان دورهمی"
+            name="meetingTime"
+            type="time"
+            required
+            defaultValue={timeInputValue(event.meetingTime)}
+          />
+          <Field
+            label="زمان شروع مسیر"
+            name="startTime"
+            type="time"
+            required
+            defaultValue={timeInputValue(event.startTime)}
+          />
+          <Field
+            label="زمان پایان تقریبی"
+            name="endTime"
+            type="time"
+            defaultValue={timeInputValue(event.endTime)}
+          />
+          <Field
+            label="آخرین زمان ثبت‌نام"
+            name="registrationDeadline"
+            type="datetime-local"
+            defaultValue={dateTimeInputValue(event.registrationDeadline)}
+          />
+          <Field
+            label="شروع بازه حضور و غیاب"
+            name="checkInStartsAt"
+            type="datetime-local"
+            defaultValue={dateTimeInputValue(event.checkInStartsAt)}
+          />
+          <Field
+            label="پایان بازه حضور و غیاب"
+            name="checkInEndsAt"
+            type="datetime-local"
+            defaultValue={dateTimeInputValue(event.checkInEndsAt)}
+          />
+          <Field
+            label="نام محل قرار"
+            name="locationName"
+            required
+            defaultValue={event.locationName}
+          />
+          <Field
+            label="ظرفیت"
+            name="capacity"
+            type="number"
+            defaultValue={event.capacity ? String(event.capacity) : ""}
+          />
+          <Field
+            label="عرض جغرافیایی"
+            name="latitude"
+            type="number"
+            step="any"
+            defaultValue={event.latitude?.toString() ?? ""}
+          />
+          <Field
+            label="طول جغرافیایی"
+            name="longitude"
+            type="number"
+            step="any"
+            defaultValue={event.longitude?.toString() ?? ""}
+          />
+          <label className="grid gap-2 text-sm font-bold text-slate-200">
+            وضعیت نمایش
+            <select
+              name="status"
+              defaultValue={event.status}
+              className="h-11 rounded-xl border border-white/10 bg-[#061124] px-3 text-white outline-none focus:border-[#F59E0B]"
+            >
+              <option value={EventStatus.DRAFT}>پیش‌نویس</option>
+              <option value={EventStatus.PUBLISHED}>آماده ثبت‌نام</option>
+              <option value={EventStatus.REGISTRATION_CLOSED}>
+                ثبت‌نام بسته
+              </option>
+              <option value={EventStatus.COMPLETED}>برگزار شده</option>
+              <option value={EventStatus.CANCELLED}>لغو شده</option>
+            </select>
+          </label>
+          <label className="grid gap-2 text-sm font-bold text-slate-200">
+            آدرس محل قرار
+            <input
+              name="locationAddress"
+              defaultValue={event.locationAddress ?? ""}
+              className="h-11 rounded-xl border border-white/10 bg-[#061124] px-3 text-white outline-none focus:border-[#F59E0B]"
+            />
+          </label>
+          <label className="grid gap-2 text-sm font-bold text-slate-200">
+            توضیحات
+            <textarea
+              name="description"
+              rows={4}
+              defaultValue={event.description ?? ""}
+              className="rounded-xl border border-white/10 bg-[#061124] px-3 py-3 text-white outline-none focus:border-[#F59E0B]"
+            />
+          </label>
+          <div>
+            <button
+              className="min-h-11 w-full rounded-xl bg-[#F59E0B] px-5 text-sm font-black text-[#061124]"
+              type="submit"
+            >
+              ذخیره تغییرات
+            </button>
+          </div>
+        </form>
+      </AdminCard>
+    </>
+  );
+}
+
+function Field({
+  label,
+  name,
+  type = "text",
+  required,
+  defaultValue,
+  className,
+  step
+}: {
+  label: string;
+  name: string;
+  type?: string;
+  required?: boolean;
+  defaultValue?: string;
+  className?: string;
+  step?: string;
+}) {
+  return (
+    <label
+      className={`grid gap-2 text-sm font-bold text-slate-200 ${className ?? ""}`}
+    >
+      {label}
+      <input
+        name={name}
+        type={type}
+        required={required}
+        defaultValue={defaultValue}
+        step={step}
+        className="h-11 rounded-xl border border-white/10 bg-[#061124] px-3 text-white outline-none focus:border-[#F59E0B]"
+      />
+    </label>
+  );
+}
