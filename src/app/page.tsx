@@ -11,18 +11,10 @@ import {
 import { defaultCommunitySlug } from "@/lib/config";
 import { prisma } from "@/lib/prisma";
 import { hasAnyRole } from "@/modules/auth/authorization";
-import { requireCurrentUserPage } from "@/modules/auth/session";
-
-async function getOptionalUser() {
-  try {
-    return await requireCurrentUserPage();
-  } catch {
-    return null;
-  }
-}
+import { getOptionalCurrentUser } from "@/modules/auth/session";
 
 async function getHomeData() {
-  const currentUser = await getOptionalUser();
+  const currentUser = await getOptionalCurrentUser();
   const [events, community] = await Promise.all([
     prisma.event.findMany({
       where: { status: "PUBLISHED", deletedAt: null },

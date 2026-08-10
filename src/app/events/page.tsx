@@ -3,12 +3,10 @@ import { EventCard } from "@/components/user/event-card";
 import { UserCard, UserPageHeader } from "@/components/user/user-card";
 import { UserPageShell } from "@/components/user/user-shell";
 import { prisma } from "@/lib/prisma";
-import { requireCurrentUserPage } from "@/modules/auth/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function EventsPage() {
-  await requireCurrentUserPage();
   const events = await prisma.event.findMany({
     where: {
       status: { in: ["PUBLISHED", "REGISTRATION_CLOSED"] },

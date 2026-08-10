@@ -1,20 +1,33 @@
 import { Role } from "@prisma/client";
 import { redirect } from "next/navigation";
-import { requireRole } from "@/modules/auth/authorization";
-import { requireCurrentUserPage } from "@/modules/auth/session";
+import { hasAnyRole } from "@/modules/auth/authorization";
+import {
+  getOptionalCurrentUser,
+  requireCurrentUserPage
+} from "@/modules/auth/session";
 
 export const adminRoles = [Role.ADMIN, Role.SUPER_ADMIN];
 export const eventManagerRoles = [Role.ADMIN, Role.SUPER_ADMIN];
 
 export async function requireAdminPage() {
-  const user = await requireCurrentUserPage();
-  requireRole(user, adminRoles);
+  const user = await getOptionalCurrentUser();
+  if (!user) {
+    redirect("/open-in-telegram");
+  }
+  if (!hasAnyRole(user, adminRoles)) {
+    redirect("/admin/forbidden");
+  }
   return user;
 }
 
 export async function requireEventManagerPage() {
-  const user = await requireCurrentUserPage();
-  requireRole(user, eventManagerRoles);
+  const user = await getOptionalCurrentUser();
+  if (!user) {
+    redirect("/open-in-telegram");
+  }
+  if (!hasAnyRole(user, eventManagerRoles)) {
+    redirect("/admin/forbidden");
+  }
   return user;
 }
 

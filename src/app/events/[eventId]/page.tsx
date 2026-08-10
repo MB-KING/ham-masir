@@ -16,7 +16,7 @@ import {
 } from "@/components/user/user-shell";
 import { miniAppWidthClass } from "@/components/user/mini-app";
 import { prisma } from "@/lib/prisma";
-import { requireCurrentUserPage } from "@/modules/auth/session";
+import { getOptionalCurrentUser } from "@/modules/auth/session";
 import { publicEventStatuses } from "@/modules/events/event.repository";
 import { MEETING_TIME_LABEL, START_TIME_LABEL } from "@/shared/copy";
 
@@ -43,7 +43,7 @@ export default async function EventDetailsPage({
 }: {
   params: Promise<{ eventId: string }>;
 }) {
-  const user = await requireCurrentUserPage();
+  const user = await getOptionalCurrentUser();
   const { eventId } = await params;
   const event = await prisma.event.findFirst({
     where: {
@@ -52,7 +52,9 @@ export default async function EventDetailsPage({
       status: { in: publicEventStatuses }
     },
     include: {
-      registrations: { where: { userId: user.id }, select: { status: true } },
+      registrations: user
+        ? { where: { userId: user.id }, select: { status: true } }
+        : false,
       _count: {
         select: {
           registrations: { where: { status: "REGISTERED" } },
@@ -71,7 +73,9 @@ export default async function EventDetailsPage({
     event.capacity == null
       ? null
       : Math.max(event.capacity - registrationCount, 0);
-  const registrationStatus = event.registrations[0]?.status;
+  const registrationStatus = Array.isArray(event.registrations)
+    ? event.registrations[0]?.status
+    : undefined;
 
   return (
     <UserPageShell contentClassName="pb-[calc(10.5rem+env(safe-area-inset-bottom))]">
@@ -175,6 +179,7 @@ export default async function EventDetailsPage({
           <EventActions
             eventId={event.id}
             registrationStatus={registrationStatus}
+            requiresLogin={!user}
           />
         </div>
       </div>

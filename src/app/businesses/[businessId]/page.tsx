@@ -5,7 +5,7 @@ import { RewardActions } from "@/components/user/reward-actions";
 import { UserCard, UserPageHeader } from "@/components/user/user-card";
 import { UserPageShell } from "@/components/user/user-shell";
 import { prisma } from "@/lib/prisma";
-import { requireCurrentUserPage } from "@/modules/auth/session";
+import { getOptionalCurrentUser } from "@/modules/auth/session";
 import {
   businessStatusLabels,
   labelOf,
@@ -19,7 +19,7 @@ export default async function BusinessDetailsPage({
 }: {
   params: Promise<{ businessId: string }>;
 }) {
-  const user = await requireCurrentUserPage();
+  const user = await getOptionalCurrentUser();
   const { businessId } = await params;
   const [business, attendanceCount] = await Promise.all([
     prisma.business.findFirst({
@@ -34,16 +34,20 @@ export default async function BusinessDetailsPage({
         }
       }
     }),
-    prisma.attendance.count({
-      where: { userId: user.id, status: "PRESENT" }
-    })
+    user
+      ? prisma.attendance.count({
+          where: { userId: user.id, status: "PRESENT" }
+        })
+      : Promise.resolve(0)
   ]);
 
   if (!business) {
     notFound();
   }
 
-  const isOwner = business.members.some((member) => member.userId === user.id);
+  const isOwner = user
+    ? business.members.some((member) => member.userId === user.id)
+    : false;
   const now = new Date();
   const visibleRewards = isOwner
     ? business.rewards
@@ -90,9 +94,7 @@ export default async function BusinessDetailsPage({
         </div>
       </UserCard>
 
-      <h2 className="mb-3 mt-5 text-xl font-black text-white">
-        مزایا
-      </h2>
+      <h2 className="mb-3 mt-5 text-xl font-black text-white">مزایا</h2>
       <div className="grid gap-3">
         {visibleRewards.length === 0 ? (
           <UserCard>
@@ -118,17 +120,26 @@ export default async function BusinessDetailsPage({
               ) : null}
               {reward.status === "APPROVED" ? (
                 <div className="mt-4">
-                  <RewardActions
-                    rewardId={reward.id}
-                    disabled={
-                      !isRewardEligible(reward, {
-                        attendanceCount,
-                        userLevel: user.level,
-                        userXP: user.xp
-                      })
-                    }
-                    reason="هنوز شرط لازم برای دریافت این مزیت را نداری."
-                  />
+                  {user ? (
+                    <RewardActions
+                      rewardId={reward.id}
+                      disabled={
+                        !isRewardEligible(reward, {
+                          attendanceCount,
+                          userLevel: user.level,
+                          userXP: user.xp
+                        })
+                      }
+                      reason="هنوز شرط لازم برای دریافت این مزیت را نداری."
+                    />
+                  ) : (
+                    <Link
+                      href="/open-in-telegram"
+                      className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-[#F59E0B] px-4 text-sm font-black text-[#061124]"
+                    >
+                      ورود از تلگرام برای دریافت
+                    </Link>
+                  )}
                 </div>
               ) : null}
             </UserCard>
@@ -145,12 +156,12 @@ function isRewardEligible(
     minimumLevel: number | null;
     requiredXP: number | null;
   },
-  user: { attendanceCount: number; userLevel: number; userXP: number }
+  stats: { attendanceCount: number; userLevel: number; userXP: number }
 ) {
   return (
     (!reward.minimumAttendance ||
-      user.attendanceCount >= reward.minimumAttendance) &&
-    (!reward.minimumLevel || user.userLevel >= reward.minimumLevel) &&
-    (!reward.requiredXP || user.userXP >= reward.requiredXP)
+      stats.attendanceCount >= reward.minimumAttendance) &&
+    (!reward.minimumLevel || stats.userLevel >= reward.minimumLevel) &&
+    (!reward.requiredXP || stats.userXP >= reward.requiredXP)
   );
 }

@@ -1,5 +1,6 @@
 import { RegistrationStatus } from "@prisma/client";
-import { CalendarCheck2, LogOut } from "lucide-react";
+import { CalendarCheck2, LogOut, Send } from "lucide-react";
+import Link from "next/link";
 import {
   cancelEventRegistrationAction,
   registerForEventAction
@@ -9,11 +10,25 @@ import { secondaryActionClass } from "@/components/user/user-shell";
 
 export function EventActions({
   eventId,
-  registrationStatus
+  registrationStatus,
+  requiresLogin = false
 }: {
   eventId: string;
   registrationStatus?: RegistrationStatus | null;
+  requiresLogin?: boolean;
 }) {
+  if (requiresLogin) {
+    return (
+      <Link
+        href="/open-in-telegram"
+        className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#F59E0B] px-4 text-sm font-black text-[#061124]"
+      >
+        <Send size={17} aria-hidden="true" />
+        برای ثبت‌نام از تلگرام وارد شو
+      </Link>
+    );
+  }
+
   if (
     registrationStatus === RegistrationStatus.REGISTERED ||
     registrationStatus === RegistrationStatus.WAITLISTED

@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { validateTelegramInitData } from "@/modules/auth/telegram";
 import { AppError } from "@/shared/errors";
@@ -70,6 +71,21 @@ export async function requireCurrentUser() {
   return user;
 }
 
+export async function getOptionalCurrentUser() {
+  try {
+    return await requireCurrentUser();
+  } catch (error) {
+    if (error instanceof AppError && error.code === "UNAUTHORIZED") {
+      return null;
+    }
+    throw error;
+  }
+}
+
 export async function requireCurrentUserPage() {
-  return requireCurrentUser();
+  const user = await getOptionalCurrentUser();
+  if (!user) {
+    redirect("/open-in-telegram");
+  }
+  return user;
 }
