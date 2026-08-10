@@ -73,13 +73,14 @@ export async function processEventReminders(now = new Date()) {
       msUntilMeeting <= 2.25 * 60 * 60 * 1000 &&
       msUntilMeeting > 1 * 60 * 60 * 1000;
 
-    if (isDayOf && hour >= 7 && hour <= 21) {
+    // Morning/day reminder (daily Vercel cron around 07:00 Asia/Tehran).
+    if (isDayOf && hour >= 6 && hour <= 22) {
       dayOfSent += await sendKindReminders({
         eventId: event.id,
         userIds,
         kind: EventReminderKind.DAY_OF,
         title: "یادآوری برنامه امروز",
-        body: `امروز «${event.title}» داری.\nساعت قرار: ${faTimeFormatter.format(event.meetingTime)}\nمحل: ${event.locationName}`,
+        body: `امروز «${event.title}» داری.\nساعت قرار: ${faTimeFormatter.format(event.meetingTime)}\nمحل: ${event.locationName}\n\n۲ ساعت قبل از قرار هم دوباره یادآوری می‌فرستیم.`,
         eventPath: `/events/${event.id}`
       });
     }
