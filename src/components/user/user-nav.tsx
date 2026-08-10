@@ -36,7 +36,7 @@ const items = [
     href: "/me",
     label: "پروفایل",
     Icon: UserRound,
-    match: ["/me", "/notifications", "/members"]
+    match: ["/me", "/notifications", "/members", "/leaderboard", "/community"]
   }
 ] as const;
 

@@ -9,9 +9,12 @@ import {
   ScrollText,
   Settings,
   Store,
+  Tags,
+  Send,
   Users,
   X
 } from "lucide-react";
+import type { Route } from "next";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -38,6 +41,8 @@ const primaryItems = [
 const moreItems = [
   { href: "/admin/rewards", label: "مزایا", Icon: Gift },
   { href: "/admin/badges", label: "بج‌ها", Icon: Award },
+  { href: "/admin/categories", label: "حوزه کاری", Icon: Tags },
+  { href: "/admin/telegram", label: "تلگرام", Icon: Send },
   { href: "/admin/activity", label: "فعالیت", Icon: ScrollText },
   { href: "/admin/settings", label: "تنظیمات", Icon: Settings }
 ] as const;
@@ -82,7 +87,7 @@ export function AdminNav({ isSuperAdmin }: { isSuperAdmin: boolean }) {
                 return (
                   <Link
                     key={href}
-                    href={href}
+                    href={href as Route}
                     onClick={() => setMoreOpen(false)}
                     className={cn(
                       "flex min-h-12 items-center gap-2 rounded-xl px-3 text-sm font-bold",

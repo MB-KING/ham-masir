@@ -56,6 +56,8 @@ enum XPTransactionType {
   CREATE_REWARD
   COMPLETE_PROFILE
   ATTEND_SPECIAL_EVENT
+  SPEND_REWARD
+  ADMIN_ADJUSTMENT
 }
 
 enum BusinessStatus {
@@ -69,6 +71,9 @@ enum RewardType {
   DISCOUNT
   FREE_ITEM
   SERVICE
+  GIFT
+  CREDIT
+  SPECIAL_OFFER
   OTHER
 }
 
@@ -87,64 +92,106 @@ enum RewardRedemptionStatus {
   EXPIRED
 }
 
+enum MediaProvider {
+  TELEGRAM
+  URL
+}
+
+enum TelegramResourceType {
+  GROUP
+  CHANNEL
+}
+
+enum TelegramMembershipStatus {
+  MEMBER
+  LEFT
+  KICKED
+  RESTRICTED
+  ADMIN
+  CREATOR
+  UNKNOWN
+}
+
+enum EventReminderKind {
+  DAY_OF
+  TWO_HOURS_BEFORE
+}
+
 model Community {
-  id          String    @id @default(uuid())
-  name        String
-  slug        String    @unique
-  tagline     String?
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  users       User[]
-  events      Event[]
-  businesses  Business[]
-  rewards     Reward[]
-  badges      Badge[]
-  levels      Level[]
+  id                    String             @id @default(uuid())
+  name                  String
+  slug                  String             @unique
+  tagline               String?
+  isActive              Boolean            @default(true)
+  leaderboardEnabled    Boolean            @default(true)
+  autoAnnounceEnabled   Boolean            @default(false)
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+  users                 User[]
+  events                Event[]
+  businesses            Business[]
+  rewards               Reward[]
+  badges                Badge[]
+  levels                Level[]
+  workCategories        WorkCategory[]
+  stepRules             StepRule[]
+  telegramResources     TelegramResource[]
 }
 
 model User {
-  id                  String              @id @default(uuid())
+  id                  String                     @id @default(uuid())
   communityId         String
-  telegramId          BigInt              @unique
+  workCategoryId      String?
+  telegramId          BigInt                     @unique
   username            String?
   firstName           String?
   lastName            String?
   photoUrl            String?
   languageCode        String?
-  xp                  Int                 @default(0)
-  level               Int                 @default(1)
-  joinedAt            DateTime            @default(now())
+  xp                  Int                        @default(0)
+  level               Int                        @default(1)
+  joinedAt            DateTime                   @default(now())
   deletedAt           DateTime?
-  community           Community           @relation(fields: [communityId], references: [id])
+  community           Community                  @relation(fields: [communityId], references: [id])
+  workCategory        WorkCategory?              @relation(fields: [workCategoryId], references: [id])
   profile             UserProfile?
   roles               UserRole[]
-  eventsCreated       Event[]             @relation("EventCreatedBy")
+  eventsCreated       Event[]                    @relation("EventCreatedBy")
   registrations       EventRegistration[]
-  attendance          Attendance[]        @relation("AttendanceUser")
-  attendanceVerified  Attendance[]        @relation("AttendanceVerifiedBy")
+  attendance          Attendance[]               @relation("AttendanceUser")
+  attendanceVerified  Attendance[]               @relation("AttendanceVerifiedBy")
   badges              UserBadge[]
   xpTransactions      XPTransaction[]
   businessMemberships BusinessMember[]
-  rewardsCreated      Reward[]            @relation("RewardCreatedBy")
-  rewardsApproved     Reward[]            @relation("RewardApprovedBy")
+  rewardsCreated      Reward[]                   @relation("RewardCreatedBy")
+  rewardsApproved     Reward[]                   @relation("RewardApprovedBy")
   redemptions         RewardRedemption[]
   auditLogs           AuditLog[]
   notifications       Notification[]
   eventReminders      EventReminder[]
+  mediaUploaded       MediaAsset[]               @relation("MediaUploader")
+  feedback            EventFeedback[]
+  groupMemberships    TelegramGroupMembership[]
 
   @@index([communityId, username])
   @@index([communityId, joinedAt])
+  @@index([communityId, xp])
+  @@index([communityId, workCategoryId])
 }
 
 model UserProfile {
   id                      String   @id @default(uuid())
   userId                  String   @unique
   bio                     String?
+  skills                  String?
+  socialLinks             Json?
   showInMembersDirectory  Boolean  @default(true)
   showTelegramUsername    Boolean  @default(true)
   showBusiness            Boolean  @default(true)
   showAttendanceCount     Boolean  @default(true)
+  showSkills              Boolean  @default(true)
+  showSocialLinks         Boolean  @default(true)
+  showWorkCategory        Boolean  @default(true)
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
   user                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -160,8 +207,53 @@ model UserRole {
   @@unique([userId, role])
 }
 
+model WorkCategory {
+  id          String    @id @default(uuid())
+  communityId String
+  name        String
+  slug        String
+  sortOrder   Int       @default(0)
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  community   Community @relation(fields: [communityId], references: [id])
+  users       User[]
+
+  @@unique([communityId, slug])
+  @@index([communityId, isActive, sortOrder])
+}
+
+model StepRule {
+  id          String            @id @default(uuid())
+  communityId String
+  type        XPTransactionType
+  amount      Int
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  community   Community         @relation(fields: [communityId], references: [id])
+
+  @@unique([communityId, type])
+}
+
+model MediaAsset {
+  id                   String        @id @default(uuid())
+  provider             MediaProvider @default(TELEGRAM)
+  telegramFileId       String?
+  telegramFileUniqueId String?
+  url                  String?
+  mimeType             String?
+  width                Int?
+  height               Int?
+  uploaderId           String?
+  createdAt            DateTime      @default(now())
+  uploader             User?         @relation("MediaUploader", fields: [uploaderId], references: [id])
+  eventImages          EventImage[]
+
+  @@index([provider, createdAt])
+}
+
 model Event {
-  id                     String              @id @default(uuid())
+  id                     String               @id @default(uuid())
   communityId            String
   title                  String
   description            String?
@@ -173,24 +265,40 @@ model Event {
   registrationDeadline   DateTime?
   locationName           String
   locationAddress        String?
-  latitude               Decimal?            @db.Decimal(9, 6)
-  longitude              Decimal?            @db.Decimal(9, 6)
+  latitude               Decimal?             @db.Decimal(9, 6)
+  longitude              Decimal?             @db.Decimal(9, 6)
   capacity               Int?
-  status                 EventStatus         @default(DRAFT)
+  status                 EventStatus          @default(DRAFT)
   checkInStartsAt        DateTime?
   checkInEndsAt          DateTime?
   createdById            String
-  createdAt              DateTime            @default(now())
-  updatedAt              DateTime            @updatedAt
+  createdAt              DateTime             @default(now())
+  updatedAt              DateTime             @updatedAt
   deletedAt              DateTime?
-  community              Community           @relation(fields: [communityId], references: [id])
-  createdBy              User                @relation("EventCreatedBy", fields: [createdById], references: [id])
+  community              Community            @relation(fields: [communityId], references: [id])
+  createdBy              User                 @relation("EventCreatedBy", fields: [createdById], references: [id])
   registrations          EventRegistration[]
   attendance             Attendance[]
   reminders              EventReminder[]
+  images                 EventImage[]
+  feedback               EventFeedback[]
+  announcements          EventAnnouncement[]
 
   @@unique([communityId, eventNumber])
   @@index([communityId, status, date])
+}
+
+model EventImage {
+  id           String     @id @default(uuid())
+  eventId      String
+  mediaAssetId String
+  caption      String?
+  sortOrder    Int        @default(0)
+  createdAt    DateTime   @default(now())
+  event        Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  mediaAsset   MediaAsset @relation(fields: [mediaAssetId], references: [id], onDelete: Cascade)
+
+  @@index([eventId, sortOrder])
 }
 
 model EventRegistration {
@@ -223,6 +331,21 @@ model Attendance {
 
   @@unique([userId, eventId])
   @@index([eventId, status])
+}
+
+model EventFeedback {
+  id        String   @id @default(uuid())
+  eventId   String
+  userId    String
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+  @@index([eventId, createdAt])
 }
 
 model Badge {
@@ -285,95 +408,95 @@ model Level {
 }
 
 model Business {
-  id          String           @id @default(uuid())
-  communityId String
-  name        String
-  description String?
-  website     String?
-  instagram   String?
-  status      BusinessStatus   @default(PENDING)
-  createdById String
+  id           String           @id @default(uuid())
+  communityId  String
+  name         String
+  description  String?
+  website      String?
+  instagram    String?
+  status       BusinessStatus   @default(PENDING)
+  createdById  String
   approvedById String?
-  approvedAt  DateTime?
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
-  deletedAt   DateTime?
-  community   Community       @relation(fields: [communityId], references: [id])
-  members     BusinessMember[]
-  rewards     Reward[]
+  approvedAt   DateTime?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  deletedAt    DateTime?
+  community    Community        @relation(fields: [communityId], references: [id])
+  members      BusinessMember[]
+  rewards      Reward[]
 
   @@index([communityId, status])
 }
 
 model BusinessMember {
-  id          String   @id @default(uuid())
-  businessId  String
-  userId      String
-  role        Role     @default(BUSINESS_OWNER)
-  createdAt   DateTime @default(now())
-  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id         String   @id @default(uuid())
+  businessId String
+  userId     String
+  role       Role     @default(BUSINESS_OWNER)
+  createdAt  DateTime @default(now())
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([businessId, userId, role])
 }
 
 model Reward {
-  id                  String             @id @default(uuid())
-  communityId         String
-  businessId          String
-  title               String
-  description         String
-  image               String?
-  type                RewardType
-  discountValue       String?
-  discountCode        String?
-  minimumLevel        Int?
-  minimumAttendance   Int?
-  requiredXP          Int?
-  startAt             DateTime
-  expireAt            DateTime
-  usageLimit          Int?
-  perUserLimit        Int?
-  status              RewardStatus       @default(PENDING)
-  createdById         String
-  approvedById        String?
-  approvedAt          DateTime?
-  createdAt           DateTime           @default(now())
-  updatedAt           DateTime           @updatedAt
-  community           Community          @relation(fields: [communityId], references: [id])
-  business            Business           @relation(fields: [businessId], references: [id])
-  createdBy           User               @relation("RewardCreatedBy", fields: [createdById], references: [id])
-  approvedBy          User?              @relation("RewardApprovedBy", fields: [approvedById], references: [id])
-  codes               RewardCode[]
-  redemptions         RewardRedemption[]
+  id                String             @id @default(uuid())
+  communityId       String
+  businessId        String
+  title             String
+  description       String
+  image             String?
+  type              RewardType
+  discountValue     String?
+  discountCode      String?
+  minimumLevel      Int?
+  minimumAttendance Int?
+  requiredXP        Int?
+  startAt           DateTime
+  expireAt          DateTime
+  usageLimit        Int?
+  perUserLimit      Int?
+  status            RewardStatus       @default(PENDING)
+  createdById       String
+  approvedById      String?
+  approvedAt        DateTime?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  community         Community          @relation(fields: [communityId], references: [id])
+  business          Business           @relation(fields: [businessId], references: [id])
+  createdBy         User               @relation("RewardCreatedBy", fields: [createdById], references: [id])
+  approvedBy        User?              @relation("RewardApprovedBy", fields: [approvedById], references: [id])
+  codes             RewardCode[]
+  redemptions       RewardRedemption[]
 
   @@index([communityId, status, expireAt])
 }
 
 model RewardCode {
-  id          String              @id @default(uuid())
-  rewardId    String
-  code        String
-  isRedeemed  Boolean             @default(false)
-  createdAt   DateTime            @default(now())
-  reward      Reward              @relation(fields: [rewardId], references: [id], onDelete: Cascade)
-  redemption  RewardRedemption?
+  id         String             @id @default(uuid())
+  rewardId   String
+  code       String
+  isRedeemed Boolean            @default(false)
+  createdAt  DateTime           @default(now())
+  reward     Reward             @relation(fields: [rewardId], references: [id], onDelete: Cascade)
+  redemption RewardRedemption?
 
   @@unique([rewardId, code])
   @@index([rewardId, isRedeemed])
 }
 
 model RewardRedemption {
-  id          String                 @id @default(uuid())
-  rewardId    String
-  userId      String
-  rewardCodeId String?              @unique
-  status      RewardRedemptionStatus @default(RESERVED)
-  redeemedAt  DateTime?
-  createdAt   DateTime               @default(now())
-  reward      Reward                 @relation(fields: [rewardId], references: [id])
-  user        User                   @relation(fields: [userId], references: [id])
-  rewardCode  RewardCode?            @relation(fields: [rewardCodeId], references: [id])
+  id           String                 @id @default(uuid())
+  rewardId     String
+  userId       String
+  rewardCodeId String?                @unique
+  status       RewardRedemptionStatus @default(RESERVED)
+  redeemedAt   DateTime?
+  createdAt    DateTime               @default(now())
+  reward       Reward                 @relation(fields: [rewardId], references: [id])
+  user         User                   @relation(fields: [userId], references: [id])
+  rewardCode   RewardCode?            @relation(fields: [rewardCodeId], references: [id])
 
   @@index([rewardId, userId, status])
 }
@@ -393,32 +516,80 @@ model AuditLog {
 }
 
 model Notification {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   userId    String
   type      String
   title     String
   body      String
   readAt    DateTime?
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, readAt, createdAt])
 }
 
-enum EventReminderKind {
-  DAY_OF
-  TWO_HOURS_BEFORE
-}
-
 model EventReminder {
-  id        String            @id @default(uuid())
-  eventId   String
-  userId    String
-  kind      EventReminderKind
-  sentAt    DateTime          @default(now())
-  event     Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id      String            @id @default(uuid())
+  eventId String
+  userId  String
+  kind    EventReminderKind
+  sentAt  DateTime          @default(now())
+  event   Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user    User              @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([eventId, userId, kind])
   @@index([kind, sentAt])
+}
+
+model TelegramResource {
+  id                   String               @id @default(uuid())
+  communityId          String
+  name                 String
+  description          String?
+  link                 String
+  type                 TelegramResourceType
+  telegramChatId       BigInt?
+  isActive             Boolean              @default(true)
+  sortOrder            Int                  @default(0)
+  receiveAnnouncements Boolean              @default(false)
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+  community            Community            @relation(fields: [communityId], references: [id])
+  announcements        EventAnnouncement[]
+  memberships          TelegramGroupMembership[]
+
+  @@index([communityId, isActive, sortOrder])
+}
+
+model TelegramGroupMembership {
+  id             String                   @id @default(uuid())
+  resourceId     String?
+  userId         String?
+  telegramUserId BigInt
+  chatId         BigInt
+  status         TelegramMembershipStatus @default(UNKNOWN)
+  joinedAt       DateTime?
+  leftAt         DateTime?
+  lastCheckedAt  DateTime                 @default(now())
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+  resource       TelegramResource?        @relation(fields: [resourceId], references: [id])
+  user           User?                    @relation(fields: [userId], references: [id])
+
+  @@unique([chatId, telegramUserId])
+  @@index([resourceId, status])
+  @@index([userId])
+}
+
+model EventAnnouncement {
+  id                String           @id @default(uuid())
+  eventId           String
+  resourceId        String
+  telegramMessageId String?
+  sentAt            DateTime         @default(now())
+  event             Event            @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  resource          TelegramResource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, resourceId])
+  @@index([resourceId, sentAt])
 }

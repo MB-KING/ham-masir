@@ -16,6 +16,7 @@ import { RewardService } from "@/modules/rewards/reward.service";
 import { XPService } from "@/modules/gamification/xp.service";
 import { logActivity } from "@/modules/activity/activity.service";
 import { AppError } from "@/shared/errors";
+import { Prisma } from "@prisma/client";
 
 const createBusinessSchema = z.object({
   name: z.string().min(2),
@@ -51,10 +52,22 @@ const createRewardSchema = z.object({
 
 const profileSchema = z.object({
   bio: z.string().max(400).optional(),
+  skills: z.string().max(300).optional(),
+  socialLinks: z.string().max(600).optional(),
+  workCategoryId: z.string().uuid().optional().or(z.literal("")),
   showInMembersDirectory: z.preprocess((value) => value === "on", z.boolean()),
   showTelegramUsername: z.preprocess((value) => value === "on", z.boolean()),
   showBusiness: z.preprocess((value) => value === "on", z.boolean()),
-  showAttendanceCount: z.preprocess((value) => value === "on", z.boolean())
+  showAttendanceCount: z.preprocess((value) => value === "on", z.boolean()),
+  showSkills: z.preprocess((value) => value === "on", z.boolean()),
+  showSocialLinks: z.preprocess((value) => value === "on", z.boolean()),
+  showWorkCategory: z.preprocess((value) => value === "on", z.boolean())
+});
+
+const feedbackSchema = z.object({
+  eventId: z.string().uuid(),
+  rating: z.coerce.number().int().min(1).max(5),
+  comment: z.string().max(500).optional()
 });
 
 function emptyToUndefined(value?: string) {
@@ -116,11 +129,48 @@ export async function redeemRewardAction(formData: FormData) {
 export async function updateProfileAction(formData: FormData) {
   const user = await requireCurrentUserPage();
   const input = profileSchema.parse(Object.fromEntries(formData));
-  const profile = await prisma.userProfile.upsert({
-    where: { userId: user.id },
-    update: input,
-    create: { userId: user.id, ...input }
-  });
+  let socialLinks: Record<string, string> | undefined;
+  if (input.socialLinks?.trim()) {
+    try {
+      const parsed = JSON.parse(input.socialLinks) as Record<string, string>;
+      socialLinks = parsed;
+    } catch {
+      socialLinks = { website: input.socialLinks.trim() };
+    }
+  }
+
+  const profileData = {
+    bio: input.bio || null,
+    skills: input.skills || null,
+    socialLinks:
+      socialLinks === undefined
+        ? undefined
+        : socialLinks === null
+          ? Prisma.JsonNull
+          : socialLinks,
+    showInMembersDirectory: input.showInMembersDirectory,
+    showTelegramUsername: input.showTelegramUsername,
+    showBusiness: input.showBusiness,
+    showAttendanceCount: input.showAttendanceCount,
+    showSkills: input.showSkills,
+    showSocialLinks: input.showSocialLinks,
+    showWorkCategory: input.showWorkCategory
+  };
+
+  const [profile] = await Promise.all([
+    prisma.userProfile.upsert({
+      where: { userId: user.id },
+      update: profileData,
+      create: { userId: user.id, ...profileData }
+    }),
+    prisma.user.update({
+      where: { id: user.id },
+      data: {
+        workCategoryId: input.workCategoryId ? input.workCategoryId : null
+      }
+    })
+  ]);
+
   await new XPService().award(
     user.id,
     XPTransactionType.COMPLETE_PROFILE,
@@ -131,6 +181,31 @@ export async function updateProfileAction(formData: FormData) {
   revalidatePath("/me");
   revalidatePath("/members");
   redirect("/me?profile=saved");
+}
+
+export async function submitEventFeedbackAction(formData: FormData) {
+  const user = await requireCurrentUserPage();
+  const input = feedbackSchema.parse(Object.fromEntries(formData));
+  const { FeedbackService } = await import("@/modules/feedback/feedback.service");
+  try {
+    await new FeedbackService().upsert({
+      userId: user.id,
+      eventId: input.eventId,
+      rating: input.rating,
+      comment: input.comment
+    });
+    revalidatePath(`/events/${input.eventId}`);
+    revalidatePath("/me");
+    redirect(`/events/${input.eventId}?ok=feedback` as `/events/${string}`);
+  } catch (error) {
+    unstable_rethrow(error);
+    if (error instanceof AppError) {
+      redirect(
+        `/events/${input.eventId}?error=${error.code}` as `/events/${string}`
+      );
+    }
+    throw error;
+  }
 }
 
 export async function markNotificationReadAction(formData: FormData) {

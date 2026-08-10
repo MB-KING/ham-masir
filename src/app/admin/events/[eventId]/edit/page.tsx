@@ -1,9 +1,15 @@
 import { EventStatus } from "@prisma/client";
+import type { Route } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
-import { updateEventAction } from "@/app/admin/actions";
+import {
+  updateEventAction,
+  uploadEventImageAction
+} from "@/app/admin/actions";
 import { AdminCard, PageTitle } from "@/components/admin/admin-card";
 import { prisma } from "@/lib/prisma";
 import { requireSuperAdminPage } from "@/modules/auth/admin-session";
+import { mediaPublicPath } from "@/modules/media/media.service";
 import {
   dateInputValue,
   dateTimeInputValue,
@@ -17,7 +23,12 @@ export default async function EditEventPage({
 }) {
   await requireSuperAdminPage();
   const { eventId } = await params;
-  const event = await prisma.event.findUnique({ where: { id: eventId } });
+  const event = await prisma.event.findUnique({
+    where: { id: eventId },
+    include: {
+      images: { orderBy: { sortOrder: "asc" }, include: { mediaAsset: true } }
+    }
+  });
 
   if (!event) {
     notFound();
@@ -31,6 +42,56 @@ export default async function EditEventPage({
         title="ویرایش برنامه"
         subtitle="سوپرادمین می‌تواند اطلاعات اصلی، زمان، مکان، ظرفیت و وضعیت برنامه را اصلاح کند."
       />
+      <div className="mb-4 flex flex-wrap gap-2">
+        <Link
+          href={`/admin/events/${eventId}/feedback` as Route}
+          className="inline-flex h-11 items-center rounded-xl bg-white/10 px-4 text-sm font-bold text-white"
+        >
+          نظرات برنامه
+        </Link>
+      </div>
+      <AdminCard className="mb-4">
+        <h2 className="mb-3 font-black text-white">تصاویر برنامه</h2>
+        <div className="mb-3 grid gap-2">
+          {event.images.map((image) => (
+            <a
+              key={image.id}
+              href={mediaPublicPath(image.mediaAssetId)}
+              target="_blank"
+              rel="noreferrer"
+              className="truncate text-sm font-bold text-[#F59E0B]"
+            >
+              {image.caption || image.mediaAssetId}
+            </a>
+          ))}
+        </div>
+        <form action={uploadEventImageAction} className="grid gap-3">
+          <input type="hidden" name="eventId" value={event.id} />
+          <label className="grid gap-2 text-sm font-bold text-slate-200">
+            آپلود تصویر
+            <input
+              name="image"
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              required
+              className="text-sm text-slate-300"
+            />
+          </label>
+          <label className="grid gap-2 text-sm font-bold text-slate-200">
+            توضیح کوتاه
+            <input
+              name="caption"
+              className="h-11 rounded-xl border border-white/10 bg-[#061124] px-3 text-white"
+            />
+          </label>
+          <button
+            type="submit"
+            className="inline-flex h-11 items-center justify-center rounded-xl bg-white/10 text-sm font-bold text-white"
+          >
+            افزودن تصویر
+          </button>
+        </form>
+      </AdminCard>
       <AdminCard>
         <form action={updateEventAction} className="grid gap-4">
           <input type="hidden" name="eventId" value={event.id} />

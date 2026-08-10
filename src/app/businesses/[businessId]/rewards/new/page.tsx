@@ -53,7 +53,7 @@ export default async function NewRewardPage({ params }: { params: Promise<{ busi
             <Field name="expireAt" label="پایان اعتبار" type="date" required defaultValue={nextMonth} />
             <Field name="minimumAttendance" label="حداقل حضور لازم" type="number" placeholder="1" />
             <Field name="minimumLevel" label="حداقل سطح عضو" type="number" placeholder="2" />
-            <Field name="requiredXP" label="حداقل امتیاز لازم" type="number" placeholder="100" />
+            <Field name="requiredXP" label="هزینه گام" type="number" placeholder="20" />
             <Field name="usageLimit" label="ظرفیت کل مزیت" type="number" placeholder="50" />
             <Field name="perUserLimit" label="سقف دریافت هر عضو" type="number" placeholder="1" defaultValue="1" />
             <Field name="discountCode" label="کد عمومی" placeholder="HAMMASIR15" />

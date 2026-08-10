@@ -89,7 +89,7 @@ export default async function AdminRewardsPage() {
                 </p>
                 <p className="mt-1 text-xs text-slate-400">
                   سطح {reward.minimumLevel ?? "آزاد"}، حضور{" "}
-                  {reward.minimumAttendance ?? "آزاد"}، امتیاز{" "}
+                  {reward.minimumAttendance ?? "آزاد"}، گام{" "}
                   {reward.requiredXP ?? "آزاد"}، سقف هر عضو{" "}
                   {reward.perUserLimit ?? "بدون محدودیت"}
                 </p>

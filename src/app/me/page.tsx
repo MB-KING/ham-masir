@@ -133,7 +133,7 @@ export default async function MePage() {
     <UserPageShell>
       <UserPageHeader
         title="پروفایل من"
-        subtitle="امتیاز، سطح، حضور و مزایای تو."
+        subtitle="گام، سطح، حضور و مزایای تو."
         showBack={false}
       />
 
@@ -157,7 +157,7 @@ export default async function MePage() {
           </Link>
         </div>
         <div className="mt-5 grid grid-cols-2 gap-3">
-          <Metric label="امتیاز" value={user.xp} />
+          <Metric label="گام" value={user.xp} />
           <Metric label="سطح" value={user.level} />
           <Metric label="حضور" value={attendanceCount} />
           <Metric label="بج" value={user._count.badges} />
@@ -171,7 +171,7 @@ export default async function MePage() {
             </span>
             <span className="text-slate-400">
               {nextLevel
-                ? `${Math.max(nextLevel.requiredXP - user.xp, 0)} امتیاز مانده`
+                ? `${Math.max(nextLevel.requiredXP - user.xp, 0)} گام مانده`
                 : "تکمیل شده"}
             </span>
           </div>
@@ -224,6 +224,36 @@ export default async function MePage() {
           </div>
           <ChevronLeft size={18} className="text-slate-400" aria-hidden="true" />
         </Link>
+        <Link
+          href={"/leaderboard" as import("next").Route}
+          className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-[#0B1E43]/75 p-4 transition active:scale-[0.99] hover:border-[#F59E0B]/35"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#F59E0B]/15 text-[#F59E0B]">
+              <Trophy size={20} aria-hidden="true" />
+            </div>
+            <div>
+              <h2 className="font-black text-white">جدول گام</h2>
+              <p className="mt-1 text-sm text-slate-400">رتبه‌بندی همراهان</p>
+            </div>
+          </div>
+          <ChevronLeft size={18} className="text-slate-400" aria-hidden="true" />
+        </Link>
+        <Link
+          href={"/community" as import("next").Route}
+          className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-[#0B1E43]/75 p-4 transition active:scale-[0.99] hover:border-[#F59E0B]/35"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#F59E0B]/15 text-[#F59E0B]">
+              <UsersRound size={20} aria-hidden="true" />
+            </div>
+            <div>
+              <h2 className="font-black text-white">گروه و کانال</h2>
+              <p className="mt-1 text-sm text-slate-400">منابع رسمی تلگرام</p>
+            </div>
+          </div>
+          <ChevronLeft size={18} className="text-slate-400" aria-hidden="true" />
+        </Link>
       </div>
 
       <UserCard className="mt-4">
@@ -253,7 +283,7 @@ export default async function MePage() {
                     {badge.type === BadgeType.SPECIAL
                       ? "ویژه"
                       : badge.type === BadgeType.XP
-                        ? `${badge.remaining} امتیاز`
+                        ? `${badge.remaining} گام`
                         : `${badge.remaining} حضور`}
                   </span>
                 </div>
@@ -315,10 +345,10 @@ export default async function MePage() {
         <UserCard>
           <h2 className="mb-3 flex items-center gap-2 font-black text-white">
             <History size={18} className="text-[#F59E0B]" />
-            آخرین امتیازها
+            آخرین گام‌ها
           </h2>
           {user.xpTransactions.length === 0 ? (
-            <p className="text-sm text-slate-400">هنوز امتیازی ثبت نشده.</p>
+            <p className="text-sm text-slate-400">هنوز گامی ثبت نشده.</p>
           ) : (
             <ul className="grid gap-2">
               {user.xpTransactions.map((item) => (
@@ -350,7 +380,7 @@ function xpTypeLabel(type: string) {
     COMPLETE_PROFILE: "تکمیل پروفایل",
     ATTEND_SPECIAL_EVENT: "حضور ویژه"
   };
-  return labels[type] ?? "امتیاز فعالیت";
+  return labels[type] ?? "گام فعالیت";
 }
 
 function Metric({ label, value }: { label: string; value: number }) {

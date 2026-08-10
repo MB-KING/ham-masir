@@ -22,7 +22,8 @@ const envSchema = z.object({
   ALLOW_DEV_AUTH: z
     .enum(["true", "false"])
     .optional()
-    .transform((value) => value === "true")
+    .transform((value) => value === "true"),
+  TELEGRAM_STORAGE_CHAT_ID: z.string().optional()
 });
 
 export const config = envSchema.parse({
@@ -35,7 +36,8 @@ export const config = envSchema.parse({
   TELEGRAM_BOT_USERNAME: process.env.TELEGRAM_BOT_USERNAME,
   NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
   NODE_ENV: process.env.NODE_ENV,
-  ALLOW_DEV_AUTH: process.env.ALLOW_DEV_AUTH
+  ALLOW_DEV_AUTH: process.env.ALLOW_DEV_AUTH,
+  TELEGRAM_STORAGE_CHAT_ID: process.env.TELEGRAM_STORAGE_CHAT_ID
 });
 
 export const defaultCommunitySlug = "ham-masir";

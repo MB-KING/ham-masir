@@ -1,35 +1,43 @@
 import { Gauge, Save, Settings } from "lucide-react";
-import { updateCommunityAction, upsertLevelAction } from "@/app/admin/actions";
+import {
+  updateCommunityAction,
+  upsertLevelAction,
+  upsertStepRuleAction
+} from "@/app/admin/actions";
 import { AdminCard, PageTitle } from "@/components/admin/admin-card";
 import { prisma } from "@/lib/prisma";
 import { requireSuperAdminPage } from "@/modules/auth/admin-session";
+import {
+  defaultStepRules,
+  earnStepTypes,
+  stepTypeLabels
+} from "@/shared/steps";
 
 export default async function AdminSettingsPage() {
   const admin = await requireSuperAdminPage();
-  const [community, levels] = await Promise.all([
+  const [community, levels, stepRules] = await Promise.all([
     prisma.community.findUnique({ where: { id: admin.communityId } }),
     prisma.level.findMany({
       where: { communityId: admin.communityId },
       orderBy: { level: "asc" }
-    })
+    }),
+    prisma.stepRule.findMany({ where: { communityId: admin.communityId } })
   ]);
   if (!community) return null;
+  const ruleMap = new Map(stepRules.map((rule) => [rule.type, rule.amount]));
 
   return (
     <>
       <PageTitle
         title="تنظیمات جامعه و سطح‌ها"
-        subtitle="نام و وضعیت جامعه را مدیریت کن و مشخص کن اعضا با چه میزان امتیاز به هر سطح برسند."
+        subtitle="نام جامعه، جدول گام، اعلان‌ها و حداقل گام هر سطح را مدیریت کن."
       />
       <AdminCard className="mb-5">
         <div className="mb-4 flex items-center gap-2">
           <Settings className="text-[#F59E0B]" size={20} />
           <h2 className="font-black text-white">مشخصات جامعه</h2>
         </div>
-        <form
-          action={updateCommunityAction}
-          className="grid gap-4"
-        >
+        <form action={updateCommunityAction} className="grid gap-4">
           <Field
             name="name"
             label="نام جامعه"
@@ -50,6 +58,24 @@ export default async function AdminSettingsPage() {
             />
             جامعه فعال باشد
           </label>
+          <label className="flex items-center gap-2 text-sm font-bold text-slate-200">
+            <input
+              name="leaderboardEnabled"
+              type="checkbox"
+              defaultChecked={community.leaderboardEnabled}
+              className="h-4 w-4 accent-[#F59E0B]"
+            />
+            جدول گام فعال باشد
+          </label>
+          <label className="flex items-center gap-2 text-sm font-bold text-slate-200">
+            <input
+              name="autoAnnounceEnabled"
+              type="checkbox"
+              defaultChecked={community.autoAnnounceEnabled}
+              className="h-4 w-4 accent-[#F59E0B]"
+            />
+            اعلان خودکار برنامه در گروه‌های تلگرام
+          </label>
           <div>
             <button
               type="submit"
@@ -62,17 +88,48 @@ export default async function AdminSettingsPage() {
         </form>
       </AdminCard>
 
+      <AdminCard className="mb-5">
+        <h2 className="mb-3 font-black text-white">قوانین گام</h2>
+        <div className="grid gap-3">
+          {earnStepTypes.map((type) => (
+            <form
+              key={type}
+              action={upsertStepRuleAction}
+              className="flex flex-wrap items-end gap-2 rounded-xl bg-white/[0.04] p-3"
+            >
+              <input type="hidden" name="type" value={type} />
+              <label className="grid min-w-[10rem] flex-1 gap-1 text-sm font-bold text-slate-200">
+                {stepTypeLabels[type]}
+                <input
+                  name="amount"
+                  type="number"
+                  min={0}
+                  defaultValue={String(
+                    ruleMap.get(type) ?? defaultStepRules[type] ?? 0
+                  )}
+                  className="h-11 rounded-xl border border-white/10 bg-[#061124] px-3 text-white"
+                />
+              </label>
+              <button
+                type="submit"
+                className="inline-flex h-11 items-center justify-center rounded-xl bg-white/10 px-4 text-sm font-bold text-white"
+              >
+                ذخیره
+              </button>
+            </form>
+          ))}
+        </div>
+      </AdminCard>
+
       <AdminCard className="mb-4 border-[#F59E0B]/25 bg-[#0B1E43]">
         <div className="flex items-start gap-3">
           <Gauge className="mt-0.5 shrink-0 text-[#F59E0B]" />
           <div>
-            <h2 className="font-black text-white">
-              سطح‌ها چطور محاسبه می‌شوند؟
-            </h2>
+            <h2 className="font-black text-white">سطح‌ها چطور محاسبه می‌شوند؟</h2>
             <p className="mt-1 text-sm leading-7 text-slate-300">
-              هر سطح یک حداقل امتیاز دارد. سیستم بعد از ثبت امتیاز، بالاترین سطح
-              فعالی را که کاربر حدنصابش را دارد انتخاب می‌کند. سطح ۱ بهتر است از
-              صفر امتیاز شروع شود.
+              هر سطح یک حداقل گام دارد. سیستم بعد از ثبت گام، بالاترین سطح فعالی
+              را که کاربر حدنصابش را دارد انتخاب می‌کند. سطح ۱ بهتر است از صفر
+              گام شروع شود.
             </p>
           </div>
         </div>
@@ -105,10 +162,7 @@ function LevelForm({
   };
 }) {
   return (
-    <form
-      action={upsertLevelAction}
-      className="grid gap-3"
-    >
+    <form action={upsertLevelAction} className="grid gap-3">
       {level ? <input type="hidden" name="levelId" value={level.id} /> : null}
       <Field
         name="level"
@@ -125,7 +179,7 @@ function LevelForm({
       />
       <Field
         name="requiredXP"
-        label="حداقل امتیاز"
+        label="حداقل گام"
         type="number"
         defaultValue={String(level?.requiredXP ?? "")}
         required

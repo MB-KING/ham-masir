@@ -102,7 +102,7 @@ export default async function RewardsPage({
           <div>
             <h2 className="font-black text-white">شرط هر مزیت روی کارت است</h2>
             <p className="mt-1 text-sm leading-7 text-slate-300">
-              اگر شرط حضور، سطح یا امتیاز را داشته باشی، می‌توانی همان لحظه
+              اگر شرط حضور، سطح یا گام را داشته باشی، می‌توانی همان لحظه
               دریافت کنی.
             </p>
           </div>

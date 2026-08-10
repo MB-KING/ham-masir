@@ -3,21 +3,22 @@ import {
   Clock,
   Flag,
   MapPin,
-  Navigation,
   UsersRound
 } from "lucide-react";
-import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { EventActions } from "@/components/user/event-actions";
+import { FeedbackForm } from "@/components/user/feedback-form";
+import { NavigationSheet } from "@/components/user/navigation-sheet";
+import { ParticipantsPreview } from "@/components/user/participants-preview";
+import { ShareCardButton } from "@/components/user/share-card-button";
 import { UserCard, UserPageHeader } from "@/components/user/user-card";
-import {
-  secondaryActionClass,
-  UserPageShell
-} from "@/components/user/user-shell";
+import { UserPageShell } from "@/components/user/user-shell";
 import { miniAppWidthClass } from "@/components/user/mini-app";
 import { prisma } from "@/lib/prisma";
 import { getOptionalCurrentUser } from "@/modules/auth/session";
 import { publicEventStatuses } from "@/modules/events/event.repository";
+import { mediaPublicPath } from "@/modules/media/media.service";
 import { MEETING_TIME_LABEL, START_TIME_LABEL } from "@/shared/copy";
 import { errorMessagesFa, type ErrorCode } from "@/shared/errors";
 
@@ -59,6 +60,10 @@ export default async function EventDetailsPage({
       registrations: user
         ? { where: { userId: user.id }, select: { status: true } }
         : false,
+      images: {
+        orderBy: { sortOrder: "asc" },
+        include: { mediaAsset: true }
+      },
       _count: {
         select: {
           registrations: { where: { status: "REGISTERED" } },
@@ -72,6 +77,27 @@ export default async function EventDetailsPage({
     notFound();
   }
 
+  const previewRegs = await prisma.eventRegistration.findMany({
+    where: {
+      eventId,
+      status: "REGISTERED",
+      user: { profile: { showInMembersDirectory: true } }
+    },
+    orderBy: { registeredAt: "asc" },
+    take: 3,
+    select: {
+      user: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          username: true,
+          photoUrl: true
+        }
+      }
+    }
+  });
+
   const registrationCount = event._count.registrations;
   const remainingCapacity =
     event.capacity == null
@@ -80,6 +106,20 @@ export default async function EventDetailsPage({
   const registrationStatus = Array.isArray(event.registrations)
     ? event.registrations[0]?.status
     : undefined;
+
+  const [attendance, feedback] = user
+    ? await Promise.all([
+        prisma.attendance.findUnique({
+          where: { userId_eventId: { userId: user.id, eventId } }
+        }),
+        prisma.eventFeedback.findUnique({
+          where: { eventId_userId: { eventId, userId: user.id } }
+        })
+      ])
+    : [null, null];
+
+  const canFeedback =
+    event.status === "COMPLETED" && attendance?.status === "PRESENT";
 
   return (
     <UserPageShell contentClassName="pb-[calc(10.5rem+env(safe-area-inset-bottom))]">
@@ -106,6 +146,43 @@ export default async function EventDetailsPage({
       {ok === "cancelled" ? (
         <UserCard className="mb-4 border-sky-400/30 bg-sky-500/10">
           <p className="text-sm font-bold text-sky-200">ثبت‌نام لغو شد.</p>
+        </UserCard>
+      ) : null}
+      {ok === "feedback" ? (
+        <UserCard className="mb-4 border-emerald-400/30 bg-emerald-500/10">
+          <p className="text-sm font-bold text-emerald-200">نظرت ثبت شد.</p>
+        </UserCard>
+      ) : null}
+
+      {event.images.length > 0 ? (
+        <UserCard className="mb-4 overflow-hidden p-0">
+          <div className="relative aspect-[16/10] w-full bg-[#0B1E43]">
+            <Image
+              src={mediaPublicPath(event.images[0].mediaAssetId)}
+              alt={event.images[0].caption ?? event.title}
+              fill
+              className="object-cover"
+              unoptimized
+            />
+          </div>
+          {event.images.length > 1 ? (
+            <div className="flex gap-2 overflow-x-auto p-3">
+              {event.images.slice(1).map((image) => (
+                <div
+                  key={image.id}
+                  className="relative h-16 w-24 shrink-0 overflow-hidden rounded-lg"
+                >
+                  <Image
+                    src={mediaPublicPath(image.mediaAssetId)}
+                    alt={image.caption ?? event.title}
+                    fill
+                    className="object-cover"
+                    unoptimized
+                  />
+                </div>
+              ))}
+            </div>
+          ) : null}
         </UserCard>
       ) : null}
 
@@ -141,10 +218,6 @@ export default async function EventDetailsPage({
             }
           />
         </div>
-        <p className="mt-3 text-xs leading-6 text-slate-400">
-          {MEETING_TIME_LABEL}: زمان حاضر شدن در محل. {START_TIME_LABEL}: زمان
-          حرکت گروه.
-        </p>
       </UserCard>
 
       <UserCard>
@@ -183,18 +256,29 @@ export default async function EventDetailsPage({
             }
           />
         </dl>
-        {event.latitude && event.longitude ? (
-          <Link
-            href={`https://www.google.com/maps?q=${event.latitude.toString()},${event.longitude.toString()}`}
-            target="_blank"
-            rel="noreferrer"
-            className={`${secondaryActionClass} mt-3 border-[#F59E0B]/30 text-[#F59E0B]`}
-          >
-            <Navigation size={16} aria-hidden="true" />
-            باز کردن محل روی نقشه
-          </Link>
+        <ParticipantsPreview
+          eventId={event.id}
+          total={registrationCount}
+          users={previewRegs.map((row) => row.user)}
+        />
+        {event.latitude != null && event.longitude != null ? (
+          <NavigationSheet
+            latitude={Number(event.latitude)}
+            longitude={Number(event.longitude)}
+          />
         ) : null}
+        <ShareCardButton eventId={event.id} />
       </UserCard>
+
+      {canFeedback ? (
+        <UserCard className="mt-4">
+          <h2 className="font-black text-white">نظر درباره این برنامه</h2>
+          <p className="mt-1 text-sm text-slate-400">
+            حضورت تأیید شده؛ تجربه‌ات را با بقیه به اشتراک بگذار.
+          </p>
+          <FeedbackForm eventId={event.id} existing={feedback} />
+        </UserCard>
+      ) : null}
 
       <div
         className={`fixed bottom-[calc(4.1rem+env(safe-area-inset-bottom))] left-1/2 z-40 w-full -translate-x-1/2 px-4 ${miniAppWidthClass}`}

@@ -6,7 +6,7 @@ export function rewardEligibilityText(reward: {
   const requirements = [
     reward.minimumAttendance ? `${reward.minimumAttendance} حضور` : null,
     reward.minimumLevel ? `سطح ${reward.minimumLevel}` : null,
-    reward.requiredXP ? `${reward.requiredXP} امتیاز` : null
+    reward.requiredXP ? `${reward.requiredXP.toLocaleString("fa-IR")} گام` : null
   ].filter(Boolean);
 
   return requirements.length

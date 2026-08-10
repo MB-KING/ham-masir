@@ -38,7 +38,10 @@ export async function setupTelegramBot() {
     commands: [
       { command: "start", description: "Start Ham Masir" },
       { command: "app", description: "Open Mini App" },
-      { command: "help", description: "Help" }
+      { command: "help", description: "Help" },
+      { command: "addgroup", description: "Register current group (super admin)" },
+      { command: "removegroup", description: "Disable current group (super admin)" },
+      { command: "groupstatus", description: "Show group status (super admin)" }
     ]
   });
 
@@ -52,7 +55,7 @@ export async function setupTelegramBot() {
 
   await callTelegram("setWebhook", {
     url: `${url}/api/telegram/webhook`,
-    allowed_updates: ["message"]
+    allowed_updates: ["message", "my_chat_member", "chat_member"]
   });
 
   return { appUrl: url, webhook: `${url}/api/telegram/webhook` };

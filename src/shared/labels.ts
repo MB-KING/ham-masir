@@ -35,9 +35,12 @@ export const rewardStatusLabels: Record<string, string> = {
 };
 
 export const rewardTypeLabels: Record<string, string> = {
-  DISCOUNT: "تخفیف",
+  DISCOUNT: "کد تخفیف",
   FREE_ITEM: "هدیه",
-  SERVICE: "خدمت",
+  SERVICE: "خدمت رایگان",
+  GIFT: "هدیه ویژه",
+  CREDIT: "اعتبار",
+  SPECIAL_OFFER: "پیشنهاد ویژه",
   OTHER: "سایر"
 };
 

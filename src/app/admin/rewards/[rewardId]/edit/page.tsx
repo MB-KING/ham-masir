@@ -131,7 +131,7 @@ export default async function EditRewardPage({
           />
           <Field
             name="requiredXP"
-            label="حداقل امتیاز لازم"
+            label="هزینه گام"
             type="number"
             defaultValue={reward.requiredXP ? String(reward.requiredXP) : ""}
           />

@@ -1,8 +1,18 @@
-import { PrismaClient, XPTransactionType } from "@prisma/client";
+import {
+  Prisma,
+  PrismaClient,
+  XPTransactionType
+} from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { LevelService } from "@/modules/gamification/level.service";
+import { AppError } from "@/shared/errors";
+import { defaultStepRules } from "@/shared/steps";
 
-export const xpRules: Record<XPTransactionType, number> = {
+/** @deprecated Use StepRule / defaultStepRules — kept for tests */
+export const xpRules: Record<
+  Exclude<XPTransactionType, "SPEND_REWARD" | "ADMIN_ADJUSTMENT">,
+  number
+> = {
   ATTEND_EVENT: 100,
   REFER_USER: 50,
   CREATE_REWARD: 75,
@@ -10,11 +20,25 @@ export const xpRules: Record<XPTransactionType, number> = {
   ATTEND_SPECIAL_EVENT: 150
 };
 
+type Tx = Prisma.TransactionClient;
+
 export class XPService {
   constructor(
     private readonly db: PrismaClient = prisma,
     private readonly levelService = new LevelService(db)
   ) {}
+
+  async getRuleAmount(
+    communityId: string,
+    type: XPTransactionType,
+    db: Tx | PrismaClient = this.db
+  ) {
+    const rule = await db.stepRule.findUnique({
+      where: { communityId_type: { communityId, type } }
+    });
+    if (rule) return rule.amount;
+    return defaultStepRules[type] ?? 0;
+  }
 
   async award(
     userId: string,
@@ -23,9 +47,27 @@ export class XPService {
     referenceId: string,
     description?: string
   ) {
-    const amount = xpRules[type];
+    if (
+      type === XPTransactionType.SPEND_REWARD ||
+      type === XPTransactionType.ADMIN_ADJUSTMENT
+    ) {
+      throw new AppError("VALIDATION_ERROR", "Use spend/adjust for this type");
+    }
 
     return this.db.$transaction(async (tx) => {
+      const user = await tx.user.findUnique({
+        where: { id: userId },
+        select: { communityId: true }
+      });
+      if (!user) {
+        throw new AppError("UNAUTHORIZED", "User not found");
+      }
+
+      const amount = await this.getRuleAmount(user.communityId, type, tx);
+      if (amount <= 0) {
+        return null;
+      }
+
       const transaction = await tx.xPTransaction.upsert({
         where: {
           userId_type_referenceType_referenceId: {
@@ -46,21 +88,82 @@ export class XPService {
         }
       });
 
-      const totalXP = await tx.xPTransaction.aggregate({
-        where: { userId },
-        _sum: { amount: true }
-      });
-      const level = await this.levelService.calculateLevel(
-        userId,
-        totalXP._sum.amount ?? 0,
-        tx
-      );
-      await tx.user.update({
-        where: { id: userId },
-        data: { xp: totalXP._sum.amount ?? 0, level }
-      });
-      await this.syncXPBadges(tx, userId, totalXP._sum.amount ?? 0);
+      await this.recalculate(tx, userId);
       return transaction;
+    });
+  }
+
+  async spend(
+    userId: string,
+    amount: number,
+    referenceType: string,
+    referenceId: string,
+    description?: string
+  ) {
+    return this.db.$transaction((tx) =>
+      this.spendInTx(tx, userId, amount, referenceType, referenceId, description)
+    );
+  }
+
+  async spendInTx(
+    tx: Tx,
+    userId: string,
+    amount: number,
+    referenceType: string,
+    referenceId: string,
+    description?: string
+  ) {
+    if (amount <= 0) {
+      throw new AppError("VALIDATION_ERROR", "Spend amount must be positive");
+    }
+
+    const user = await tx.user.findUnique({ where: { id: userId } });
+    if (!user || user.xp < amount) {
+      throw new AppError("NOT_ELIGIBLE_FOR_REWARD", "Insufficient steps");
+    }
+
+    try {
+      await tx.xPTransaction.create({
+        data: {
+          userId,
+          type: XPTransactionType.SPEND_REWARD,
+          referenceType,
+          referenceId,
+          amount: -amount,
+          description
+        }
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002"
+      ) {
+        throw new AppError("NOT_ELIGIBLE_FOR_REWARD", "Already spent");
+      }
+      throw error;
+    }
+
+    return this.recalculate(tx, userId);
+  }
+
+  async adjust(
+    userId: string,
+    amount: number,
+    referenceId: string,
+    description?: string
+  ) {
+    return this.db.$transaction(async (tx) => {
+      await tx.xPTransaction.create({
+        data: {
+          userId,
+          type: XPTransactionType.ADMIN_ADJUSTMENT,
+          referenceType: "admin",
+          referenceId,
+          amount,
+          description
+        }
+      });
+      return this.recalculate(tx, userId);
     });
   }
 
@@ -74,23 +177,23 @@ export class XPService {
       await tx.xPTransaction.deleteMany({
         where: { userId, type, referenceType, referenceId }
       });
-      const totalXP = await tx.xPTransaction.aggregate({
-        where: { userId },
-        _sum: { amount: true }
-      });
-      const xp = totalXP._sum.amount ?? 0;
-      const level = await this.levelService.calculateLevel(userId, xp, tx);
-      await tx.user.update({ where: { id: userId }, data: { xp, level } });
-      await this.syncXPBadges(tx, userId, xp);
-      return { xp, level };
+      return this.recalculate(tx, userId);
     });
   }
 
-  private async syncXPBadges(
-    db: Parameters<LevelService["calculateLevel"]>[2] & {},
-    userId: string,
-    xp: number
-  ) {
+  private async recalculate(tx: Tx, userId: string) {
+    const totalXP = await tx.xPTransaction.aggregate({
+      where: { userId },
+      _sum: { amount: true }
+    });
+    const xp = Math.max(totalXP._sum.amount ?? 0, 0);
+    const level = await this.levelService.calculateLevel(userId, xp, tx);
+    await tx.user.update({ where: { id: userId }, data: { xp, level } });
+    await this.syncXPBadges(tx, userId, xp);
+    return { xp, level };
+  }
+
+  private async syncXPBadges(db: Tx, userId: string, xp: number) {
     const user = await db.user.findUnique({
       where: { id: userId },
       select: { communityId: true }

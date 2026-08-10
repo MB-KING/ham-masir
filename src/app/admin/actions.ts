@@ -8,7 +8,9 @@ import {
   RewardRedemptionStatus,
   RewardStatus,
   RewardType,
-  Role
+  Role,
+  TelegramResourceType,
+  XPTransactionType
 } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -19,8 +21,11 @@ import {
   requireSuperAdminPage
 } from "@/modules/auth/admin-session";
 import { AttendanceService } from "@/modules/attendance/attendance.service";
+import { announcePublishedEvent } from "@/modules/events/announce.service";
 import { EventService } from "@/modules/events/event.service";
+import { MediaService } from "@/modules/media/media.service";
 import { logActivity, notifyUser } from "@/modules/activity/activity.service";
+import { earnStepTypes } from "@/shared/steps";
 
 const optionalPositiveInt = z.preprocess(
   (value) => (value === "" || value == null ? undefined : value),
@@ -78,7 +83,9 @@ const rewardFormSchema = z.object({
 const communityFormSchema = z.object({
   name: z.string().min(2),
   tagline: z.string().max(160).optional(),
-  isActive: z.preprocess((value) => value === "on", z.boolean())
+  isActive: z.preprocess((value) => value === "on", z.boolean()),
+  leaderboardEnabled: z.preprocess((value) => value === "on", z.boolean()),
+  autoAnnounceEnabled: z.preprocess((value) => value === "on", z.boolean())
 });
 
 const levelFormSchema = z.object({
@@ -115,24 +122,31 @@ export async function createEventAction(formData: FormData) {
   const admin = await requireEventManagerPage();
   const input = eventFormSchema.parse(Object.fromEntries(formData));
 
-  await new EventService().createEvent(admin.communityId, admin.id, {
-    title: input.title,
-    description: input.description || undefined,
-    eventNumber: input.eventNumber,
-    date: toDate(input.date),
-    meetingTime: toDate(input.date, input.meetingTime),
-    startTime: toDate(input.date, input.startTime),
-    endTime: input.endTime ? toDate(input.date, input.endTime) : undefined,
-    registrationDeadline: optionalDateTime(input.registrationDeadline),
-    checkInStartsAt: optionalDateTime(input.checkInStartsAt),
-    checkInEndsAt: optionalDateTime(input.checkInEndsAt),
-    locationName: input.locationName,
-    locationAddress: input.locationAddress || undefined,
-    latitude: input.latitude,
-    longitude: input.longitude,
-    capacity: input.capacity,
-    status: input.status
-  });
+  const event = await new EventService().createEvent(
+    admin.communityId,
+    admin.id,
+    {
+      title: input.title,
+      description: input.description || undefined,
+      eventNumber: input.eventNumber,
+      date: toDate(input.date),
+      meetingTime: toDate(input.date, input.meetingTime),
+      startTime: toDate(input.date, input.startTime),
+      endTime: input.endTime ? toDate(input.date, input.endTime) : undefined,
+      registrationDeadline: optionalDateTime(input.registrationDeadline),
+      checkInStartsAt: optionalDateTime(input.checkInStartsAt),
+      checkInEndsAt: optionalDateTime(input.checkInEndsAt),
+      locationName: input.locationName,
+      locationAddress: input.locationAddress || undefined,
+      latitude: input.latitude,
+      longitude: input.longitude,
+      capacity: input.capacity,
+      status: input.status
+    }
+  );
+  if (event.status === EventStatus.PUBLISHED) {
+    void announcePublishedEvent(event);
+  }
   revalidatePath("/");
   revalidatePath("/admin");
   revalidatePath("/admin/events");
@@ -144,7 +158,7 @@ export async function updateEventAction(formData: FormData) {
   const eventId = z.string().uuid().parse(formData.get("eventId"));
   const input = eventFormSchema.parse(Object.fromEntries(formData));
 
-  await prisma.event.update({
+  const event = await prisma.event.update({
     where: { id: eventId },
     data: {
       title: input.title,
@@ -173,6 +187,9 @@ export async function updateEventAction(formData: FormData) {
     entityId: eventId,
     metadata: { title: input.title }
   });
+  if (event.status === EventStatus.PUBLISHED) {
+    void announcePublishedEvent(event);
+  }
 
   revalidatePath("/");
   revalidatePath("/admin/events");
@@ -183,7 +200,10 @@ export async function setEventStatusAction(formData: FormData) {
   const admin = await requireEventManagerPage();
   const eventId = z.string().uuid().parse(formData.get("eventId"));
   const status = z.nativeEnum(EventStatus).parse(formData.get("status"));
-  await prisma.event.update({ where: { id: eventId }, data: { status } });
+  const event = await prisma.event.update({
+    where: { id: eventId },
+    data: { status }
+  });
   await logActivity({
     actorUserId: admin.id,
     action: "EVENT_STATUS_CHANGED",
@@ -191,6 +211,9 @@ export async function setEventStatusAction(formData: FormData) {
     entityId: eventId,
     metadata: { status }
   });
+  if (status === EventStatus.PUBLISHED) {
+    void announcePublishedEvent(event);
+  }
   revalidatePath("/");
   revalidatePath("/admin/events");
 }
@@ -636,4 +659,119 @@ export async function revokeSpecialBadgeAction(formData: FormData) {
   });
   revalidatePath("/admin/users");
   revalidatePath("/me");
+}
+
+export async function upsertStepRuleAction(formData: FormData) {
+  const admin = await requireSuperAdminPage();
+  const type = z.nativeEnum(XPTransactionType).parse(formData.get("type"));
+  if (!earnStepTypes.includes(type)) {
+    throw new Error("نوع قانون گام معتبر نیست.");
+  }
+  const amount = z.coerce.number().int().nonnegative().parse(formData.get("amount"));
+  await prisma.stepRule.upsert({
+    where: {
+      communityId_type: { communityId: admin.communityId, type }
+    },
+    update: { amount },
+    create: { communityId: admin.communityId, type, amount }
+  });
+  revalidatePath("/admin/settings");
+}
+
+export async function upsertWorkCategoryAction(formData: FormData) {
+  const admin = await requireSuperAdminPage();
+  const id = z.string().uuid().optional().or(z.literal("")).parse(formData.get("id") ?? "");
+  const name = z.string().min(2).parse(formData.get("name"));
+  const slug = z
+    .string()
+    .min(2)
+    .regex(/^[a-z0-9-]+$/)
+    .parse(formData.get("slug"));
+  const sortOrder = z.coerce.number().int().parse(formData.get("sortOrder") ?? 0);
+  const isActive = formData.get("isActive") === "on";
+  if (id) {
+    await prisma.workCategory.update({
+      where: { id },
+      data: { name, slug, sortOrder, isActive }
+    });
+  } else {
+    await prisma.workCategory.create({
+      data: {
+        communityId: admin.communityId,
+        name,
+        slug,
+        sortOrder,
+        isActive
+      }
+    });
+  }
+  revalidatePath("/admin/categories");
+  revalidatePath("/members");
+  revalidatePath("/me/settings");
+}
+
+export async function upsertTelegramResourceAction(formData: FormData) {
+  const admin = await requireSuperAdminPage();
+  const id = z.string().uuid().optional().or(z.literal("")).parse(formData.get("id") ?? "");
+  const data = {
+    name: z.string().min(2).parse(formData.get("name")),
+    description: z.string().optional().parse(formData.get("description") ?? "") || null,
+    link: z.string().url().parse(formData.get("link")),
+    type: z.nativeEnum(TelegramResourceType).parse(formData.get("type")),
+    sortOrder: z.coerce.number().int().parse(formData.get("sortOrder") ?? 0),
+    isActive: formData.get("isActive") === "on",
+    receiveAnnouncements: formData.get("receiveAnnouncements") === "on",
+    telegramChatId: (() => {
+      const raw = String(formData.get("telegramChatId") ?? "").trim();
+      return raw ? BigInt(raw) : null;
+    })()
+  };
+  if (id) {
+    await prisma.telegramResource.update({ where: { id }, data });
+  } else {
+    await prisma.telegramResource.create({
+      data: { communityId: admin.communityId, ...data }
+    });
+  }
+  revalidatePath("/admin/telegram");
+  revalidatePath("/community");
+}
+
+export async function deleteTelegramResourceAction(formData: FormData) {
+  const admin = await requireSuperAdminPage();
+  const id = z.string().uuid().parse(formData.get("id"));
+  await prisma.telegramResource.updateMany({
+    where: { id, communityId: admin.communityId },
+    data: { isActive: false }
+  });
+  revalidatePath("/admin/telegram");
+  revalidatePath("/community");
+}
+
+export async function uploadEventImageAction(formData: FormData) {
+  const admin = await requireSuperAdminPage();
+  const eventId = z.string().uuid().parse(formData.get("eventId"));
+  const caption = z.string().max(200).optional().parse(formData.get("caption") ?? "");
+  const file = formData.get("image");
+  if (!(file instanceof File) || file.size === 0) {
+    throw new Error("تصویر معتبر نیست.");
+  }
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const asset = await new MediaService().createFromUpload({
+    uploaderId: admin.id,
+    buffer,
+    filename: file.name || "event.jpg",
+    mimeType: file.type || "image/jpeg"
+  });
+  const count = await prisma.eventImage.count({ where: { eventId } });
+  await prisma.eventImage.create({
+    data: {
+      eventId,
+      mediaAssetId: asset.id,
+      caption: caption || null,
+      sortOrder: count
+    }
+  });
+  revalidatePath(`/admin/events/${eventId}/edit`);
+  revalidatePath(`/events/${eventId}`);
 }

@@ -6,8 +6,9 @@ import {
 } from "@prisma/client";
 import { lockNextRewardCode, lockRewardRow } from "@/lib/db-lock";
 import { prisma } from "@/lib/prisma";
-import { AppError } from "@/shared/errors";
 import { notifyUser } from "@/modules/activity/activity.service";
+import { XPService } from "@/modules/gamification/xp.service";
+import { AppError } from "@/shared/errors";
 
 const activeRedemptionStatuses: RewardRedemptionStatus[] = [
   RewardRedemptionStatus.REDEEMED,
@@ -15,6 +16,8 @@ const activeRedemptionStatuses: RewardRedemptionStatus[] = [
 ];
 
 export class RewardService {
+  constructor(private readonly xpService = new XPService()) {}
+
   async listApproved(take: number, skip: number) {
     const now = new Date();
     return prisma.reward.findMany({
@@ -80,12 +83,14 @@ export class RewardService {
           })
         ]);
 
+      const stepCost = reward.requiredXP ?? 0;
+
       if (
         !user ||
         (reward.minimumLevel && user.level < reward.minimumLevel) ||
         (reward.minimumAttendance &&
           attendanceCount < reward.minimumAttendance) ||
-        (reward.requiredXP && user.xp < reward.requiredXP)
+        (stepCost > 0 && user.xp < stepCost)
       ) {
         throw new AppError("NOT_ELIGIBLE_FOR_REWARD", "User is not eligible");
       }
@@ -130,6 +135,17 @@ export class RewardService {
             redeemedAt: now
           }
         });
+
+        if (stepCost > 0) {
+          await this.xpService.spendInTx(
+            tx,
+            userId,
+            stepCost,
+            "RewardRedemption",
+            redemption.id,
+            `خرج گام برای ${reward.title}`
+          );
+        }
 
         return {
           redemption,

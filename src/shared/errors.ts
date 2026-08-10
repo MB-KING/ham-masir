@@ -9,6 +9,8 @@ export type ErrorCode =
   | "ATTENDANCE_ALREADY_VERIFIED"
   | "NOT_ELIGIBLE_FOR_REWARD"
   | "REWARD_OUT_OF_STOCK"
+  | "NOT_FOUND"
+  | "FEEDBACK_NOT_ALLOWED"
   | "UNEXPECTED_ERROR";
 
 export class AppError extends Error {
@@ -32,5 +34,7 @@ export const errorMessagesFa: Record<ErrorCode, string> = {
   ATTENDANCE_ALREADY_VERIFIED: "حضور این عضو قبلا بررسی شده است.",
   NOT_ELIGIBLE_FOR_REWARD: "هنوز شرایط دریافت این مزیت را ندارید.",
   REWARD_OUT_OF_STOCK: "ظرفیت این مزیت تکمیل شده است.",
+  NOT_FOUND: "مورد درخواستی پیدا نشد.",
+  FEEDBACK_NOT_ALLOWED: "فقط بعد از حضور تأییدشده می‌توانید نظر بدهید.",
   UNEXPECTED_ERROR: "خطای غیرمنتظره رخ داد. لطفا دوباره تلاش کنید."
 };

@@ -1,6 +1,29 @@
-import { PrismaClient, Role, BadgeType, EventStatus, RewardStatus, RewardType, BusinessStatus } from "@prisma/client";
+import { PrismaClient, Role, BadgeType, EventStatus, RewardStatus, RewardType, BusinessStatus, XPTransactionType } from "@prisma/client";
 
 const prisma = new PrismaClient();
+
+const workCategories = [
+  ["programming", "برنامه‌نویسی و فناوری"],
+  ["design", "طراحی"],
+  ["marketing", "مارکتینگ"],
+  ["management", "مدیریت"],
+  ["sales", "فروش"],
+  ["finance", "مالی"],
+  ["medical", "پزشکی"],
+  ["law", "حقوق"],
+  ["art", "هنر"],
+  ["education", "آموزش"],
+  ["business", "کسب‌وکار و کارآفرینی"],
+  ["other", "سایر"]
+];
+
+const stepRules = [
+  [XPTransactionType.ATTEND_EVENT, 100],
+  [XPTransactionType.REFER_USER, 50],
+  [XPTransactionType.CREATE_REWARD, 75],
+  [XPTransactionType.COMPLETE_PROFILE, 25],
+  [XPTransactionType.ATTEND_SPECIAL_EVENT, 150]
+];
 
 async function main() {
   const community = await prisma.community.upsert({
@@ -12,6 +35,28 @@ async function main() {
       tagline: "یک مسیر، هزار تجربه"
     }
   });
+
+  for (const [index, [slug, name]] of workCategories.entries()) {
+    await prisma.workCategory.upsert({
+      where: { communityId_slug: { communityId: community.id, slug } },
+      update: { name, sortOrder: index, isActive: true },
+      create: {
+        communityId: community.id,
+        slug,
+        name,
+        sortOrder: index,
+        isActive: true
+      }
+    });
+  }
+
+  for (const [type, amount] of stepRules) {
+    await prisma.stepRule.upsert({
+      where: { communityId_type: { communityId: community.id, type } },
+      update: { amount },
+      create: { communityId: community.id, type, amount }
+    });
+  }
 
   const superAdmin = await prisma.user.upsert({
     where: { telegramId: 1000000001n },
