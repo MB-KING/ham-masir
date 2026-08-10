@@ -1,6 +1,7 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { sendTelegramMessage } from "@/lib/telegram-bot";
+import { formatNotificationHtml } from "@/lib/telegram-format";
 
 export async function logActivity(input: {
   actorUserId?: string | null;
@@ -26,6 +27,7 @@ export async function notifyUser(input: {
   title: string;
   body: string;
   eventPath?: string;
+  buttonText?: string;
   telegramOnly?: boolean;
 }) {
   const notification = input.telegramOnly
@@ -47,9 +49,11 @@ export async function notifyUser(input: {
   if (user && !user.deletedAt) {
     await sendTelegramMessage({
       chatId: user.telegramId,
-      text: `${input.title}\n\n${input.body}`,
+      text: formatNotificationHtml(input.title, input.body),
+      parseMode: "HTML",
       openApp: true,
-      eventPath: input.eventPath
+      eventPath: input.eventPath,
+      buttonText: input.buttonText ?? "باز کردن هم مسیر"
     });
   }
 

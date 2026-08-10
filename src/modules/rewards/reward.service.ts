@@ -168,8 +168,10 @@ export class RewardService {
       type: "REWARD_REDEEMED",
       title: "مزیت دریافت شد",
       body: result.code
-        ? `${result.rewardTitle} - کد: ${result.code}`
-        : result.rewardTitle
+        ? `«${result.rewardTitle}» فعال شد.\nکد: ${result.code}`
+        : `«${result.rewardTitle}» برات ثبت شد.`,
+      buttonText: "مشاهده پروفایل",
+      eventPath: "/me"
     });
 
     return result.redemption;

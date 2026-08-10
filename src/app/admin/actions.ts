@@ -179,7 +179,7 @@ export async function createEventAction(formData: FormData) {
       }
     );
     if (event.status === EventStatus.PUBLISHED) {
-      void announcePublishedEvent(event);
+      await announcePublishedEvent(event);
     }
     revalidatePath("/");
     revalidatePath("/admin");
@@ -236,7 +236,7 @@ export async function updateEventAction(formData: FormData) {
       metadata: { title: input.title }
     });
     if (event.status === EventStatus.PUBLISHED) {
-      void announcePublishedEvent(event);
+      await announcePublishedEvent(event);
     }
 
     revalidatePath("/");
@@ -270,7 +270,7 @@ export async function setEventStatusAction(formData: FormData) {
     metadata: { status }
   });
   if (status === EventStatus.PUBLISHED) {
-    void announcePublishedEvent(event);
+    await announcePublishedEvent(event);
   }
   revalidatePath("/");
   revalidatePath("/admin/events");

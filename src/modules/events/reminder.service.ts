@@ -80,7 +80,13 @@ export async function processEventReminders(now = new Date()) {
         userIds,
         kind: EventReminderKind.DAY_OF,
         title: "یادآوری برنامه امروز",
-        body: `امروز «${event.title}» داری.\nساعت قرار: ${faTimeFormatter.format(event.meetingTime)}\nمحل: ${event.locationName}\n\n۲ ساعت قبل از قرار هم دوباره یادآوری می‌فرستیم.`,
+        body: [
+          `امروز «${event.title}» داری.`,
+          `🕐 جمع شدن: ${faTimeFormatter.format(event.meetingTime)}`,
+          `📍 ${event.locationName}`,
+          "",
+          "۲ ساعت قبل از قرار هم دوباره یادآوری می‌فرستیم."
+        ].join("\n"),
         eventPath: `/events/${event.id}`
       });
     }
@@ -91,7 +97,12 @@ export async function processEventReminders(now = new Date()) {
         userIds,
         kind: EventReminderKind.TWO_HOURS_BEFORE,
         title: "۲ ساعت تا برنامه",
-        body: `حدود ۲ ساعت دیگر «${event.title}» شروع قرار دارد.\nساعت قرار: ${faTimeFormatter.format(event.meetingTime)}\nتاریخ: ${faDateFormatter.format(event.date)}\nمحل: ${event.locationName}`,
+        body: [
+          `حدود ۲ ساعت دیگر قرار «${event.title}» است.`,
+          `📅 ${faDateFormatter.format(event.date)}`,
+          `🕐 جمع شدن: ${faTimeFormatter.format(event.meetingTime)}`,
+          `📍 ${event.locationName}`
+        ].join("\n"),
         eventPath: `/events/${event.id}`
       });
     }
@@ -135,7 +146,8 @@ async function sendKindReminders(input: {
       type: `EVENT_REMINDER_${input.kind}`,
       title: input.title,
       body: input.body,
-      eventPath: input.eventPath
+      eventPath: input.eventPath,
+      buttonText: "مشاهده برنامه"
     });
     sent += 1;
   }

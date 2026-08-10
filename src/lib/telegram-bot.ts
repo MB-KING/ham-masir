@@ -1,5 +1,10 @@
 import { config } from "@/lib/config";
 import { logger } from "@/lib/logger";
+import {
+  formatStartMessageHtml,
+  isGroupOrChannelChat,
+  telegramDeepLink
+} from "@/lib/telegram-format";
 
 const apiBase = `https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN}`;
 
@@ -31,17 +36,41 @@ export function appPublicUrl() {
   );
 }
 
+function buildAppKeyboard(input: {
+  chatId: string;
+  eventPath?: string;
+  buttonText?: string;
+}) {
+  const label = input.buttonText ?? "باز کردن هم مسیر";
+  const webAppUrl = input.eventPath
+    ? `${appPublicUrl()}${input.eventPath}`
+    : appPublicUrl();
+
+  // web_app buttons only work in private chats with the bot.
+  if (isGroupOrChannelChat(input.chatId)) {
+    return {
+      inline_keyboard: [
+        [{ text: label, url: telegramDeepLink(input.eventPath) }]
+      ]
+    };
+  }
+
+  return {
+    inline_keyboard: [[{ text: label, web_app: { url: webAppUrl } }]]
+  };
+}
+
 export async function setupTelegramBot() {
   const url = appPublicUrl();
 
   await callTelegram("setMyCommands", {
     commands: [
-      { command: "start", description: "Start Ham Masir" },
-      { command: "app", description: "Open Mini App" },
-      { command: "help", description: "Help" },
-      { command: "addgroup", description: "Register current group (super admin)" },
-      { command: "removegroup", description: "Disable current group (super admin)" },
-      { command: "groupstatus", description: "Show group status (super admin)" }
+      { command: "start", description: "شروع هم مسیر" },
+      { command: "app", description: "باز کردن مینی‌اپ" },
+      { command: "help", description: "راهنما" },
+      { command: "addgroup", description: "ثبت گروه فعلی (سوپرادمین)" },
+      { command: "removegroup", description: "غیرفعال‌سازی گروه (سوپرادمین)" },
+      { command: "groupstatus", description: "وضعیت گروه (سوپرادمین)" }
     ]
   });
 
@@ -62,17 +91,16 @@ export async function setupTelegramBot() {
 }
 
 export async function sendStartMessage(chatId: number | string | bigint) {
-  const url = appPublicUrl();
+  const id = chatId.toString();
   return callTelegram("sendMessage", {
-    chat_id: chatId.toString(),
-    text:
-      "به هم مسیر خوش آمدی.\n\nبرای ورود و استفاده از اپ، دکمه زیر را بزن و مینی‌اپ را باز کن.",
-    reply_markup: {
-      inline_keyboard: [
-        [{ text: "🚀 باز کردن هم مسیر", web_app: { url } }],
-        [{ text: "سایت", url }]
-      ]
-    }
+    chat_id: id,
+    text: formatStartMessageHtml(),
+    parse_mode: "HTML",
+    disable_web_page_preview: true,
+    reply_markup: buildAppKeyboard({
+      chatId: id,
+      buttonText: "ورود به هم مسیر"
+    })
   });
 }
 
@@ -81,26 +109,29 @@ export async function sendTelegramMessage(input: {
   text: string;
   openApp?: boolean;
   eventPath?: string;
+  buttonText?: string;
+  parseMode?: "HTML";
 }) {
-  const url = appPublicUrl();
-  const appUrl = input.eventPath ? `${url}${input.eventPath}` : url;
+  const chatId = input.chatId.toString();
   const keyboard = input.openApp
-    ? {
-        inline_keyboard: [
-          [{ text: "باز کردن هم مسیر", web_app: { url: appUrl } }]
-        ]
-      }
+    ? buildAppKeyboard({
+        chatId,
+        eventPath: input.eventPath,
+        buttonText: input.buttonText
+      })
     : undefined;
 
   try {
     return await callTelegram("sendMessage", {
-      chat_id: input.chatId.toString(),
+      chat_id: chatId,
       text: input.text,
+      parse_mode: input.parseMode,
+      disable_web_page_preview: true,
       reply_markup: keyboard
     });
   } catch (error) {
     logger.warn("telegram_send_failed", {
-      chatId: input.chatId.toString(),
+      chatId,
       reason: error instanceof Error ? error.message : "unknown"
     });
     return null;

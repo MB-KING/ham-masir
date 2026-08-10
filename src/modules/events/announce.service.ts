@@ -2,6 +2,7 @@ import { EventStatus, Prisma } from "@prisma/client";
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { appPublicUrl, sendTelegramMessage } from "@/lib/telegram-bot";
+import { formatEventAnnounceHtml } from "@/lib/telegram-format";
 
 type AnnounceEvent = {
   id: string;
@@ -16,16 +17,6 @@ type AnnounceEvent = {
   status: EventStatus;
 };
 
-const dateFormatter = new Intl.DateTimeFormat("fa-IR", {
-  weekday: "long",
-  month: "long",
-  day: "numeric"
-});
-const timeFormatter = new Intl.DateTimeFormat("fa-IR", {
-  hour: "2-digit",
-  minute: "2-digit"
-});
-
 export async function announcePublishedEvent(event: AnnounceEvent) {
   if (event.status !== EventStatus.PUBLISHED) return;
 
@@ -34,7 +25,10 @@ export async function announcePublishedEvent(event: AnnounceEvent) {
       where: { id: event.communityId },
       select: { autoAnnounceEnabled: true }
     });
-    if (!community?.autoAnnounceEnabled) return;
+    if (!community?.autoAnnounceEnabled) {
+      logger.info("event_announce_skipped_disabled", { eventId: event.id });
+      return;
+    }
 
     const resources = await prisma.telegramResource.findMany({
       where: {
@@ -45,20 +39,12 @@ export async function announcePublishedEvent(event: AnnounceEvent) {
       }
     });
 
-    const text = [
-      `🆕 برنامه جدید هم مسیر`,
-      ``,
-      `📍 ${event.title}`,
-      `شماره ${event.eventNumber}`,
-      `🗓 ${dateFormatter.format(event.date)}`,
-      `⏰ ${timeFormatter.format(event.meetingTime)}`,
-      `📌 ${event.locationName}`,
-      event.description ? `\n${event.description.slice(0, 180)}` : "",
-      ``,
-      `برای مشاهده و ثبت‌نام دکمه زیر را بزن.`
-    ]
-      .filter(Boolean)
-      .join("\n");
+    if (resources.length === 0) {
+      logger.warn("event_announce_no_targets", { eventId: event.id });
+      return;
+    }
+
+    const text = formatEventAnnounceHtml(event);
 
     for (const resource of resources) {
       if (!resource.telegramChatId) continue;
@@ -76,14 +62,17 @@ export async function announcePublishedEvent(event: AnnounceEvent) {
       const result = await sendTelegramMessage({
         chatId: resource.telegramChatId,
         text,
+        parseMode: "HTML",
         openApp: true,
-        eventPath: `/events/${event.id}`
+        eventPath: `/events/${event.id}`,
+        buttonText: "مشاهده و ثبت‌نام"
       });
 
       if (!result) {
         logger.warn("event_announce_failed", {
           eventId: event.id,
-          resourceId: resource.id
+          resourceId: resource.id,
+          chatId: resource.telegramChatId.toString()
         });
         continue;
       }
@@ -98,6 +87,11 @@ export async function announcePublishedEvent(event: AnnounceEvent) {
                 ? String((result as { message_id: number }).message_id)
                 : null
           }
+        });
+        logger.info("event_announce_sent", {
+          eventId: event.id,
+          resourceId: resource.id,
+          chatId: resource.telegramChatId.toString()
         });
       } catch (error) {
         if (

@@ -52,7 +52,12 @@ export class RegistrationService {
         registration.status === RegistrationStatus.WAITLISTED
           ? "در لیست انتظار قرار گرفتی"
           : "ثبت‌نام انجام شد",
-      body: registration.eventTitle
+      body:
+        registration.status === RegistrationStatus.WAITLISTED
+          ? `برای «${registration.eventTitle}» در لیست انتظاری. اگر جا باز شود خبرت می‌کنیم.`
+          : `ثبت‌نامت برای «${registration.eventTitle}» قطعی شد. منتظر دیدارت هستیم.`,
+      eventPath: `/events/${eventId}`,
+      buttonText: "مشاهده برنامه"
     });
 
     return registration.registration;
@@ -101,7 +106,9 @@ export class RegistrationService {
       userId,
       type: "REGISTRATION_CANCELLED",
       title: "ثبت‌نام لغو شد",
-      body: result.eventTitle
+      body: `ثبت‌نامت برای «${result.eventTitle}» لغو شد.`,
+      eventPath: `/events/${eventId}`,
+      buttonText: "مشاهده برنامه"
     });
 
     if (result.promotedUserId) {
@@ -109,7 +116,9 @@ export class RegistrationService {
         userId: result.promotedUserId,
         type: "WAITLIST_PROMOTED",
         title: "جای تو در برنامه قطعی شد",
-        body: result.eventTitle
+        body: `از لیست انتظار برای «${result.eventTitle}» به ثبت‌نام قطعی منتقل شدی.`,
+        eventPath: `/events/${eventId}`,
+        buttonText: "مشاهده برنامه"
       });
     }
 

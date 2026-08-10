@@ -3,12 +3,16 @@
 import Script from "next/script";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { pathFromStartParam } from "@/lib/telegram-format";
 
 declare global {
   interface Window {
     Telegram?: {
       WebApp?: {
         initData?: string;
+        initDataUnsafe?: {
+          start_param?: string;
+        };
         ready: () => void;
         expand: () => void;
         setHeaderColor?: (color: string) => void;
@@ -59,7 +63,13 @@ export function TelegramProvider({ children }: { children: React.ReactNode }) {
 
     try {
       await loginWithInitData(initData);
-      router.refresh();
+      const startParam = webApp.initDataUnsafe?.start_param;
+      const deepPath = startParam ? pathFromStartParam(startParam) : null;
+      if (deepPath && deepPath !== "/") {
+        router.replace(deepPath as never);
+      } else {
+        router.refresh();
+      }
     } catch {
       bootstrapped.current = false;
     }
