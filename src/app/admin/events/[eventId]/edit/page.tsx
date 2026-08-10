@@ -7,6 +7,8 @@ import {
   uploadEventImageAction
 } from "@/app/admin/actions";
 import { AdminCard, PageTitle } from "@/components/admin/admin-card";
+import { Button } from "@/components/ui/button";
+import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import { prisma } from "@/lib/prisma";
 import { requireSuperAdminPage } from "@/modules/auth/admin-session";
 import { mediaPublicPath } from "@/modules/media/media.service";
@@ -17,12 +19,15 @@ import {
 } from "@/shared/form-date";
 
 export default async function EditEventPage({
-  params
+  params,
+  searchParams
 }: {
   params: Promise<{ eventId: string }>;
+  searchParams: Promise<{ error?: string; ok?: string }>;
 }) {
   await requireSuperAdminPage();
   const { eventId } = await params;
+  const { error, ok } = await searchParams;
   const event = await prisma.event.findUnique({
     where: { id: eventId },
     include: {
@@ -42,6 +47,16 @@ export default async function EditEventPage({
         title="ویرایش برنامه"
         subtitle="سوپرادمین می‌تواند اطلاعات اصلی، زمان، مکان، ظرفیت و وضعیت برنامه را اصلاح کند."
       />
+      {ok === "image" ? (
+        <AdminCard className="mb-4 border-emerald-400/30 bg-emerald-500/10">
+          <p className="text-sm font-bold text-emerald-200">تصویر با موفقیت اضافه شد.</p>
+        </AdminCard>
+      ) : null}
+      {error ? (
+        <AdminCard className="mb-4 border-red-400/30 bg-red-500/10">
+          <p className="text-sm font-bold text-red-200">{error}</p>
+        </AdminCard>
+      ) : null}
       <div className="mb-4 flex flex-wrap gap-2">
         <Link
           href={`/admin/events/${eventId}/feedback` as Route}
@@ -84,12 +99,12 @@ export default async function EditEventPage({
               className="h-11 rounded-xl border border-white/10 bg-[#061124] px-3 text-white"
             />
           </label>
-          <button
-            type="submit"
-            className="inline-flex h-11 items-center justify-center rounded-xl bg-white/10 text-sm font-bold text-white"
+          <PendingSubmitButton
+            className="w-full bg-white/10 text-sm font-bold text-white"
+            pendingLabel="در حال آپلود…"
           >
             افزودن تصویر
-          </button>
+          </PendingSubmitButton>
         </form>
       </AdminCard>
       <AdminCard>
@@ -213,12 +228,13 @@ export default async function EditEventPage({
             />
           </label>
           <div>
-            <button
-              className="min-h-11 w-full rounded-xl bg-[#F59E0B] px-5 text-sm font-black text-[#061124]"
+            <Button
+              className="w-full"
               type="submit"
+              pendingLabel="در حال ذخیره…"
             >
               ذخیره تغییرات
-            </button>
+            </Button>
           </div>
         </form>
       </AdminCard>

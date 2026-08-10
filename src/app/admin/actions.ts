@@ -751,27 +751,42 @@ export async function deleteTelegramResourceAction(formData: FormData) {
 export async function uploadEventImageAction(formData: FormData) {
   const admin = await requireSuperAdminPage();
   const eventId = z.string().uuid().parse(formData.get("eventId"));
-  const caption = z.string().max(200).optional().parse(formData.get("caption") ?? "");
+  const caption = z
+    .string()
+    .max(200)
+    .optional()
+    .parse(formData.get("caption") ?? "");
   const file = formData.get("image");
-  if (!(file instanceof File) || file.size === 0) {
-    throw new Error("تصویر معتبر نیست.");
-  }
-  const buffer = Buffer.from(await file.arrayBuffer());
-  const asset = await new MediaService().createFromUpload({
-    uploaderId: admin.id,
-    buffer,
-    filename: file.name || "event.jpg",
-    mimeType: file.type || "image/jpeg"
-  });
-  const count = await prisma.eventImage.count({ where: { eventId } });
-  await prisma.eventImage.create({
-    data: {
-      eventId,
-      mediaAssetId: asset.id,
-      caption: caption || null,
-      sortOrder: count
+
+  try {
+    if (!(file instanceof File) || file.size === 0) {
+      throw new Error("تصویر معتبر نیست.");
     }
-  });
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const asset = await new MediaService().createFromUpload({
+      uploaderId: admin.id,
+      buffer,
+      filename: file.name || "event.jpg",
+      mimeType: file.type || "image/jpeg"
+    });
+    const count = await prisma.eventImage.count({ where: { eventId } });
+    await prisma.eventImage.create({
+      data: {
+        eventId,
+        mediaAssetId: asset.id,
+        caption: caption || null,
+        sortOrder: count
+      }
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "آپلود تصویر ناموفق بود.";
+    redirect(
+      `/admin/events/${eventId}/edit?error=${encodeURIComponent(message)}` as never
+    );
+  }
+
   revalidatePath(`/admin/events/${eventId}/edit`);
   revalidatePath(`/events/${eventId}`);
+  redirect(`/admin/events/${eventId}/edit?ok=image` as never);
 }

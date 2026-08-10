@@ -18,19 +18,14 @@ type TelegramFile = {
   file_size?: number;
 };
 
-async function callTelegram<T>(
+async function callTelegramJson<T>(
   method: string,
-  body?: FormData | Record<string, unknown>
+  body?: Record<string, unknown>
 ): Promise<T> {
-  const isForm = typeof FormData !== "undefined" && body instanceof FormData;
   const response = await fetch(`${apiBase}/${method}`, {
     method: "POST",
-    headers: isForm ? undefined : { "Content-Type": "application/json" },
-    body: isForm
-      ? body
-      : body
-        ? JSON.stringify(body)
-        : undefined,
+    headers: { "Content-Type": "application/json" },
+    body: body ? JSON.stringify(body) : undefined,
     cache: "no-store"
   });
   const payload = (await response.json()) as {
@@ -44,13 +39,38 @@ async function callTelegram<T>(
   return payload.result;
 }
 
+async function callTelegramForm<T>(method: string, form: FormData): Promise<T> {
+  const response = await fetch(`${apiBase}/${method}`, {
+    method: "POST",
+    body: form,
+    cache: "no-store"
+  });
+  const payload = (await response.json()) as {
+    ok: boolean;
+    description?: string;
+    result: T;
+  };
+  if (!payload.ok) {
+    throw new Error(payload.description ?? `Telegram API failed: ${method}`);
+  }
+  return payload.result;
+}
+
+function storageChatId() {
+  return (
+    config.TELEGRAM_STORAGE_CHAT_ID ||
+    process.env.TELEGRAM_STORAGE_CHAT_ID ||
+    ""
+  ).trim();
+}
+
 export async function uploadPhotoToTelegramStorage(input: {
   buffer: Buffer;
   filename: string;
   contentType: string;
   caption?: string;
 }) {
-  const chatId = process.env.TELEGRAM_STORAGE_CHAT_ID;
+  const chatId = storageChatId();
   if (!chatId) {
     throw new Error("TELEGRAM_STORAGE_CHAT_ID is not configured");
   }
@@ -58,13 +78,16 @@ export async function uploadPhotoToTelegramStorage(input: {
   const form = new FormData();
   form.append("chat_id", chatId);
   if (input.caption) form.append("caption", input.caption);
+
+  // Blob + filename is the most reliable multipart shape on Node/Vercel.
+  const bytes = Uint8Array.from(input.buffer);
   form.append(
     "photo",
-    new Blob([new Uint8Array(input.buffer)], { type: input.contentType }),
-    input.filename
+    new Blob([bytes], { type: input.contentType }),
+    input.filename || "photo.jpg"
   );
 
-  const message = await callTelegram<{
+  const message = await callTelegramForm<{
     photo?: TelegramPhotoSize[];
   }>("sendPhoto", form);
 
@@ -84,7 +107,7 @@ export async function uploadPhotoToTelegramStorage(input: {
 }
 
 export async function resolveTelegramFile(fileId: string) {
-  const file = await callTelegram<TelegramFile>("getFile", {
+  const file = await callTelegramJson<TelegramFile>("getFile", {
     file_id: fileId
   });
   if (!file.file_path) {

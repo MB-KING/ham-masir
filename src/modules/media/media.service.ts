@@ -1,4 +1,5 @@
 import { MediaProvider } from "@prisma/client";
+import { config } from "@/lib/config";
 import {
   fetchTelegramFileBytes,
   uploadPhotoToTelegramStorage
@@ -7,7 +8,24 @@ import { prisma } from "@/lib/prisma";
 import { AppError } from "@/shared/errors";
 
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
-const ALLOWED_MIME = new Set(["image/jpeg", "image/png", "image/webp"]);
+const ALLOWED_MIME = new Set([
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+  "image/gif"
+]);
+
+function guessMime(filename: string, mimeType?: string | null) {
+  const normalized = (mimeType || "").toLowerCase().trim();
+  if (normalized && ALLOWED_MIME.has(normalized)) return normalized;
+  const lower = filename.toLowerCase();
+  if (lower.endsWith(".png")) return "image/png";
+  if (lower.endsWith(".webp")) return "image/webp";
+  if (lower.endsWith(".gif")) return "image/gif";
+  if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg";
+  return normalized || "image/jpeg";
+}
 
 export class MediaService {
   async createFromUpload(input: {
@@ -16,19 +34,32 @@ export class MediaService {
     filename: string;
     mimeType: string;
   }) {
-    if (!ALLOWED_MIME.has(input.mimeType)) {
+    const mimeType = guessMime(input.filename, input.mimeType);
+    if (!ALLOWED_MIME.has(mimeType)) {
       throw new AppError("VALIDATION_ERROR", "Unsupported image type");
     }
     if (input.buffer.byteLength > MAX_UPLOAD_BYTES) {
       throw new AppError("VALIDATION_ERROR", "Image too large (max 5MB)");
     }
+    if (input.buffer.byteLength < 32) {
+      throw new AppError("VALIDATION_ERROR", "Image file is empty");
+    }
 
-    const storageChat = process.env.TELEGRAM_STORAGE_CHAT_ID;
-    if (storageChat) {
+    const storageChat =
+      config.TELEGRAM_STORAGE_CHAT_ID || process.env.TELEGRAM_STORAGE_CHAT_ID;
+
+    if (!storageChat) {
+      throw new AppError(
+        "VALIDATION_ERROR",
+        "TELEGRAM_STORAGE_CHAT_ID روی سرور تنظیم نشده است."
+      );
+    }
+
+    try {
       const uploaded = await uploadPhotoToTelegramStorage({
         buffer: input.buffer,
-        filename: input.filename,
-        contentType: input.mimeType
+        filename: input.filename || `upload-${Date.now()}.jpg`,
+        contentType: mimeType
       });
       return prisma.mediaAsset.create({
         data: {
@@ -41,18 +72,14 @@ export class MediaService {
           uploaderId: input.uploaderId
         }
       });
+    } catch (error) {
+      const reason =
+        error instanceof Error ? error.message : "unknown telegram error";
+      throw new AppError(
+        "VALIDATION_ERROR",
+        `آپلود به تلگرام ناموفق بود: ${reason}`
+      );
     }
-
-    // Dev / fallback: data URL stored as URL provider (not for large prod use)
-    const dataUrl = `data:${input.mimeType};base64,${input.buffer.toString("base64")}`;
-    return prisma.mediaAsset.create({
-      data: {
-        provider: MediaProvider.URL,
-        url: dataUrl,
-        mimeType: input.mimeType,
-        uploaderId: input.uploaderId
-      }
-    });
   }
 
   async getStreamable(mediaId: string) {
