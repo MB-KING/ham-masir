@@ -34,13 +34,25 @@ export function validateTelegramInitData(initData: string, botToken = config.TEL
   const secretKey = crypto.createHmac("sha256", "WebAppData").update(botToken).digest();
   const calculatedHash = crypto.createHmac("sha256", secretKey).update(dataCheckString).digest("hex");
 
-  if (hash.length !== calculatedHash.length || !crypto.timingSafeEqual(Buffer.from(calculatedHash, "hex"), Buffer.from(hash, "hex"))) {
+  const hashBuffer = Buffer.from(hash, "hex");
+  const calculatedHashBuffer = Buffer.from(calculatedHash, "hex");
+
+  if (
+    hash.length !== calculatedHash.length ||
+    hashBuffer.length !== calculatedHashBuffer.length ||
+    !crypto.timingSafeEqual(calculatedHashBuffer, hashBuffer)
+  ) {
     throw new AppError("UNAUTHORIZED", "Invalid Telegram signature", 401);
   }
 
   const authDate = Number(params.get("auth_date"));
   const maxAgeSeconds = 24 * 60 * 60;
-  if (!Number.isFinite(authDate) || Date.now() / 1000 - authDate > maxAgeSeconds) {
+  const ageSeconds = Date.now() / 1000 - authDate;
+  if (
+    !Number.isFinite(authDate) ||
+    ageSeconds < 0 ||
+    ageSeconds > maxAgeSeconds
+  ) {
     throw new AppError("UNAUTHORIZED", "Expired Telegram auth data", 401);
   }
 

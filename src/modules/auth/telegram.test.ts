@@ -2,9 +2,9 @@ import crypto from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { validateTelegramInitData } from "@/modules/auth/telegram";
 
-function signedInitData(botToken: string) {
+function signedInitData(botToken: string, authDate = Math.floor(Date.now() / 1000)) {
   const params = new URLSearchParams({
-    auth_date: `${Math.floor(Date.now() / 1000)}`,
+    auth_date: `${authDate}`,
     query_id: "AAHdF6IQAAAAAN0XohDhrOrc",
     user: JSON.stringify({ id: 42, first_name: "Ham", username: "walker" })
   });
@@ -28,5 +28,23 @@ describe("validateTelegramInitData", () => {
   it("rejects tampered init data", () => {
     const data = signedInitData("secret-token").replace("walker", "intruder");
     expect(() => validateTelegramInitData(data, "secret-token")).toThrow();
+  });
+
+  it("rejects malformed hashes as unauthorized errors", () => {
+    const params = new URLSearchParams(signedInitData("secret-token"));
+    params.set("hash", "z".repeat(64));
+
+    expect(() => validateTelegramInitData(params.toString(), "secret-token")).toThrow(
+      "Invalid Telegram signature"
+    );
+  });
+
+  it("rejects auth dates from the future", () => {
+    const futureAuthDate = Math.floor(Date.now() / 1000) + 60;
+    const data = signedInitData("secret-token", futureAuthDate);
+
+    expect(() => validateTelegramInitData(data, "secret-token")).toThrow(
+      "Expired Telegram auth data"
+    );
   });
 });
