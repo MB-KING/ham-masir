@@ -15,7 +15,9 @@ export async function requireAdminPage() {
     redirect("/open-in-telegram");
   }
   if (!hasAnyRole(user, adminRoles)) {
-    redirect("/admin/forbidden");
+    // Never send regular users to /admin/forbidden — layout also requires admin
+    // and that combination used to infinite-redirect.
+    redirect("/");
   }
   return user;
 }
@@ -26,7 +28,7 @@ export async function requireEventManagerPage() {
     redirect("/open-in-telegram");
   }
   if (!hasAnyRole(user, eventManagerRoles)) {
-    redirect("/admin/forbidden");
+    redirect(hasAnyRole(user, adminRoles) ? "/admin/forbidden" : "/");
   }
   return user;
 }

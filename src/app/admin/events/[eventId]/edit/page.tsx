@@ -8,7 +8,7 @@ import { EventImageUploadForm } from "@/components/admin/event-image-upload-form
 import { PersianDateField } from "@/components/admin/persian-date-field";
 import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/prisma";
-import { requireSuperAdminPage } from "@/modules/auth/admin-session";
+import { requireEventManagerPage } from "@/modules/auth/admin-session";
 import { mediaPublicPath } from "@/modules/media/media.service";
 import { MEETING_OFFSET_MINUTES } from "@/shared/event-timing";
 import { dateInputValue, timeInputValue } from "@/shared/form-date";
@@ -20,7 +20,7 @@ export default async function EditEventPage({
   params: Promise<{ eventId: string }>;
   searchParams: Promise<{ error?: string }>;
 }) {
-  await requireSuperAdminPage();
+  await requireEventManagerPage();
   const { eventId } = await params;
   const { error } = await searchParams;
   const event = await prisma.event.findUnique({

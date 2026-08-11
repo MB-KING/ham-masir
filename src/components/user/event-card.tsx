@@ -12,17 +12,14 @@ import {
 import Link from "next/link";
 import { UserCard } from "@/components/user/user-card";
 import { cn } from "@/lib/cn";
+import {
+  faTehranDateShortFormatter,
+  faTehranTimeFormatter
+} from "@/lib/tehran-time";
 import { MEETING_TIME_LABEL, START_TIME_LABEL } from "@/shared/copy";
 
-const dateFormatter = new Intl.DateTimeFormat("fa-IR", {
-  weekday: "long",
-  month: "long",
-  day: "numeric"
-});
-const timeFormatter = new Intl.DateTimeFormat("fa-IR", {
-  hour: "2-digit",
-  minute: "2-digit"
-});
+const dateFormatter = faTehranDateShortFormatter;
+const timeFormatter = faTehranTimeFormatter;
 
 type EventCardEvent = {
   id: string;

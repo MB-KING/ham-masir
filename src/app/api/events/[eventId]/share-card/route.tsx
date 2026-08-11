@@ -1,8 +1,12 @@
 import { ImageResponse } from "next/og";
 import { prisma } from "@/lib/prisma";
+import { logger } from "@/lib/logger";
+import {
+  faTehranDateShortFormatter,
+  faTehranTimeFormatter
+} from "@/lib/tehran-time";
 import { publicEventStatuses } from "@/modules/events/event.repository";
 import { MediaService } from "@/modules/media/media.service";
-import { logger } from "@/lib/logger";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -13,15 +17,8 @@ const sizes = {
   landscape: { width: 1200, height: 630 }
 } as const;
 
-const dateFormatter = new Intl.DateTimeFormat("fa-IR", {
-  weekday: "long",
-  month: "long",
-  day: "numeric"
-});
-const timeFormatter = new Intl.DateTimeFormat("fa-IR", {
-  hour: "2-digit",
-  minute: "2-digit"
-});
+const dateFormatter = faTehranDateShortFormatter;
+const timeFormatter = faTehranTimeFormatter;
 
 async function loadVazirmatnFont() {
   const sources = [

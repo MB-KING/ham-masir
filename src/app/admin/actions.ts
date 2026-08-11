@@ -19,6 +19,7 @@ import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
+import { tehranWallTimeToUtc } from "@/lib/tehran-time";
 import {
   requireEventManagerPage,
   requireSuperAdminPage
@@ -150,13 +151,11 @@ function normalizeTime(time: string) {
 function toDate(date: string, time = "00:00") {
   const normalizedTime =
     time.includes(":") && time.length < 8 ? normalizeTime(time) : time;
-  const value = new Date(
-    `${date}T${normalizedTime.length === 5 ? `${normalizedTime}:00` : normalizedTime}`
+  // Admin times are Tehran wall-clock (not Vercel UTC server local).
+  return tehranWallTimeToUtc(
+    date,
+    normalizedTime.length >= 8 ? normalizedTime.slice(0, 5) : normalizedTime
   );
-  if (Number.isNaN(value.getTime())) {
-    throw new Error("تاریخ یا ساعت معتبر نیست.");
-  }
-  return value;
 }
 
 export async function createEventAction(formData: FormData) {
@@ -209,7 +208,7 @@ export async function createEventAction(formData: FormData) {
 }
 
 export async function updateEventAction(formData: FormData) {
-  const admin = await requireSuperAdminPage();
+  const admin = await requireEventManagerPage();
   const eventId = z.string().uuid().parse(formData.get("eventId"));
   try {
     const parsed = eventFormSchema.safeParse(Object.fromEntries(formData));
@@ -303,12 +302,20 @@ export async function verifyAttendanceAction(formData: FormData) {
     .nativeEnum(AttendanceStatus)
     .parse(formData.get("status") ?? AttendanceStatus.PRESENT);
 
-  await new AttendanceService().verify({
-    eventId,
-    userId,
-    verifiedById: admin.id,
-    status
-  });
+  try {
+    await new AttendanceService().verify({
+      eventId,
+      userId,
+      verifiedById: admin.id,
+      status
+    });
+  } catch (error) {
+    logger.warn("verify_attendance_failed", {
+      eventId,
+      userId,
+      reason: error instanceof Error ? error.message : "unknown"
+    });
+  }
   revalidatePath("/admin/events");
   revalidatePath(`/admin/events/${eventId}/attendance`);
 }
@@ -834,7 +841,7 @@ export async function deleteTelegramResourceAction(formData: FormData) {
 }
 
 export async function uploadEventImageAction(formData: FormData) {
-  const admin = await requireSuperAdminPage();
+  const admin = await requireEventManagerPage();
   const eventId = z.string().uuid().parse(formData.get("eventId"));
   const caption = z
     .string()

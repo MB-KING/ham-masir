@@ -16,16 +16,21 @@ import {
   isRewardEligible,
   rewardEligibilityText
 } from "@/shared/rewards";
+import { errorMessagesFa, type ErrorCode } from "@/shared/errors";
 
 export const dynamic = "force-dynamic";
 
 export default async function RewardsPage({
   searchParams
 }: {
-  searchParams: Promise<{ received?: string }>;
+  searchParams: Promise<{ received?: string; error?: string }>;
 }) {
   const user = await getOptionalCurrentUser();
-  const { received } = await searchParams;
+  const { received, error } = await searchParams;
+  const errorText =
+    error && error in errorMessagesFa
+      ? errorMessagesFa[error as ErrorCode]
+      : null;
   const now = new Date();
   const [rewards, attendanceCount] = await Promise.all([
     prisma.reward.findMany({
@@ -76,6 +81,22 @@ export default async function RewardsPage({
               </h2>
               <p className="mt-1 text-sm leading-7 text-slate-300">
                 اطلاعات آن در بخش «مزایای دریافت‌شده» پروفایل تو نگهداری می‌شود.
+              </p>
+            </div>
+          </div>
+        </UserCard>
+      ) : null}
+      {errorText ? (
+        <UserCard className="mb-4 border-rose-400/30 bg-rose-500/10">
+          <div className="flex items-start gap-3">
+            <LockKeyhole
+              className="mt-0.5 shrink-0 text-rose-300"
+              aria-hidden="true"
+            />
+            <div>
+              <h2 className="font-black text-white">دریافت مزیت انجام نشد</h2>
+              <p className="mt-1 text-sm leading-7 text-slate-300">
+                {errorText}
               </p>
             </div>
           </div>

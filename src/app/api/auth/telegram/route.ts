@@ -25,7 +25,8 @@ export async function POST(request: Request) {
       name: TELEGRAM_INIT_COOKIE,
       value: input.initData,
       httpOnly: true,
-      secure: true,
+      // Local http://localhost cannot set Secure cookies in browsers.
+      secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
       maxAge: 60 * 60 * 24

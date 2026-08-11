@@ -1,8 +1,9 @@
-import { AttendanceStatus } from "@prisma/client";
+import { AttendanceStatus, RegistrationStatus } from "@prisma/client";
 import { verifyAttendanceAction } from "@/app/admin/actions";
 import { AdminCard, PageTitle } from "@/components/admin/admin-card";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import { prisma } from "@/lib/prisma";
+import { faTehranDayFormatter } from "@/lib/tehran-time";
 import { requireEventManagerPage } from "@/modules/auth/admin-session";
 import { attendanceStatusLabels, labelOf, registrationStatusLabels } from "@/shared/labels";
 
@@ -55,7 +56,7 @@ export default async function AttendancePage({ params }: { params: Promise<{ eve
       <AdminCard>
         <div className="mb-4 grid gap-2 text-sm text-slate-300">
           <span>ثبت‌نام‌ها: {event.registrations.length}</span>
-          <span>تاریخ: {new Intl.DateTimeFormat("fa-IR").format(event.date)}</span>
+          <span>تاریخ: {faTehranDayFormatter.format(event.date)}</span>
           <span>شماره برنامه: {event.eventNumber}</span>
         </div>
 
@@ -78,7 +79,13 @@ export default async function AttendancePage({ params }: { params: Promise<{ eve
                     </p>
                   </div>
                   <div className="grid grid-cols-3 gap-2">
-                    <AttendanceButton eventId={event.id} userId={registration.userId} currentStatus={attendance?.status} status={AttendanceStatus.PRESENT} label="حاضر" />
+                    {registration.status === RegistrationStatus.REGISTERED ? (
+                      <AttendanceButton eventId={event.id} userId={registration.userId} currentStatus={attendance?.status} status={AttendanceStatus.PRESENT} label="حاضر" />
+                    ) : (
+                      <div className="inline-flex min-h-11 items-center justify-center rounded-xl border border-dashed border-white/15 px-2 text-xs text-slate-400">
+                        فقط قطعی
+                      </div>
+                    )}
                     <AttendanceButton eventId={event.id} userId={registration.userId} currentStatus={attendance?.status} status={AttendanceStatus.ABSENT} label="غایب" />
                     <AttendanceButton eventId={event.id} userId={registration.userId} currentStatus={attendance?.status} status={AttendanceStatus.REJECTED} label="رد" />
                   </div>

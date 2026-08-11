@@ -16,6 +16,10 @@ import { UserCard, UserPageHeader } from "@/components/user/user-card";
 import { UserPageShell } from "@/components/user/user-shell";
 import { miniAppWidthClass } from "@/components/user/mini-app";
 import { prisma } from "@/lib/prisma";
+import {
+  faTehranDateFormatter,
+  faTehranTimeFormatter
+} from "@/lib/tehran-time";
 import { getOptionalCurrentUser } from "@/modules/auth/session";
 import { publicEventStatuses } from "@/modules/events/event.repository";
 import { mediaPublicPath } from "@/modules/media/media.service";
@@ -24,16 +28,8 @@ import { errorMessagesFa, type ErrorCode } from "@/shared/errors";
 
 export const dynamic = "force-dynamic";
 
-const dateFormatter = new Intl.DateTimeFormat("fa-IR", {
-  weekday: "long",
-  year: "numeric",
-  month: "long",
-  day: "numeric"
-});
-const timeFormatter = new Intl.DateTimeFormat("fa-IR", {
-  hour: "2-digit",
-  minute: "2-digit"
-});
+const dateFormatter = faTehranDateFormatter;
+const timeFormatter = faTehranTimeFormatter;
 
 export default async function EventDetailsPage({
   params,

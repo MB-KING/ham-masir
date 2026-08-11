@@ -23,7 +23,13 @@ const nextConfig: NextConfig = {
       source: "/:path*",
       headers: [
         { key: "X-Content-Type-Options", value: "nosniff" },
-        { key: "X-Frame-Options", value: "SAMEORIGIN" },
+        // Mini App must load inside Telegram Web (web.telegram.org iframe).
+        // Do not set X-Frame-Options: SAMEORIGIN — it blocks that embed.
+        {
+          key: "Content-Security-Policy",
+          value:
+            "frame-ancestors 'self' https://web.telegram.org https://telegram.org https://k.telegram.org"
+        },
         { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
         {
           key: "Permissions-Policy",

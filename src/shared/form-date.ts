@@ -1,17 +1,16 @@
+import {
+  tehranDateInputValue,
+  tehranTimeInputValue
+} from "@/lib/tehran-time";
+
+/** YYYY-MM-DD in Asia/Tehran for date inputs. */
 export function dateInputValue(date: Date) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
+  return tehranDateInputValue(date);
 }
 
+/** HH:mm in Asia/Tehran for time inputs. */
 export function timeInputValue(date?: Date | null) {
-  if (!date) {
-    return "";
-  }
-  const h = String(date.getHours()).padStart(2, "0");
-  const m = String(date.getMinutes()).padStart(2, "0");
-  return `${h}:${m}`;
+  return tehranTimeInputValue(date);
 }
 
 export function dateTimeInputValue(date?: Date | null) {

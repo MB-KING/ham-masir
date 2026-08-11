@@ -117,13 +117,21 @@ export async function cancelEventRegistrationAction(formData: FormData) {
 }
 
 export async function redeemRewardAction(formData: FormData) {
-  const user = await requireCurrentUserPage();
   const rewardId = z.string().uuid().parse(formData.get("rewardId"));
-  await new RewardService().redeem(user.id, rewardId);
-  revalidatePath("/");
-  revalidatePath("/rewards");
-  revalidatePath("/me");
-  redirect("/rewards?received=1");
+  try {
+    const user = await requireCurrentUserPage();
+    await new RewardService().redeem(user.id, rewardId);
+    revalidatePath("/");
+    revalidatePath("/rewards");
+    revalidatePath("/me");
+    redirect("/rewards?received=1");
+  } catch (error) {
+    unstable_rethrow(error);
+    if (error instanceof AppError) {
+      redirect(`/rewards?error=${error.code}` as "/rewards");
+    }
+    redirect("/rewards?error=UNEXPECTED_ERROR" as "/rewards");
+  }
 }
 
 export async function updateProfileAction(formData: FormData) {

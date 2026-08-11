@@ -16,7 +16,7 @@ export async function POST(
 ) {
   try {
     const admin = await requireCurrentUser();
-    requireRole(admin, [Role.SUPER_ADMIN]);
+    requireRole(admin, [Role.ADMIN, Role.SUPER_ADMIN]);
     const { eventId } = await params;
 
     const event = await prisma.event.findFirst({

@@ -1,4 +1,3 @@
-import { Role } from "@prisma/client";
 import { CalendarPlus2, ClipboardCheck, Pencil } from "lucide-react";
 import Link from "next/link";
 import { AdminCard, PageTitle } from "@/components/admin/admin-card";
@@ -6,7 +5,7 @@ import { EventStatusActions } from "@/components/admin/event-status-actions";
 import { Button } from "@/components/ui/button";
 import { StatusPill } from "@/components/ui/status-pill";
 import { prisma } from "@/lib/prisma";
-import { hasRole } from "@/modules/auth/authorization";
+import { faTehranDayFormatter } from "@/lib/tehran-time";
 import { requireEventManagerPage } from "@/modules/auth/admin-session";
 
 function announceBanner(params: {
@@ -40,10 +39,9 @@ export default async function AdminEventsPage({
 }: {
   searchParams: Promise<{ announce?: string; sent?: string; failed?: string }>;
 }) {
-  const admin = await requireEventManagerPage();
+  await requireEventManagerPage();
   const params = await searchParams;
   const banner = announceBanner(params);
-  const isSuperAdmin = hasRole(admin, Role.SUPER_ADMIN);
   const events = await prisma.event.findMany({
     where: { deletedAt: null },
     orderBy: { date: "desc" },
@@ -103,7 +101,7 @@ export default async function AdminEventsPage({
               </div>
               <p className="mt-2 text-sm text-slate-300">
                 شماره {event.eventNumber}،{" "}
-                {new Intl.DateTimeFormat("fa-IR").format(event.date)}،{" "}
+                {faTehranDayFormatter.format(event.date)}،{" "}
                 {event.locationName}
               </p>
               <p className="mt-2 text-sm text-slate-400">
@@ -111,17 +109,15 @@ export default async function AdminEventsPage({
                 حضور
               </p>
               <div className="mt-4 grid grid-cols-2 gap-2">
-                {isSuperAdmin ? (
-                  <Link
-                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-white/15 px-3 text-sm font-bold text-slate-200"
-                    href={`/admin/events/${event.id}/edit`}
-                  >
-                    <Pencil size={16} aria-hidden="true" />
-                    ویرایش
-                  </Link>
-                ) : null}
                 <Link
-                  className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#F59E0B]/30 px-3 text-sm font-bold text-[#F59E0B] ${isSuperAdmin ? "" : "col-span-2"}`}
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-white/15 px-3 text-sm font-bold text-slate-200"
+                  href={`/admin/events/${event.id}/edit`}
+                >
+                  <Pencil size={16} aria-hidden="true" />
+                  ویرایش
+                </Link>
+                <Link
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#F59E0B]/30 px-3 text-sm font-bold text-[#F59E0B]"
                   href={`/admin/events/${event.id}/attendance`}
                 >
                   <ClipboardCheck size={16} aria-hidden="true" />

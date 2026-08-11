@@ -36,8 +36,17 @@ export function formatJalaliDisplay(j: JalaliDate) {
 }
 
 export function todayJalali(): JalaliDate {
-  const now = new Date();
-  return toJalali(now.getFullYear(), now.getMonth() + 1, now.getDate());
+  // Use Tehran calendar day, not the server's local timezone.
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Tehran",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).formatToParts(new Date());
+  const gy = Number(parts.find((part) => part.type === "year")?.value);
+  const gm = Number(parts.find((part) => part.type === "month")?.value);
+  const gd = Number(parts.find((part) => part.type === "day")?.value);
+  return toJalali(gy, gm, gd);
 }
 
 export const jalaliMonthNames = [

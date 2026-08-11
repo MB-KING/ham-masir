@@ -1,8 +1,13 @@
-import { AttendanceStatus, XPTransactionType } from "@prisma/client";
+import {
+  AttendanceStatus,
+  RegistrationStatus,
+  XPTransactionType
+} from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { XPService } from "@/modules/gamification/xp.service";
 import { BadgeService } from "@/modules/gamification/badge.service";
 import { logActivity, notifyUser } from "@/modules/activity/activity.service";
+import { AppError } from "@/shared/errors";
 
 export class AttendanceService {
   constructor(
@@ -16,6 +21,25 @@ export class AttendanceService {
     verifiedById: string;
     status: AttendanceStatus;
   }) {
+    if (input.status === AttendanceStatus.PRESENT) {
+      const registration = await prisma.eventRegistration.findUnique({
+        where: {
+          userId_eventId: {
+            userId: input.userId,
+            eventId: input.eventId
+          }
+        },
+        select: { status: true }
+      });
+      if (registration?.status !== RegistrationStatus.REGISTERED) {
+        throw new AppError(
+          "VALIDATION_ERROR",
+          "فقط ثبت‌نام قطعی را می‌توان حاضر علامت زد.",
+          400
+        );
+      }
+    }
+
     const existing = await prisma.attendance.findUnique({
       where: {
         userId_eventId: { userId: input.userId, eventId: input.eventId }
