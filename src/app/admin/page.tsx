@@ -3,8 +3,6 @@ import {
   CalendarDays,
   CalendarPlus2,
   CheckCircle2,
-  Gift,
-  Store,
   UserCheck,
   UsersRound
 } from "lucide-react";
@@ -21,15 +19,12 @@ export default async function AdminDashboardPage() {
   const admin = await requireAdminPage();
   const isSuperAdmin = hasRole(admin, Role.SUPER_ADMIN);
 
-  const [users, events, registrations, presentAttendance, businesses, rewards] =
-    await Promise.all([
-      prisma.user.count({ where: { deletedAt: null } }),
-      prisma.event.count({ where: { deletedAt: null } }),
-      prisma.eventRegistration.count({ where: { status: "REGISTERED" } }),
-      prisma.attendance.count({ where: { status: "PRESENT" } }),
-      isSuperAdmin ? prisma.business.count() : Promise.resolve(0),
-      isSuperAdmin ? prisma.reward.count() : Promise.resolve(0)
-    ]);
+  const [users, events, registrations, presentAttendance] = await Promise.all([
+    prisma.user.count({ where: { deletedAt: null } }),
+    prisma.event.count({ where: { deletedAt: null } }),
+    prisma.eventRegistration.count({ where: { status: "REGISTERED" } }),
+    prisma.attendance.count({ where: { status: "PRESENT" } })
+  ]);
 
   const latestEvents = await prisma.event.findMany({
     orderBy: { date: "desc" },
@@ -68,23 +63,7 @@ export default async function AdminDashboardPage() {
       value: presentAttendance,
       Icon: CheckCircle2,
       href: "/admin/events"
-    },
-    ...(isSuperAdmin
-      ? [
-          {
-            label: "کسب‌وکارها",
-            value: businesses,
-            Icon: Store,
-            href: "/admin/businesses"
-          },
-          {
-            label: "مزایا",
-            value: rewards,
-            Icon: Gift,
-            href: "/admin/rewards"
-          }
-        ]
-      : [])
+    }
   ];
 
   return (

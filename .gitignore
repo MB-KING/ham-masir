@@ -2,6 +2,8 @@
 .env
 .env.*
 !.env.example
+CREDENTIALS.txt
+deploy/vps-bootstrap.sh
 
 # dependencies & build
 node_modules

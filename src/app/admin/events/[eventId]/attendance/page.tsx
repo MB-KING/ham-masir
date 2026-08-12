@@ -48,7 +48,7 @@ export default async function AttendancePage({ params }: { params: Promise<{ eve
           چرا حضور را تأیید می‌کنیم؟
         </summary>
         <p className="mt-2 text-sm leading-7 text-slate-300">
-          حضور تأییدشده مبنای امتیاز، بج و باز شدن بعضی مزایا است. فقط کسانی را
+          حضور تأییدشده مبنای امتیاز و بج است. فقط کسانی را
           «حاضر بود» بزن که واقعا شرکت کرده‌اند.
         </p>
       </details>

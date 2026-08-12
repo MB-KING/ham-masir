@@ -184,6 +184,7 @@ model UserProfile {
   userId                  String   @unique
   bio                     String?
   skills                  String?
+  businessName            String?
   socialLinks             Json?
   showInMembersDirectory  Boolean  @default(true)
   showTelegramUsername    Boolean  @default(true)

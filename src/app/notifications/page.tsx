@@ -45,7 +45,7 @@ export default async function NotificationsPage() {
     <UserPageShell width="narrow">
         <UserPageHeader
           title="اعلان‌ها"
-          subtitle="وضعیت ثبت‌نام، حضور و مزایا."
+          subtitle="وضعیت ثبت‌نام و حضور."
           backFallbackHref="/me"
         />
 

@@ -3,12 +3,10 @@
 import {
   Award,
   CalendarDays,
-  Gift,
   LayoutDashboard,
   MoreHorizontal,
   ScrollText,
   Settings,
-  Store,
   Tags,
   Send,
   Users,
@@ -29,17 +27,10 @@ const primaryItems = [
     Icon: CalendarDays,
     superOnly: false
   },
-  {
-    href: "/admin/businesses",
-    label: "کسب‌وکار",
-    Icon: Store,
-    superOnly: true
-  },
   { href: "/admin/users", label: "اعضا", Icon: Users, superOnly: true }
 ] as const;
 
 const moreItems = [
-  { href: "/admin/rewards", label: "مزایا", Icon: Gift },
   { href: "/admin/badges", label: "بج‌ها", Icon: Award },
   { href: "/admin/categories", label: "حوزه کاری", Icon: Tags },
   { href: "/admin/telegram", label: "تلگرام", Icon: Send },

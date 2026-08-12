@@ -5,6 +5,10 @@ import { UserCard, UserPageHeader } from "@/components/user/user-card";
 import { UserPageShell } from "@/components/user/user-shell";
 import { prisma } from "@/lib/prisma";
 import { requireCurrentUserPage } from "@/modules/auth/session";
+import {
+  readSocialLinks,
+  SOCIAL_LINK_FIELDS
+} from "@/shared/social-links";
 
 export const dynamic = "force-dynamic";
 
@@ -18,10 +22,7 @@ export default async function ProfileSettingsPage() {
     })
   ]);
 
-  const socialLinks =
-    profile?.socialLinks && typeof profile.socialLinks === "object"
-      ? JSON.stringify(profile.socialLinks)
-      : "";
+  const social = readSocialLinks(profile?.socialLinks);
 
   return (
     <UserPageShell width="narrow">
@@ -84,6 +85,19 @@ export default async function ProfileSettingsPage() {
             />
           </label>
           <label className="grid gap-2 text-sm font-bold text-slate-200">
+            کسب‌وکار
+            <input
+              name="businessName"
+              maxLength={120}
+              defaultValue={profile?.businessName ?? ""}
+              className="h-11 rounded-xl border border-white/10 bg-[#061124] px-3 text-white outline-none focus:border-[#F59E0B]"
+              placeholder="اگر کسب‌وکاری داری، همین‌جا بنویس"
+            />
+            <span className="text-xs font-medium text-slate-400">
+              اختیاری است؛ مثلاً نام فروشگاه، استودیو یا برند شخصی.
+            </span>
+          </label>
+          <label className="grid gap-2 text-sm font-bold text-slate-200">
             حوزه کاری
             <select
               name="workCategoryId"
@@ -108,17 +122,34 @@ export default async function ProfileSettingsPage() {
               placeholder="مثلاً طراحی، فروش، برنامه‌نویسی"
             />
           </label>
-          <label className="grid gap-2 text-sm font-bold text-slate-200">
-            لینک‌های اجتماعی (JSON یا یک آدرس)
-            <input
-              name="socialLinks"
-              maxLength={600}
-              defaultValue={socialLinks}
-              className="h-11 rounded-xl border border-white/10 bg-[#061124] px-3 text-white"
-              placeholder='{"instagram":"https://instagram.com/..."}'
-              dir="ltr"
-            />
-          </label>
+
+          <div className="grid gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+            <div>
+              <h3 className="text-sm font-black text-white">لینک‌های من</h3>
+              <p className="mt-1 text-xs leading-5 text-slate-400">
+                هر کدام را که می‌خواهی دیگران ببینند پر کن؛ بقیه را خالی بگذار.
+              </p>
+            </div>
+            {SOCIAL_LINK_FIELDS.map((field) => (
+              <label
+                key={field.key}
+                className="grid gap-2 text-sm font-bold text-slate-200"
+              >
+                {field.label}
+                <input
+                  name={field.key}
+                  maxLength={200}
+                  defaultValue={social[field.key] ?? ""}
+                  className="h-11 rounded-xl border border-white/10 bg-[#061124] px-3 text-white outline-none focus:border-[#F59E0B]"
+                  placeholder={field.placeholder}
+                  dir="ltr"
+                  inputMode="url"
+                  autoComplete="url"
+                />
+              </label>
+            ))}
+          </div>
+
           <div className="grid gap-3">
             <Toggle
               name="showInMembersDirectory"
@@ -134,8 +165,8 @@ export default async function ProfileSettingsPage() {
             />
             <Toggle
               name="showBusiness"
-              label="نمایش کسب‌وکارهای من"
-              description="کسب‌وکارهای تأییدشده‌ای که عضو آن‌ها هستی نمایش داده شوند."
+              label="نمایش کسب‌وکار"
+              description="نام کسب‌وکاری که بالا نوشتی در پروفایل عمومی دیده شود."
               defaultChecked={profile?.showBusiness ?? true}
             />
             <Toggle
@@ -158,8 +189,8 @@ export default async function ProfileSettingsPage() {
             />
             <Toggle
               name="showSocialLinks"
-              label="نمایش لینک‌های اجتماعی"
-              description="لینک‌های اجتماعی در پروفایل عمومی دیده شوند."
+              label="نمایش لینک‌ها"
+              description="لینک‌های اینستاگرام، تلگرام و بقیه در پروفایل عمومی دیده شوند."
               defaultChecked={profile?.showSocialLinks ?? true}
             />
           </div>

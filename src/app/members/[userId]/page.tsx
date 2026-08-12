@@ -6,6 +6,7 @@ import { UserPageShell } from "@/components/user/user-shell";
 import { prisma } from "@/lib/prisma";
 import { mediaPublicPath } from "@/modules/media/media.service";
 import { getPublicMemberView } from "@/shared/privacy";
+import { readSocialLinks, socialLinkLabel } from "@/shared/social-links";
 import { formatSteps } from "@/shared/steps";
 
 export const dynamic = "force-dynamic";
@@ -40,10 +41,6 @@ export default async function PublicMemberPage({
             }
           }
         }
-      },
-      businessMemberships: {
-        include: { business: true },
-        where: { business: { status: "APPROVED", deletedAt: null } }
       }
     }
   });
@@ -60,10 +57,7 @@ export default async function PublicMemberPage({
     attendanceCount
   });
 
-  const social =
-    view.socialLinks && typeof view.socialLinks === "object"
-      ? (view.socialLinks as Record<string, string>)
-      : null;
+  const social = readSocialLinks(view.socialLinks);
 
   return (
     <UserPageShell>
@@ -89,6 +83,11 @@ export default async function PublicMemberPage({
                 {view.workCategory.name}
               </p>
             ) : null}
+            {view.businessName ? (
+              <p className="mt-1 text-sm text-slate-300">
+                کسب‌وکار: {view.businessName}
+              </p>
+            ) : null}
           </div>
         </div>
         {view.bio ? (
@@ -109,36 +108,28 @@ export default async function PublicMemberPage({
             {view.skills}
           </p>
         ) : null}
-        {social ? (
-          <div className="mt-3 flex flex-wrap gap-2">
-            {Object.entries(social).map(([key, value]) => (
-              <a
-                key={key}
-                href={value.startsWith("http") ? value : `https://${value}`}
-                target="_blank"
-                rel="noreferrer"
-                className="rounded-lg bg-white/10 px-3 py-1.5 text-xs font-bold text-slate-200"
-              >
-                {key}
-              </a>
-            ))}
+        {Object.keys(social).length > 0 ? (
+          <div className="mt-4 grid gap-2">
+            <p className="text-xs font-bold text-slate-400">لینک‌ها</p>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {Object.entries(social).map(([key, value]) => (
+                <a
+                  key={key}
+                  href={value}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex min-h-11 items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/[0.05] px-3 text-sm font-bold text-slate-200 transition hover:border-[#F59E0B]/40 hover:text-white"
+                >
+                  <span>{socialLinkLabel(key)}</span>
+                  <span className="truncate text-xs font-medium text-[#F59E0B]" dir="ltr">
+                    باز کردن
+                  </span>
+                </a>
+              ))}
+            </div>
           </div>
         ) : null}
       </UserCard>
-
-      {member.profile?.showBusiness !== false &&
-      member.businessMemberships.length > 0 ? (
-        <UserCard className="mb-4">
-          <h3 className="font-black text-white">کسب‌وکارها</h3>
-          <ul className="mt-3 grid gap-2">
-            {member.businessMemberships.map((item) => (
-              <li key={item.id} className="text-sm text-slate-300">
-                {item.business.name}
-              </li>
-            ))}
-          </ul>
-        </UserCard>
-      ) : null}
 
       {member.badges.length > 0 ? (
         <UserCard className="mb-4">

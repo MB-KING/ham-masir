@@ -4,9 +4,7 @@ import {
   CheckCircle2,
   ChevronLeft,
   History,
-  KeyRound,
   Settings,
-  Store,
   Trophy,
   UsersRound
 } from "lucide-react";
@@ -31,6 +29,7 @@ export default async function MePage() {
     prisma.user.findUnique({
       where: { id: currentUser.id },
       include: {
+        profile: true,
         badges: {
           include: { badge: true },
           orderBy: { earnedAt: "desc" },
@@ -47,18 +46,12 @@ export default async function MePage() {
           orderBy: { verifiedAt: "desc" },
           take: 3
         },
-        redemptions: {
-          include: { reward: true, rewardCode: true },
-          orderBy: { createdAt: "desc" },
-          take: 3
-        },
         xpTransactions: { orderBy: { createdAt: "desc" }, take: 5 },
         _count: {
           select: {
             registrations: true,
             attendance: { where: { status: "PRESENT" } },
-            badges: true,
-            redemptions: true
+            badges: true
           }
         }
       }
@@ -125,9 +118,7 @@ export default async function MePage() {
         name: badge.name,
         remaining,
         progress,
-        type: badge.type,
-        currentValue,
-        threshold: badge.threshold
+        type: badge.type
       };
     });
 
@@ -135,7 +126,7 @@ export default async function MePage() {
     <UserPageShell>
       <UserPageHeader
         title="پروفایل من"
-        subtitle="گام، سطح، حضور و مزایای تو."
+        subtitle="گام، سطح و حضورهای تو."
         showBack={false}
       />
 
@@ -149,6 +140,11 @@ export default async function MePage() {
             <p className="truncate text-sm text-slate-400" dir="ltr">
               @{user.username ?? "بدون نام کاربری"}
             </p>
+            {user.profile?.businessName ? (
+              <p className="mt-1 truncate text-sm text-slate-300">
+                {user.profile.businessName}
+              </p>
+            ) : null}
           </div>
           <Link
             href="/me/settings"
@@ -212,23 +208,6 @@ export default async function MePage() {
           <ChevronLeft size={18} className="text-slate-400" aria-hidden="true" />
         </Link>
         <Link
-          href={"/businesses" as Route}
-          className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-[#0B1E43]/75 p-4 transition active:scale-[0.99] hover:border-[#F59E0B]/35"
-        >
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#F59E0B]/15 text-[#F59E0B]">
-              <Store size={20} aria-hidden="true" />
-            </div>
-            <div>
-              <h2 className="font-black text-white">کسب‌وکار</h2>
-              <p className="mt-1 text-sm text-slate-400">
-                کسب‌وکارها و مزایای اعضا
-              </p>
-            </div>
-          </div>
-          <ChevronLeft size={18} className="text-slate-400" aria-hidden="true" />
-        </Link>
-        <Link
           href="/members"
           className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-[#0B1E43]/75 p-4 transition active:scale-[0.99] hover:border-[#F59E0B]/35"
         >
@@ -263,12 +242,10 @@ export default async function MePage() {
       </div>
 
       <UserCard className="mt-4">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="flex items-center gap-2 font-black text-white">
-            <Trophy size={18} className="text-[#F59E0B]" />
-            بج‌های بعدی
-          </h2>
-        </div>
+        <h2 className="flex items-center gap-2 font-black text-white">
+          <Trophy size={18} className="text-[#F59E0B]" />
+          بج‌های بعدی
+        </h2>
         <div className="mt-4 grid gap-3">
           {nextBadges.length === 0 ? (
             <p className="text-sm text-slate-300">
@@ -334,20 +311,6 @@ export default async function MePage() {
           }))}
           empty="با اولین حضور، اولین بجت می‌آید."
         />
-        <SummaryCard
-          title="مزایای دریافت‌شده"
-          icon={<KeyRound size={18} className="text-[#F59E0B]" />}
-          total={user._count.redemptions}
-          items={user.redemptions.map((item) => ({
-            id: item.id,
-            text: `${item.reward.title}${
-              item.rewardCode?.code || item.reward.discountCode
-                ? ` - کد: ${item.rewardCode?.code ?? item.reward.discountCode}`
-                : ""
-            }`
-          }))}
-          empty="هنوز مزیتی نگرفته‌ای."
-        />
         <UserCard>
           <h2 className="mb-3 flex items-center gap-2 font-black text-white">
             <History size={18} className="text-[#F59E0B]" />
@@ -382,7 +345,6 @@ function xpTypeLabel(type: string) {
   const labels: Record<string, string> = {
     ATTEND_EVENT: "حضور در برنامه",
     REFER_USER: "دعوت عضو",
-    CREATE_REWARD: "ثبت مزیت",
     COMPLETE_PROFILE: "تکمیل پروفایل",
     ATTEND_SPECIAL_EVENT: "حضور ویژه"
   };

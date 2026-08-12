@@ -75,8 +75,15 @@ export function TelegramProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    const webApp = window.Telegram?.WebApp;
-    const initData = webApp?.initData?.trim();
+    // Telegram sometimes injects WebApp after the script onLoad fires.
+    let webApp = window.Telegram?.WebApp;
+    let initData = webApp?.initData?.trim();
+    for (let i = 0; i < 20 && (!webApp || !initData); i += 1) {
+      await new Promise((resolve) => window.setTimeout(resolve, 100));
+      webApp = window.Telegram?.WebApp;
+      initData = webApp?.initData?.trim();
+    }
+
     if (!webApp || !initData) {
       return;
     }

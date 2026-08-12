@@ -21,8 +21,8 @@ function isTelegramMiniApp() {
 }
 
 function openMapService(service: MapServiceLink) {
-  // Telegram WebView rejects most custom schemes (neshan://, waze://, …)
-  // and blocks window.open — always use HTTPS via openLink there.
+  // Telegram WebView blocks custom schemes (neshan://, waze://, …).
+  // Universal HTTPS links open the installed app when possible, else the web map.
   if (isTelegramMiniApp()) {
     openExternalHttps(service.webFallback);
     return;
@@ -37,14 +37,23 @@ function openMapService(service: MapServiceLink) {
     return;
   }
 
-  // Outside Telegram: try native deep link, then HTTPS fallback.
+  // Outside Telegram on mobile: try native scheme briefly, then HTTPS fallback.
+  // Prefer not to interrupt if the page is already hidden (app opened).
   const started = Date.now();
+  const onHide = () => {
+    window.removeEventListener("pagehide", onHide);
+    window.removeEventListener("blur", onHide);
+  };
+  window.addEventListener("pagehide", onHide);
+  window.addEventListener("blur", onHide);
+
   window.location.href = service.deepLink;
   window.setTimeout(() => {
-    if (Date.now() - started < 2200) {
+    onHide();
+    if (document.visibilityState === "visible" && Date.now() - started < 2500) {
       openExternalHttps(service.webFallback);
     }
-  }, 1200);
+  }, 1500);
 }
 
 export function NavigationSheet({

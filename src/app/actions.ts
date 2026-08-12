@@ -10,13 +10,17 @@ import {
 } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { requireCurrentUserPage } from "@/modules/auth/session";
+import {
+  getOptionalCurrentUser,
+  requireCurrentUserPage
+} from "@/modules/auth/session";
 import { RegistrationService } from "@/modules/registrations/registration.service";
 import { RewardService } from "@/modules/rewards/reward.service";
 import { XPService } from "@/modules/gamification/xp.service";
 import { logActivity } from "@/modules/activity/activity.service";
 import { AppError } from "@/shared/errors";
 import { Prisma } from "@prisma/client";
+import { buildSocialLinks } from "@/shared/social-links";
 
 const createBusinessSchema = z.object({
   name: z.string().min(2),
@@ -55,7 +59,11 @@ const profileSchema = z.object({
   lastName: z.string().trim().min(1).max(60),
   bio: z.string().max(400).optional(),
   skills: z.string().max(300).optional(),
-  socialLinks: z.string().max(600).optional(),
+  businessName: z.string().max(120).optional(),
+  instagram: z.string().max(200).optional(),
+  telegram: z.string().max(200).optional(),
+  website: z.string().max(200).optional(),
+  linkedin: z.string().max(200).optional(),
   workCategoryId: z.string().uuid().optional().or(z.literal("")),
   showInMembersDirectory: z.preprocess((value) => value === "on", z.boolean()),
   showTelegramUsername: z.preprocess((value) => value === "on", z.boolean()),
@@ -79,7 +87,12 @@ function emptyToUndefined(value?: string) {
 export async function registerForEventAction(formData: FormData) {
   const eventId = z.string().uuid().parse(formData.get("eventId"));
   try {
-    const user = await requireCurrentUserPage();
+    const user = await getOptionalCurrentUser();
+    if (!user) {
+      redirect(
+        `/events/${eventId}?error=UNAUTHORIZED` as `/events/${string}`
+      );
+    }
     await new RegistrationService().register(user.id, eventId);
     revalidatePath("/");
     revalidatePath("/events");
@@ -100,7 +113,12 @@ export async function registerForEventAction(formData: FormData) {
 export async function cancelEventRegistrationAction(formData: FormData) {
   const eventId = z.string().uuid().parse(formData.get("eventId"));
   try {
-    const user = await requireCurrentUserPage();
+    const user = await getOptionalCurrentUser();
+    if (!user) {
+      redirect(
+        `/events/${eventId}?error=UNAUTHORIZED` as `/events/${string}`
+      );
+    }
     await new RegistrationService().cancel(user.id, eventId);
     revalidatePath("/");
     revalidatePath("/events");
@@ -139,25 +157,20 @@ export async function redeemRewardAction(formData: FormData) {
 export async function updateProfileAction(formData: FormData) {
   const user = await requireCurrentUserPage();
   const input = profileSchema.parse(Object.fromEntries(formData));
-  let socialLinks: Record<string, string> | undefined;
-  if (input.socialLinks?.trim()) {
-    try {
-      const parsed = JSON.parse(input.socialLinks) as Record<string, string>;
-      socialLinks = parsed;
-    } catch {
-      socialLinks = { website: input.socialLinks.trim() };
-    }
-  }
+  const socialLinks = buildSocialLinks({
+    instagram: input.instagram,
+    telegram: input.telegram,
+    website: input.website,
+    linkedin: input.linkedin
+  });
 
   const profileData = {
-    bio: input.bio || null,
-    skills: input.skills || null,
-    socialLinks:
-      socialLinks === undefined
-        ? undefined
-        : socialLinks === null
-          ? Prisma.JsonNull
-          : socialLinks,
+    bio: input.bio?.trim() ? input.bio.trim() : null,
+    skills: input.skills?.trim() ? input.skills.trim() : null,
+    businessName: input.businessName?.trim()
+      ? input.businessName.trim()
+      : null,
+    socialLinks: socialLinks === null ? Prisma.JsonNull : socialLinks,
     showInMembersDirectory: input.showInMembersDirectory,
     showTelegramUsername: input.showTelegramUsername,
     showBusiness: input.showBusiness,

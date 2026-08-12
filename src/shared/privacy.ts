@@ -8,6 +8,7 @@ type PrivacyUser = {
   profile?: {
     bio?: string | null;
     skills?: string | null;
+    businessName?: string | null;
     socialLinks?: unknown;
     showInMembersDirectory?: boolean;
     showTelegramUsername?: boolean;
@@ -39,6 +40,7 @@ export function getPublicMemberView(
   const showSocial = profile?.showSocialLinks !== false;
   const showWork = profile?.showWorkCategory !== false;
   const showAttendance = profile?.showAttendanceCount !== false;
+  const showBusiness = profile?.showBusiness !== false;
 
   return {
     id: user.id,
@@ -47,6 +49,10 @@ export function getPublicMemberView(
     username: showUsername ? user.username : null,
     bio: profile?.bio ?? null,
     skills: showSkills ? (profile?.skills ?? null) : null,
+    businessName:
+      showBusiness && profile?.businessName?.trim()
+        ? profile.businessName.trim()
+        : null,
     socialLinks: showSocial ? (profile?.socialLinks ?? null) : null,
     workCategory:
       showWork && user.workCategory
