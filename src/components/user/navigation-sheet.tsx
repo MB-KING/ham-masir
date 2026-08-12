@@ -3,7 +3,7 @@
 import { MapPinned } from "lucide-react";
 import { useState } from "react";
 import { BottomSheet } from "@/components/user/bottom-sheet";
-import { secondaryActionClass } from "@/components/user/user-shell";
+import { secondaryActionClass } from "@/components/user/user-action-styles";
 import {
   buildMapServiceLinks,
   type MapServiceLink

@@ -7,7 +7,7 @@ import {
 } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
-import { secondaryActionClass } from "@/components/user/user-shell";
+import { secondaryActionClass } from "@/components/user/user-action-styles";
 
 export function EventActions({
   eventId,

@@ -3,7 +3,7 @@
 import { Download, Loader2, Share2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { BottomSheet } from "@/components/user/bottom-sheet";
-import { secondaryActionClass } from "@/components/user/user-shell";
+import { secondaryActionClass } from "@/components/user/user-action-styles";
 
 const formats = [
   { id: "story", label: "استوری ۹:۱۶" },
