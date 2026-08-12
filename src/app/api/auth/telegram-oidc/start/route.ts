@@ -10,12 +10,14 @@ import {
   createPkcePair,
   requireTelegramOidcCredentials,
   telegramOidcAppOrigin,
+  telegramOidcAbsoluteUrl,
   telegramOidcFlowCookieOptions,
   telegramOidcRedirectUri
 } from "@/modules/auth/telegram-oidc";
 
 function failureRedirect(request: NextRequest, next: string) {
-  const failureUrl = new URL("/open-in-telegram", request.url);
+  const origin = telegramOidcAppOrigin(request);
+  const failureUrl = telegramOidcAbsoluteUrl("/open-in-telegram", origin);
   failureUrl.searchParams.set("error", "UNAUTHORIZED");
   if (next !== "/") {
     failureUrl.searchParams.set("next", next);
@@ -28,7 +30,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const { clientId } = requireTelegramOidcCredentials();
-    const origin = telegramOidcAppOrigin(request.nextUrl.origin);
+    const origin = telegramOidcAppOrigin(request);
     const redirectUri = telegramOidcRedirectUri(origin);
     const { verifier, challenge } = createPkcePair();
     const state = createOidcState();

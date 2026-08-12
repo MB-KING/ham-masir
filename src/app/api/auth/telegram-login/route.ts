@@ -9,6 +9,10 @@ import {
 import {
   serializeTelegramLoginWidget
 } from "@/modules/auth/telegram-login";
+import {
+  telegramOidcAbsoluteUrl,
+  telegramOidcAppOrigin
+} from "@/modules/auth/telegram-oidc";
 import { fail, ok, parseJson } from "@/shared/api";
 
 const widgetSchema = z
@@ -58,8 +62,12 @@ export async function POST(request: Request) {
 
 export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams;
+  const origin = telegramOidcAppOrigin(request);
   if (params.has("code") || params.has("error")) {
-    const oidcUrl = new URL("/api/auth/telegram-oidc/callback", request.url);
+    const oidcUrl = telegramOidcAbsoluteUrl(
+      "/api/auth/telegram-oidc/callback",
+      origin
+    );
     for (const [key, value] of params.entries()) {
       oidcUrl.searchParams.set(key, value);
     }
@@ -74,7 +82,9 @@ export async function GET(request: NextRequest) {
     const input = Object.fromEntries(params.entries());
     await new AuthService().loginWithTelegramWidget(input);
 
-    const response = NextResponse.redirect(new URL(next, request.url));
+    const response = NextResponse.redirect(
+      telegramOidcAbsoluteUrl(next, origin)
+    );
     applyTelegramSessionCookie(
       response.cookies,
       serializeTelegramLoginWidget(input)
@@ -87,7 +97,7 @@ export async function GET(request: NextRequest) {
     });
     return response;
   } catch {
-    const failureUrl = new URL("/open-in-telegram", request.url);
+    const failureUrl = telegramOidcAbsoluteUrl("/open-in-telegram", origin);
     failureUrl.searchParams.set("error", "UNAUTHORIZED");
     if (next !== "/") {
       failureUrl.searchParams.set("next", next);

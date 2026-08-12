@@ -12,6 +12,7 @@ import {
   loginUserFromTelegramOidcCode,
   serializeTelegramOidcSession,
   telegramOidcAppOrigin,
+  telegramOidcAbsoluteUrl,
   telegramOidcRedirectUri
 } from "@/modules/auth/telegram-oidc";
 
@@ -27,7 +28,8 @@ function clearOidcCookies(response: NextResponse) {
 }
 
 function failureRedirect(request: NextRequest, next: string) {
-  const failureUrl = new URL("/open-in-telegram", request.url);
+  const origin = telegramOidcAppOrigin(request);
+  const failureUrl = telegramOidcAbsoluteUrl("/open-in-telegram", origin);
   failureUrl.searchParams.set("error", "UNAUTHORIZED");
   if (next !== "/") {
     failureUrl.searchParams.set("next", next);
@@ -52,7 +54,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const origin = telegramOidcAppOrigin(request.nextUrl.origin);
+    const origin = telegramOidcAppOrigin(request);
     const telegramUser = await loginUserFromTelegramOidcCode({
       code,
       state,
@@ -63,7 +65,9 @@ export async function GET(request: NextRequest) {
     });
     await new AuthService().loginWithTelegramUser(telegramUser);
 
-    const response = NextResponse.redirect(new URL(next, request.url));
+    const response = NextResponse.redirect(
+      telegramOidcAbsoluteUrl(next, origin)
+    );
     applyTelegramSessionCookie(
       response.cookies,
       serializeTelegramOidcSession(telegramUser)

@@ -20,6 +20,7 @@ const envSchema = z.object({
   TELEGRAM_OIDC_CLIENT_ID: z.string().optional(),
   TELEGRAM_OIDC_CLIENT_SECRET: z.string().optional(),
   NEXT_PUBLIC_APP_URL: z.string().url().optional(),
+  APP_URL: z.string().url().optional(),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   ALLOW_DEV_AUTH: z
     .enum(["true", "false"])
@@ -39,6 +40,7 @@ export const config = envSchema.parse({
   TELEGRAM_OIDC_CLIENT_ID: process.env.TELEGRAM_OIDC_CLIENT_ID,
   TELEGRAM_OIDC_CLIENT_SECRET: process.env.TELEGRAM_OIDC_CLIENT_SECRET,
   NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+  APP_URL: process.env.APP_URL,
   NODE_ENV: process.env.NODE_ENV,
   ALLOW_DEV_AUTH: process.env.ALLOW_DEV_AUTH,
   TELEGRAM_STORAGE_CHAT_ID: process.env.TELEGRAM_STORAGE_CHAT_ID

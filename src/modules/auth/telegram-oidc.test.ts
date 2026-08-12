@@ -11,6 +11,7 @@ import {
   mapOidcClaimsToTelegramUser,
   serializeTelegramOidcSession,
   telegramOidcRedirectUri,
+  resolvePublicAppOrigin,
   validateTelegramOidcSession,
   verifyTelegramOidcIdToken
 } from "@/modules/auth/telegram-oidc";
@@ -53,6 +54,30 @@ describe("telegramOidcRedirectUri", () => {
     expect(telegramOidcRedirectUri("https://hammasir.mbking.info/")).toBe(
       "https://hammasir.mbking.info/api/auth/telegram-oidc/callback"
     );
+  });
+});
+
+describe("resolvePublicAppOrigin", () => {
+  it("prefers the public forwarded host over localhost", () => {
+    expect(
+      resolvePublicAppOrigin({
+        forwardedHost: "hammasir.mbking.info",
+        forwardedProto: "https",
+        envUrl: "http://localhost:3000",
+        requestOrigin: "http://127.0.0.1:3000"
+      })
+    ).toBe("https://hammasir.mbking.info");
+  });
+
+  it("uses APP_URL when forwarded host is local", () => {
+    expect(
+      resolvePublicAppOrigin({
+        forwardedHost: "127.0.0.1:3000",
+        forwardedProto: "http",
+        envUrl: "https://hammasir.mbking.info",
+        requestOrigin: "http://127.0.0.1:3000"
+      })
+    ).toBe("https://hammasir.mbking.info");
   });
 });
 

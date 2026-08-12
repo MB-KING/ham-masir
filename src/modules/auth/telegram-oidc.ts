@@ -1,3 +1,4 @@
+import { NextRequest } from "next/server";
 import crypto from "node:crypto";
 import {
   createRemoteJWKSet,
@@ -79,8 +80,47 @@ export function buildTelegramOidcAuthUrl(input: {
   return url.toString();
 }
 
-export function telegramOidcAppOrigin(requestOrigin: string) {
-  return (config.NEXT_PUBLIC_APP_URL || requestOrigin).replace(/\/$/, "");
+export function isPrivateAppHost(value: string) {
+  const host = value
+    .replace(/^https?:\/\//, "")
+    .split("/")[0]
+    ?.split(":")[0]
+    ?.toLowerCase();
+  return host === "localhost" || host === "127.0.0.1" || host === "::1" || host === "[::1]";
+}
+
+export function resolvePublicAppOrigin(input: {
+  forwardedHost?: string | null;
+  forwardedProto?: string | null;
+  envUrl?: string | null;
+  requestOrigin: string;
+}) {
+  const forwardedHost = input.forwardedHost?.split(",")[0]?.trim();
+  const forwardedProto = input.forwardedProto?.split(",")[0]?.trim();
+  if (forwardedHost && !isPrivateAppHost(forwardedHost)) {
+    const proto = forwardedProto === "http" ? "http" : "https";
+    return `${proto}://${forwardedHost}`.replace(/\/$/, "");
+  }
+
+  const envUrl = input.envUrl?.trim().replace(/\/$/, "") || "";
+  if (envUrl && !isPrivateAppHost(envUrl)) {
+    return envUrl;
+  }
+
+  return input.requestOrigin.replace(/\/$/, "");
+}
+
+export function telegramOidcAppOrigin(request: NextRequest) {
+  return resolvePublicAppOrigin({
+    forwardedHost: request.headers.get("x-forwarded-host"),
+    forwardedProto: request.headers.get("x-forwarded-proto"),
+    envUrl: process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL,
+    requestOrigin: request.nextUrl.origin
+  });
+}
+
+export function telegramOidcAbsoluteUrl(path: string, origin: string) {
+  return new URL(path, `${origin.replace(/\/$/, "")}/`);
 }
 
 export function telegramOidcRedirectUri(origin: string) {
