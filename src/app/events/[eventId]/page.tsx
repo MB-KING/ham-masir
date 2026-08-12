@@ -36,11 +36,11 @@ export default async function EventDetailsPage({
   searchParams
 }: {
   params: Promise<{ eventId: string }>;
-  searchParams: Promise<{ error?: string; ok?: string }>;
+  searchParams: Promise<{ error?: string; ok?: string; register?: string }>;
 }) {
   const user = await getOptionalCurrentUser();
   const { eventId } = await params;
-  const { error, ok } = await searchParams;
+  const { error, ok, register } = await searchParams;
   const event = await prisma.event.findFirst({
     where: {
       id: eventId,
@@ -266,6 +266,7 @@ export default async function EventDetailsPage({
             eventId={event.id}
             registrationStatus={registrationStatus}
             requiresLogin={!user}
+            autoRegister={Boolean(user && register === "1" && !registrationStatus)}
           />
         </div>
       </div>

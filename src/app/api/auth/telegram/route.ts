@@ -1,5 +1,5 @@
 import { AuthService } from "@/modules/auth/auth.service";
-import { TELEGRAM_INIT_COOKIE } from "@/modules/auth/telegram-cookie";
+import { applyTelegramSessionCookie } from "@/modules/auth/telegram-cookie";
 import { ok, fail, parseJson } from "@/shared/api";
 import { z } from "zod";
 
@@ -21,17 +21,7 @@ export async function POST(request: Request) {
       roles: user.roles.map((role) => role.role)
     });
 
-    response.cookies.set({
-      name: TELEGRAM_INIT_COOKIE,
-      value: input.initData,
-      httpOnly: true,
-      // Local http://localhost cannot set Secure cookies in browsers.
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60 * 24
-    });
-
+    applyTelegramSessionCookie(response.cookies, input.initData);
     return response;
   } catch (error) {
     return fail(error);

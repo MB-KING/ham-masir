@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { hasAnyRole } from "@/modules/auth/authorization";
 import {
   getOptionalCurrentUser,
+  redirectToTelegramLogin,
   requireCurrentUserPage
 } from "@/modules/auth/session";
 
@@ -12,7 +13,7 @@ export const eventManagerRoles = [Role.ADMIN, Role.SUPER_ADMIN];
 export async function requireAdminPage() {
   const user = await getOptionalCurrentUser();
   if (!user) {
-    redirect("/open-in-telegram");
+    return redirectToTelegramLogin();
   }
   if (!hasAnyRole(user, adminRoles)) {
     // Never send regular users to /admin/forbidden — layout also requires admin
@@ -25,7 +26,7 @@ export async function requireAdminPage() {
 export async function requireEventManagerPage() {
   const user = await getOptionalCurrentUser();
   if (!user) {
-    redirect("/open-in-telegram");
+    return redirectToTelegramLogin();
   }
   if (!hasAnyRole(user, eventManagerRoles)) {
     redirect(hasAnyRole(user, adminRoles) ? "/admin/forbidden" : "/");

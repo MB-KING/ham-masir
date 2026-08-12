@@ -24,7 +24,7 @@ export class AppError extends Error {
 }
 
 export const errorMessagesFa: Record<ErrorCode, string> = {
-  UNAUTHORIZED: "برای ادامه باید از داخل تلگرام وارد شوید.",
+  UNAUTHORIZED: "برای ادامه با تلگرام وارد شو.",
   FORBIDDEN: "به این بخش دسترسی ندارید.",
   VALIDATION_ERROR: "اطلاعات واردشده کامل یا معتبر نیست.",
   EVENT_NOT_FOUND: "این برنامه پیدا نشد.",

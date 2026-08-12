@@ -1,11 +1,16 @@
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { safeInternalPath } from "@/lib/safe-internal-path";
 import { prisma } from "@/lib/prisma";
 import {
   TELEGRAM_INIT_COOKIE,
   TELEGRAM_INIT_HEADER
 } from "@/modules/auth/telegram-cookie";
 import { validateTelegramInitData } from "@/modules/auth/telegram";
+import {
+  isTelegramLoginWidgetPayload,
+  validateTelegramLoginWidget
+} from "@/modules/auth/telegram-login";
 import { AppError } from "@/shared/errors";
 
 function isDevAuthAllowed() {
@@ -52,7 +57,9 @@ export async function requireCurrentUser() {
     throw new AppError("UNAUTHORIZED", "Missing Telegram init data", 401);
   }
 
-  const telegramUser = validateTelegramInitData(initData);
+  const telegramUser = isTelegramLoginWidgetPayload(initData)
+    ? validateTelegramLoginWidget(initData)
+    : validateTelegramInitData(initData);
   const user = await prisma.user.findUnique({
     where: { telegramId: BigInt(telegramUser.id) },
     include: { roles: true }
@@ -92,10 +99,21 @@ export async function getOptionalCurrentUser() {
   }
 }
 
+export async function redirectToTelegramLogin(): Promise<never> {
+  const currentPath = (await headers()).get("x-ham-masir-path");
+  const next = safeInternalPath(currentPath);
+  if (next === "/") {
+    redirect("/open-in-telegram");
+  }
+  redirect(
+    `/open-in-telegram?next=${encodeURIComponent(next)}` as never
+  );
+}
+
 export async function requireCurrentUserPage() {
   const user = await getOptionalCurrentUser();
   if (!user) {
-    redirect("/open-in-telegram");
+    return redirectToTelegramLogin();
   }
   return user;
 }
