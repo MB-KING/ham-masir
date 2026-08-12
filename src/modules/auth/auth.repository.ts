@@ -16,8 +16,6 @@ export class AuthRepository {
       where: { telegramId: BigInt(user.id) },
       update: {
         username: user.username,
-        firstName: user.first_name,
-        lastName: user.last_name,
         photoUrl: user.photo_url,
         languageCode: user.language_code
       },

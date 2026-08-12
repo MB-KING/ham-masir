@@ -51,6 +51,8 @@ const createRewardSchema = z.object({
 });
 
 const profileSchema = z.object({
+  firstName: z.string().trim().min(1).max(60),
+  lastName: z.string().trim().min(1).max(60),
   bio: z.string().max(400).optional(),
   skills: z.string().max(300).optional(),
   socialLinks: z.string().max(600).optional(),
@@ -174,6 +176,8 @@ export async function updateProfileAction(formData: FormData) {
     prisma.user.update({
       where: { id: user.id },
       data: {
+        firstName: input.firstName,
+        lastName: input.lastName,
         workCategoryId: input.workCategoryId ? input.workCategoryId : null
       }
     })

@@ -1,10 +1,12 @@
 import { cn } from "@/lib/cn";
 import { miniAppWidthClass } from "@/components/user/mini-app";
+import { ProfileCompletePrompt } from "@/components/user/profile-complete-prompt";
 import { UserNav } from "@/components/user/user-nav";
+import { getOptionalCurrentUser } from "@/modules/auth/session";
 
 export { miniAppWidthClass };
 
-export function UserPageShell({
+export async function UserPageShell({
   children,
   className,
   contentClassName
@@ -15,6 +17,12 @@ export function UserPageShell({
   /** @deprecated Kept for call-site compatibility; Mini App has one width only. */
   width?: "default" | "narrow";
 }) {
+  const user = await getOptionalCurrentUser();
+  const needsCompletion = Boolean(
+    user &&
+      (!user.firstName?.trim() || !user.lastName?.trim())
+  );
+
   return (
     <main className={cn("min-h-screen overflow-x-clip text-slate-100", className)}>
       <div
@@ -26,6 +34,7 @@ export function UserPageShell({
       >
         {children}
       </div>
+      <ProfileCompletePrompt needsCompletion={needsCompletion} />
       <UserNav />
     </main>
   );

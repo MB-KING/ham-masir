@@ -46,6 +46,32 @@ export default async function ProfileSettingsPage() {
       </UserCard>
       <UserCard>
         <form action={updateProfileAction} className="grid gap-5">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="grid gap-2 text-sm font-bold text-slate-200">
+              نام
+              <input
+                name="firstName"
+                required
+                maxLength={60}
+                defaultValue={user.firstName ?? ""}
+                className="h-11 rounded-xl border border-white/10 bg-[#061124] px-3 text-white outline-none focus:border-[#F59E0B]"
+                placeholder="مثلاً سارا"
+                autoComplete="given-name"
+              />
+            </label>
+            <label className="grid gap-2 text-sm font-bold text-slate-200">
+              نام خانوادگی
+              <input
+                name="lastName"
+                required
+                maxLength={60}
+                defaultValue={user.lastName ?? ""}
+                className="h-11 rounded-xl border border-white/10 bg-[#061124] px-3 text-white outline-none focus:border-[#F59E0B]"
+                placeholder="مثلاً محمدی"
+                autoComplete="family-name"
+              />
+            </label>
+          </div>
           <label className="grid gap-2 text-sm font-bold text-slate-200">
             درباره من
             <textarea
