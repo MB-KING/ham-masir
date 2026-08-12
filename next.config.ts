@@ -11,6 +11,7 @@ const nextConfig: NextConfig = {
     }
   },
   images: {
+    localPatterns: [{ pathname: "/brand/**" }],
     remotePatterns: [
       { protocol: "https", hostname: "t.me" },
       { protocol: "https", hostname: "telegram.org" },
