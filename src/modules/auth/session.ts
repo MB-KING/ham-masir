@@ -11,6 +11,10 @@ import {
   isTelegramLoginWidgetPayload,
   validateTelegramLoginWidget
 } from "@/modules/auth/telegram-login";
+import {
+  isTelegramOidcSessionPayload,
+  validateTelegramOidcSession
+} from "@/modules/auth/telegram-oidc";
 import { AppError } from "@/shared/errors";
 
 function isDevAuthAllowed() {
@@ -57,9 +61,11 @@ export async function requireCurrentUser() {
     throw new AppError("UNAUTHORIZED", "Missing Telegram init data", 401);
   }
 
-  const telegramUser = isTelegramLoginWidgetPayload(initData)
-    ? validateTelegramLoginWidget(initData)
-    : validateTelegramInitData(initData);
+  const telegramUser = isTelegramOidcSessionPayload(initData)
+    ? validateTelegramOidcSession(initData)
+    : isTelegramLoginWidgetPayload(initData)
+      ? validateTelegramLoginWidget(initData)
+      : validateTelegramInitData(initData);
   const user = await prisma.user.findUnique({
     where: { telegramId: BigInt(telegramUser.id) },
     include: { roles: true }

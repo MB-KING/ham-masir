@@ -58,6 +58,14 @@ export async function POST(request: Request) {
 
 export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams;
+  if (params.has("code") || params.has("error")) {
+    const oidcUrl = new URL("/api/auth/telegram-oidc/callback", request.url);
+    for (const [key, value] of params.entries()) {
+      oidcUrl.searchParams.set(key, value);
+    }
+    return NextResponse.redirect(oidcUrl);
+  }
+
   const next = safeInternalPath(
     params.get("next") ?? request.cookies.get(TELEGRAM_NEXT_COOKIE)?.value
   );

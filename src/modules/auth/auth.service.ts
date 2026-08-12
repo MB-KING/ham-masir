@@ -1,6 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { AuthRepository } from "@/modules/auth/auth.repository";
-import { validateTelegramInitData } from "@/modules/auth/telegram";
+import {
+  validateTelegramInitData,
+  type TelegramUser
+} from "@/modules/auth/telegram";
 import {
   validateTelegramLoginWidget,
   type TelegramLoginWidgetInput
@@ -16,6 +19,10 @@ export class AuthService {
 
   async loginWithTelegramWidget(payload: TelegramLoginWidgetInput) {
     const telegramUser = validateTelegramLoginWidget(payload);
+    return this.repository.upsertTelegramUser(telegramUser);
+  }
+
+  async loginWithTelegramUser(telegramUser: TelegramUser) {
     return this.repository.upsertTelegramUser(telegramUser);
   }
 }

@@ -17,6 +17,8 @@ const envSchema = z.object({
       );
     }, "TELEGRAM_BOT_TOKEN must be set to a real bot token"),
   TELEGRAM_BOT_USERNAME: z.string().optional(),
+  TELEGRAM_OIDC_CLIENT_ID: z.string().optional(),
+  TELEGRAM_OIDC_CLIENT_SECRET: z.string().optional(),
   NEXT_PUBLIC_APP_URL: z.string().url().optional(),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   ALLOW_DEV_AUTH: z
@@ -34,6 +36,8 @@ export const config = envSchema.parse({
     process.env.TELEGRAM_BOT_TOKEN ??
     (isVitest ? "test-bot-token-not-for-production" : undefined),
   TELEGRAM_BOT_USERNAME: process.env.TELEGRAM_BOT_USERNAME,
+  TELEGRAM_OIDC_CLIENT_ID: process.env.TELEGRAM_OIDC_CLIENT_ID,
+  TELEGRAM_OIDC_CLIENT_SECRET: process.env.TELEGRAM_OIDC_CLIENT_SECRET,
   NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
   NODE_ENV: process.env.NODE_ENV,
   ALLOW_DEV_AUTH: process.env.ALLOW_DEV_AUTH,

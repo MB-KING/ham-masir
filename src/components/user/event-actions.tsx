@@ -193,10 +193,7 @@ function LoginThenRegisterButton({ eventId }: { eventId: string }) {
         <p className="text-center text-xs font-bold text-slate-300">
           با تلگرام وارد شو
         </p>
-        <TelegramLoginWidget
-          nextPath={`/events/${eventId}?register=1`}
-          onSuccess={registerAfterLogin}
-        />
+        <TelegramLoginWidget nextPath={`/events/${eventId}?register=1`} />
         {error ? (
           <p className="rounded-xl border border-red-400/30 bg-red-500/10 px-3 py-2 text-xs font-bold leading-5 text-red-200">
             {error}
