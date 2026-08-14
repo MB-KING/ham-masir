@@ -28,6 +28,10 @@ declare global {
           params: { url: string; file_name: string },
           callback?: (ok: boolean) => void
         ) => void;
+        shareMessage?: (
+          msgId: string,
+          callback?: (sent: boolean) => void
+        ) => void;
       };
     };
   }

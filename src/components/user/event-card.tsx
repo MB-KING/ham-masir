@@ -1,10 +1,11 @@
-import { RegistrationStatus } from "@prisma/client";
+import { EventStatus, RegistrationStatus } from "@prisma/client";
 import {
   ArrowLeft,
   CalendarCheck2,
   CalendarDays,
   Clock3,
   Hourglass,
+  Images,
   MapPin,
   Route,
   UsersRound
@@ -30,6 +31,7 @@ type EventCardEvent = {
   startTime: Date;
   locationName: string;
   capacity: number | null;
+  status?: EventStatus;
   _count: { registrations: number };
 };
 
@@ -45,6 +47,7 @@ export function EventCard({
       ? null
       : Math.max(event.capacity - event._count.registrations, 0);
 
+  const isCompleted = event.status === EventStatus.COMPLETED;
   const isRegistered = registrationStatus === RegistrationStatus.REGISTERED;
   const isWaitlisted = registrationStatus === RegistrationStatus.WAITLISTED;
 
@@ -65,9 +68,14 @@ export function EventCard({
                   ثبت‌نام شدی
                 </span>
               ) : null}
-              {isWaitlisted ? (
+              {isWaitlisted && !isCompleted ? (
                 <span className="rounded-lg bg-sky-500/15 px-2 py-0.5 text-[11px] font-bold text-sky-300">
                   لیست انتظار
+                </span>
+              ) : null}
+              {isCompleted ? (
+                <span className="rounded-lg bg-white/10 px-2 py-0.5 text-[11px] font-bold text-slate-200">
+                  برگزار شده
                 </span>
               ) : null}
             </div>
@@ -93,9 +101,11 @@ export function EventCard({
           <Meta
             Icon={UsersRound}
             text={
-              remaining == null
+              isCompleted
                 ? `${event._count.registrations} نفر همراه`
-                : `${event._count.registrations} همراه · ${remaining} جای خالی`
+                : remaining == null
+                  ? `${event._count.registrations} نفر همراه`
+                  : `${event._count.registrations} همراه · ${remaining} جای خالی`
             }
           />
         </div>
@@ -105,14 +115,21 @@ export function EventCard({
           href={`/events/${event.id}` as `/events/${string}`}
           className={cn(
             "inline-flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-xl px-4 text-sm font-black shadow-sm transition active:scale-[0.99]",
-            isRegistered
-              ? "border border-emerald-400/35 bg-emerald-500/15 text-emerald-200 hover:bg-emerald-500/25"
-              : isWaitlisted
-                ? "border border-sky-400/35 bg-sky-500/15 text-sky-200 hover:bg-sky-500/25"
-                : "bg-[#F59E0B] text-[#061124] shadow-[#F59E0B]/20 hover:bg-[#FBBF24]"
+            isCompleted
+              ? "border border-[#F59E0B]/35 bg-[#F59E0B]/10 text-[#FDE68A] hover:bg-[#F59E0B]/20"
+              : isRegistered
+                ? "border border-emerald-400/35 bg-emerald-500/15 text-emerald-200 hover:bg-emerald-500/25"
+                : isWaitlisted
+                  ? "border border-sky-400/35 bg-sky-500/15 text-sky-200 hover:bg-sky-500/25"
+                  : "bg-[#F59E0B] text-[#061124] shadow-[#F59E0B]/20 hover:bg-[#FBBF24]"
           )}
         >
-          {isRegistered ? (
+          {isCompleted ? (
+            <>
+              <Images size={16} aria-hidden="true" />
+              نظرات و عکس‌ها
+            </>
+          ) : isRegistered ? (
             <>
               <CalendarCheck2 size={16} aria-hidden="true" />
               مشاهده ثبت‌نام من

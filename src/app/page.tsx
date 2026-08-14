@@ -13,28 +13,40 @@ import { prisma } from "@/lib/prisma";
 import { hasAnyRole } from "@/modules/auth/authorization";
 import { getOptionalCurrentUser } from "@/modules/auth/session";
 
+const eventCardInclude = (userId?: string) => ({
+  _count: {
+    select: { registrations: { where: { status: "REGISTERED" as const } } }
+  },
+  registrations: userId
+    ? {
+        where: {
+          userId,
+          status: { in: ["REGISTERED" as const, "WAITLISTED" as const] }
+        },
+        select: { status: true },
+        take: 1
+      }
+    : false
+});
+
 async function getHomeData() {
   const currentUser = await getOptionalCurrentUser();
-  const [events, community] = await Promise.all([
+  const cardInclude = eventCardInclude(currentUser?.id);
+  const [events, completedEvents, community] = await Promise.all([
     prisma.event.findMany({
-      where: { status: "PUBLISHED", deletedAt: null },
+      where: {
+        status: { in: ["PUBLISHED", "REGISTRATION_CLOSED"] },
+        deletedAt: null
+      },
       orderBy: { date: "asc" },
       take: 2,
-      include: {
-        _count: {
-          select: { registrations: { where: { status: "REGISTERED" } } }
-        },
-        registrations: currentUser
-          ? {
-              where: {
-                userId: currentUser.id,
-                status: { in: ["REGISTERED", "WAITLISTED"] }
-              },
-              select: { status: true },
-              take: 1
-            }
-          : false
-      }
+      include: cardInclude
+    }),
+    prisma.event.findMany({
+      where: { status: "COMPLETED", deletedAt: null },
+      orderBy: { date: "desc" },
+      take: 2,
+      include: cardInclude
     }),
     prisma.community.findFirst({
       where: currentUser
@@ -46,6 +58,7 @@ async function getHomeData() {
 
   return {
     events,
+    completedEvents,
     communityName: community?.name ?? "هم مسیر",
     communityTagline: community?.tagline ?? "یک مسیر، هزار تجربه",
     canOpenAdmin: currentUser
@@ -55,8 +68,13 @@ async function getHomeData() {
 }
 
 export default async function Home() {
-  const { events, communityName, communityTagline, canOpenAdmin } =
-    await getHomeData();
+  const {
+    events,
+    completedEvents,
+    communityName,
+    communityTagline,
+    canOpenAdmin
+  } = await getHomeData();
 
   return (
     <UserPageShell className="flex flex-col">
@@ -115,6 +133,32 @@ export default async function Home() {
           ))
         )}
       </section>
+
+      {completedEvents.length > 0 ? (
+        <section className="mt-8 space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-xl font-black text-white">برگزار شده</h2>
+            <Link
+              className="inline-flex min-h-11 items-center gap-1 text-sm font-bold text-[#F59E0B]"
+              href="/events"
+            >
+              آرشیو
+              <ArrowLeft size={15} aria-hidden="true" />
+            </Link>
+          </div>
+          {completedEvents.map((event) => (
+            <EventCard
+              key={event.id}
+              event={event}
+              registrationStatus={
+                Array.isArray(event.registrations)
+                  ? event.registrations[0]?.status
+                  : undefined
+              }
+            />
+          ))}
+        </section>
+      ) : null}
     </UserPageShell>
   );
 }

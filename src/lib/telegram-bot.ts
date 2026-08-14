@@ -43,6 +43,29 @@ async function callTelegram<T>(
   return payload.result;
 }
 
+async function callTelegramForm<T>(method: string, form: FormData): Promise<T> {
+  const response = await fetch(`${apiBase}/${method}`, {
+    method: "POST",
+    body: form,
+    cache: "no-store"
+  });
+  const payload = (await response.json()) as {
+    ok: boolean;
+    description?: string;
+    result: T;
+  };
+  if (!payload.ok) {
+    throw new Error(payload.description ?? `Telegram API failed: ${method}`);
+  }
+  return payload.result;
+}
+
+function photoBlobFromBuffer(buffer: Buffer, contentType: string) {
+  const bytes = new Uint8Array(buffer.byteLength);
+  bytes.set(buffer);
+  return new Blob([bytes], { type: contentType });
+}
+
 export function appPublicUrl() {
   return (
     process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
@@ -248,4 +271,93 @@ export async function sendTelegramPhoto(input: {
       buttonText: input.buttonText
     });
   }
+}
+
+export async function sendTelegramPhotoBuffer(input: {
+  chatId: number | string | bigint;
+  photo: Buffer;
+  filename?: string;
+  contentType?: string;
+  caption: string;
+  openApp?: boolean;
+  eventPath?: string;
+  buttonText?: string;
+}): Promise<TelegramSendResult> {
+  const chatId = input.chatId.toString();
+  const contentType = input.contentType || "image/png";
+  const filename = input.filename || "ham-masir-share.png";
+  const keyboard = input.openApp
+    ? buildAppKeyboard({
+        chatId,
+        eventPath: input.eventPath,
+        buttonText: input.buttonText
+      })
+    : undefined;
+  const caption = input.caption.slice(0, 1024);
+
+  const buildForm = (html: boolean, text: string) => {
+    const form = new FormData();
+    form.append("chat_id", chatId);
+    form.append("caption", text);
+    if (html) form.append("parse_mode", "HTML");
+    if (keyboard) form.append("reply_markup", JSON.stringify(keyboard));
+    form.append("photo", photoBlobFromBuffer(input.photo, contentType), filename);
+    return form;
+  };
+
+  try {
+    try {
+      const result = await callTelegramForm<TelegramMessage>(
+        "sendPhoto",
+        buildForm(true, caption)
+      );
+      return { ok: true, messageId: result.message_id };
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : "unknown";
+      if (!/parse|entities|can't find end/i.test(reason)) {
+        throw error;
+      }
+      logger.warn("telegram_html_fallback", { reason });
+      const result = await callTelegramForm<TelegramMessage>(
+        "sendPhoto",
+        buildForm(false, stripHtml(caption))
+      );
+      return { ok: true, messageId: result.message_id };
+    }
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : "unknown";
+    logger.warn("telegram_photo_buffer_failed", { chatId, reason });
+    return { ok: false, reason };
+  }
+}
+
+export async function savePreparedInlinePhoto(input: {
+  telegramUserId: number | string | bigint;
+  photoUrl: string;
+  thumbnailUrl?: string;
+  photoWidth?: number;
+  photoHeight?: number;
+  caption: string;
+}): Promise<{ id: string; expirationDate: number }> {
+  const caption = input.caption.slice(0, 1024);
+  const result = await callTelegram<{
+    id: string;
+    expiration_date: number;
+  }>("savePreparedInlineMessage", {
+    user_id: Number(input.telegramUserId.toString()),
+    allow_user_chats: true,
+    allow_group_chats: true,
+    allow_channel_chats: true,
+    result: {
+      type: "photo",
+      id: `share-${Date.now().toString(36)}`,
+      photo_url: input.photoUrl,
+      thumbnail_url: input.thumbnailUrl ?? input.photoUrl,
+      photo_width: input.photoWidth,
+      photo_height: input.photoHeight,
+      caption,
+      parse_mode: "HTML"
+    }
+  });
+  return { id: result.id, expirationDate: result.expiration_date };
 }

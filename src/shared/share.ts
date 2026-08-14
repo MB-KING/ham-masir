@@ -1,5 +1,12 @@
+export const shareCardFormats = ["story", "square", "landscape"] as const;
+export type ShareCardFormat = (typeof shareCardFormats)[number];
+
 export function eventShareText(eventTitle: string) {
   return `من توی برنامه «${eventTitle}» شرکت می‌کنم. اگر شما هم هستید خوشحال می‌شم ببینمتون 🥾`;
+}
+
+export function eventShareCaption(eventTitle: string, shareUrl: string) {
+  return `${eventShareText(eventTitle)}\n\n${shareUrl}`;
 }
 
 export function telegramShareUrl(url: string, text: string) {
@@ -32,5 +39,20 @@ export function publicAppUrl() {
 export function eventReferralUrl(eventId: string, referrerId?: string | null) {
   const url = new URL(`${publicAppUrl()}/events/${eventId}`);
   if (referrerId) url.searchParams.set("ref", referrerId);
+  return url.toString();
+}
+
+export function eventShareCardUrl(
+  eventId: string,
+  options?: {
+    format?: ShareCardFormat;
+    userId?: string | null;
+    mime?: "jpeg" | "png";
+  }
+) {
+  const url = new URL(`${publicAppUrl()}/api/events/${eventId}/share-card`);
+  url.searchParams.set("format", options?.format ?? "square");
+  if (options?.userId) url.searchParams.set("u", options.userId);
+  if (options?.mime) url.searchParams.set("mime", options.mime);
   return url.toString();
 }

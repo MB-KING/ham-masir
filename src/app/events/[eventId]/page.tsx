@@ -8,6 +8,7 @@ import {
   Star,
   UsersRound
 } from "lucide-react";
+import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { EventActions } from "@/components/user/event-actions";
@@ -33,11 +34,76 @@ import { FeedbackService } from "@/modules/feedback/feedback.service";
 import { mediaPublicPath } from "@/modules/media/media.service";
 import { MEETING_TIME_LABEL, START_TIME_LABEL } from "@/shared/copy";
 import { errorMessagesFa, type ErrorCode } from "@/shared/errors";
-import { labelOf, moderationStatusLabels } from "@/shared/labels";
+import {
+  eventStatusLabels,
+  labelOf,
+  moderationStatusLabels
+} from "@/shared/labels";
 import { getDisplayName } from "@/shared/privacy";
-import { eventReferralUrl, eventShareText } from "@/shared/share";
+import {
+  eventReferralUrl,
+  eventShareCardUrl,
+  eventShareText,
+  publicAppUrl
+} from "@/shared/share";
 
 export const dynamic = "force-dynamic";
+
+const UUID_RE = /^[0-9a-f-]{36}$/i;
+
+export async function generateMetadata({
+  params,
+  searchParams
+}: {
+  params: Promise<{ eventId: string }>;
+  searchParams: Promise<{ ref?: string }>;
+}): Promise<Metadata> {
+  const { eventId } = await params;
+  const { ref } = await searchParams;
+  const referrerId = ref && UUID_RE.test(ref) ? ref : null;
+  const event = await prisma.event.findFirst({
+    where: {
+      id: eventId,
+      deletedAt: null,
+      status: { in: publicEventStatuses }
+    },
+    select: { id: true, title: true, description: true }
+  });
+
+  if (!event) {
+    return { title: "هم مسیر" };
+  }
+
+  const pageUrl = eventReferralUrl(event.id, referrerId);
+  const imageUrl = eventShareCardUrl(event.id, {
+    format: "landscape",
+    userId: referrerId
+  });
+  const description =
+    event.description?.trim().slice(0, 160) || eventShareText(event.title);
+
+  return {
+    title: event.title,
+    description,
+    metadataBase: new URL(publicAppUrl()),
+    openGraph: {
+      title: event.title,
+      description: eventShareText(event.title),
+      url: pageUrl,
+      locale: "fa_IR",
+      type: "website",
+      images: [
+        { url: imageUrl, width: 1200, height: 630, alt: event.title }
+      ]
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: event.title,
+      description: eventShareText(event.title),
+      images: [imageUrl]
+    }
+  };
+}
 
 const dateFormatter = faTehranDateFormatter;
 const timeFormatter = faTehranTimeFormatter;
@@ -47,7 +113,12 @@ export default async function EventDetailsPage({
   searchParams
 }: {
   params: Promise<{ eventId: string }>;
-  searchParams: Promise<{ error?: string; ok?: string; register?: string }>;
+  searchParams: Promise<{
+    error?: string;
+    ok?: string;
+    register?: string;
+    ref?: string;
+  }>;
 }) {
   const user = await getOptionalCurrentUser();
   const { eventId } = await params;
@@ -139,9 +210,16 @@ export default async function EventDetailsPage({
 
   const canContribute =
     event.status === "COMPLETED" && attendance?.status === "PRESENT";
+  const isCompleted = event.status === "COMPLETED";
 
   return (
-    <UserPageShell contentClassName="pb-[calc(10.5rem+env(safe-area-inset-bottom))]">
+    <UserPageShell
+      contentClassName={
+        isCompleted
+          ? undefined
+          : "pb-[calc(10.5rem+env(safe-area-inset-bottom))]"
+      }
+    >
       <ReferralCapture />
       <UserPageHeader
         title={event.title}
@@ -251,18 +329,20 @@ export default async function EventDetailsPage({
             label="ثبت‌نام‌شده‌ها"
             value={`${registrationCount} نفر`}
           />
+          {isCompleted ? null : (
+            <Info
+              icon={<UsersRound size={18} />}
+              label="ظرفیت باقی‌مانده"
+              value={
+                remainingCapacity == null
+                  ? "بدون محدودیت"
+                  : `${remainingCapacity} نفر`
+              }
+            />
+          )}
           <Info
-            icon={<UsersRound size={18} />}
-            label="ظرفیت باقی‌مانده"
-            value={
-              remainingCapacity == null
-                ? "بدون محدودیت"
-                : `${remainingCapacity} نفر`
-            }
-          />
-          <Info
-            label="ثبت‌نام"
-            value="تا وقتی ادمین ثبت‌نام را نبندد باز است"
+            label="وضعیت برنامه"
+            value={labelOf(eventStatusLabels, event.status)}
           />
         </dl>
         <ParticipantsPreview
@@ -278,6 +358,7 @@ export default async function EventDetailsPage({
         ) : null}
         <ShareCardButton
           eventId={event.id}
+          userId={user?.id}
           shareUrl={eventReferralUrl(event.id, user?.id)}
           shareText={eventShareText(event.title)}
         />
@@ -421,18 +502,22 @@ export default async function EventDetailsPage({
         </UserCard>
       ) : null}
 
-      <div
-        className={`fixed bottom-[calc(4.1rem+env(safe-area-inset-bottom))] left-1/2 z-40 w-full -translate-x-1/2 px-4 ${miniAppWidthClass}`}
-      >
-        <div className="rounded-2xl border border-white/10 bg-[#07162E]/95 p-3 shadow-[0_-8px_24px_rgba(0,0,0,0.35)] backdrop-blur-xl">
-          <EventActions
-            eventId={event.id}
-            registrationStatus={registrationStatus}
-            requiresLogin={!user}
-            autoRegister={Boolean(user && register === "1" && !registrationStatus)}
-          />
+      {isCompleted ? null : (
+        <div
+          className={`fixed bottom-[calc(4.1rem+env(safe-area-inset-bottom))] left-1/2 z-40 w-full -translate-x-1/2 px-4 ${miniAppWidthClass}`}
+        >
+          <div className="rounded-2xl border border-white/10 bg-[#07162E]/95 p-3 shadow-[0_-8px_24px_rgba(0,0,0,0.35)] backdrop-blur-xl">
+            <EventActions
+              eventId={event.id}
+              registrationStatus={registrationStatus}
+              requiresLogin={!user}
+              autoRegister={Boolean(
+                user && register === "1" && !registrationStatus
+              )}
+            />
+          </div>
         </div>
-      </div>
+      )}
     </UserPageShell>
   );
 }

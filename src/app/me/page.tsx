@@ -232,6 +232,7 @@ export default async function MePage() {
           total={user._count.registrations}
           items={user.registrations.map((item) => ({
             id: item.id,
+            href: `/events/${item.event.id}`,
             text: `${item.event.title} - ${labelOf(registrationStatusLabels, item.status)}`
           }))}
           empty="هنوز ثبت‌نامی نداری."
@@ -241,6 +242,7 @@ export default async function MePage() {
           total={user._count.attendance}
           items={user.attendance.map((item) => ({
             id: item.id,
+            href: `/events/${item.event.id}`,
             text: item.event.title
           }))}
           empty="هنوز حضور تأییدشده‌ای نداری."
@@ -313,7 +315,7 @@ function SummaryCard({
   icon
 }: {
   title: string;
-  items: Array<{ id: string; text: string }>;
+  items: Array<{ id: string; text: string; href?: string }>;
   empty: string;
   total: number;
   icon?: React.ReactNode;
@@ -336,11 +338,24 @@ function SummaryCard({
       ) : (
         <ul className="grid gap-2">
           {items.map((item) => (
-            <li
-              key={item.id}
-              className="rounded-xl bg-white/10 px-3 py-2 text-sm text-slate-200"
-            >
-              {item.text}
+            <li key={item.id}>
+              {item.href ? (
+                <Link
+                  href={item.href as Route}
+                  className="flex min-h-11 items-center justify-between gap-2 rounded-xl bg-white/10 px-3 py-2 text-sm text-slate-200"
+                >
+                  <span className="min-w-0 truncate">{item.text}</span>
+                  <ChevronLeft
+                    size={16}
+                    className="shrink-0 text-[#F59E0B]"
+                    aria-hidden="true"
+                  />
+                </Link>
+              ) : (
+                <div className="rounded-xl bg-white/10 px-3 py-2 text-sm text-slate-200">
+                  {item.text}
+                </div>
+              )}
             </li>
           ))}
         </ul>
