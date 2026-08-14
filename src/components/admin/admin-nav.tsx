@@ -3,6 +3,7 @@
 import {
   Award,
   CalendarDays,
+  Images,
   LayoutDashboard,
   MoreHorizontal,
   ScrollText,
@@ -31,6 +32,7 @@ const primaryItems = [
 ] as const;
 
 const moreItems = [
+  { href: "/admin/moderation", label: "نظر و عکس", Icon: Images },
   { href: "/admin/badges", label: "بج‌ها", Icon: Award },
   { href: "/admin/categories", label: "حوزه کاری", Icon: Tags },
   { href: "/admin/telegram", label: "تلگرام", Icon: Send },

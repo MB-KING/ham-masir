@@ -26,6 +26,12 @@ export const businessStatusLabels: Record<string, string> = {
   DISABLED: "غیرفعال"
 };
 
+export const moderationStatusLabels: Record<string, string> = {
+  PENDING: "در انتظار تأیید",
+  APPROVED: "تأیید شده",
+  REJECTED: "رد شده"
+};
+
 export const rewardStatusLabels: Record<string, string> = {
   PENDING: "در انتظار تأیید",
   APPROVED: "فعال",

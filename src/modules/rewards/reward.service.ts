@@ -143,7 +143,7 @@ export class RewardService {
             stepCost,
             "RewardRedemption",
             redemption.id,
-            `خرج گام برای ${reward.title}`
+            `خرج امتیاز برای ${reward.title}`
           );
         }
 

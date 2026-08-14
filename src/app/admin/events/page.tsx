@@ -1,4 +1,4 @@
-import { CalendarPlus2, ClipboardCheck, Pencil } from "lucide-react";
+import { CalendarPlus2, ClipboardCheck, Images, Pencil } from "lucide-react";
 import Link from "next/link";
 import { AdminCard, PageTitle } from "@/components/admin/admin-card";
 import { EventStatusActions } from "@/components/admin/event-status-actions";
@@ -122,6 +122,13 @@ export default async function AdminEventsPage({
                 >
                   <ClipboardCheck size={16} aria-hidden="true" />
                   حضور و غیاب
+                </Link>
+                <Link
+                  className="col-span-2 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-white/15 px-3 text-sm font-bold text-slate-200"
+                  href={`/admin/events/${event.id}/feedback`}
+                >
+                  <Images size={16} aria-hidden="true" />
+                  نظرات و عکس‌ها
                 </Link>
               </div>
               <EventStatusActions eventId={event.id} status={event.status} />

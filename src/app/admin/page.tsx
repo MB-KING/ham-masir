@@ -3,6 +3,7 @@ import {
   CalendarDays,
   CalendarPlus2,
   CheckCircle2,
+  Images,
   UserCheck,
   UsersRound
 } from "lucide-react";
@@ -19,11 +20,14 @@ export default async function AdminDashboardPage() {
   const admin = await requireAdminPage();
   const isSuperAdmin = hasRole(admin, Role.SUPER_ADMIN);
 
-  const [users, events, registrations, presentAttendance] = await Promise.all([
+  const [users, events, registrations, presentAttendance, pendingFeedback, pendingPhotos] =
+    await Promise.all([
     prisma.user.count({ where: { deletedAt: null } }),
     prisma.event.count({ where: { deletedAt: null } }),
     prisma.eventRegistration.count({ where: { status: "REGISTERED" } }),
-    prisma.attendance.count({ where: { status: "PRESENT" } })
+    prisma.attendance.count({ where: { status: "PRESENT" } }),
+    prisma.eventFeedback.count({ where: { status: "PENDING" } }),
+    prisma.eventPhoto.count({ where: { status: "PENDING" } })
   ]);
 
   const latestEvents = await prisma.event.findMany({
@@ -80,6 +84,34 @@ export default async function AdminDashboardPage() {
           </Link>
         }
       />
+
+      {pendingFeedback + pendingPhotos > 0 ? (
+        <Link href={"/admin/moderation" as Route} className="mb-4 block">
+          <AdminCard className="border-[#F59E0B]/35 bg-[#F59E0B]/10">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="font-black text-white">در انتظار تأیید</p>
+                <p className="mt-1 text-sm leading-7 text-[#FDE68A]">
+                  {pendingFeedback.toLocaleString("fa-IR")} نظر و{" "}
+                  {pendingPhotos.toLocaleString("fa-IR")} عکس باید بررسی شود.
+                </p>
+              </div>
+              <Images className="text-[#F59E0B]" size={22} aria-hidden="true" />
+            </div>
+          </AdminCard>
+        </Link>
+      ) : (
+        <Link href={"/admin/moderation" as Route} className="mb-4 block">
+          <AdminCard>
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-sm font-bold text-slate-300">
+                صف تأیید نظر و عکس خالی است.
+              </p>
+              <Images className="text-[#F59E0B]" size={20} aria-hidden="true" />
+            </div>
+          </AdminCard>
+        </Link>
+      )}
 
       <section className="grid grid-cols-2 gap-3">
         {stats.map(({ label, value, Icon, href }) => {

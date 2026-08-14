@@ -5,6 +5,7 @@ import {
   BadgeType,
   BusinessStatus,
   EventStatus,
+  ModerationStatus,
   Prisma,
   RewardRedemptionStatus,
   RewardStatus,
@@ -757,7 +758,7 @@ export async function upsertStepRuleAction(formData: FormData) {
   const admin = await requireSuperAdminPage();
   const type = z.nativeEnum(XPTransactionType).parse(formData.get("type"));
   if (!earnStepTypes.includes(type)) {
-    throw new Error("نوع قانون گام معتبر نیست.");
+    throw new Error("نوع قانون امتیاز معتبر نیست.");
   }
   const amount = z.coerce.number().int().nonnegative().parse(formData.get("amount"));
   await prisma.stepRule.upsert({
@@ -881,4 +882,39 @@ export async function uploadEventImageAction(formData: FormData) {
   revalidatePath(`/admin/events/${eventId}/edit`);
   revalidatePath(`/events/${eventId}`);
   redirect(`/admin/events/${eventId}/edit?ok=image` as never);
+}
+
+export async function reviewEventFeedbackAction(formData: FormData) {
+  const admin = await requireEventManagerPage();
+  const feedbackId = z.string().uuid().parse(formData.get("feedbackId"));
+  const eventId = z.string().uuid().parse(formData.get("eventId"));
+  const status = z.nativeEnum(ModerationStatus).parse(formData.get("status"));
+  const { FeedbackService } = await import("@/modules/feedback/feedback.service");
+  await new FeedbackService().review({
+    feedbackId,
+    reviewerId: admin.id,
+    status
+  });
+  revalidatePath(`/admin/events/${eventId}/feedback`);
+  revalidatePath("/admin/moderation");
+  revalidatePath(`/events/${eventId}`);
+}
+
+export async function reviewEventPhotoAction(formData: FormData) {
+  const admin = await requireEventManagerPage();
+  const photoId = z.string().uuid().parse(formData.get("photoId"));
+  const eventId = z.string().uuid().parse(formData.get("eventId"));
+  const status = z.nativeEnum(ModerationStatus).parse(formData.get("status"));
+  const { EventPhotoService } = await import(
+    "@/modules/events/event-photo.service"
+  );
+  await new EventPhotoService().review({
+    photoId,
+    reviewerId: admin.id,
+    status
+  });
+  revalidatePath(`/admin/events/${eventId}/feedback`);
+  revalidatePath("/admin/moderation");
+  revalidatePath(`/events/${eventId}`);
+  revalidatePath("/me");
 }

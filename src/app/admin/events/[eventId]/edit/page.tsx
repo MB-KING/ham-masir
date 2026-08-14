@@ -52,7 +52,7 @@ export default async function EditEventPage({
           href={`/admin/events/${eventId}/feedback` as Route}
           className="inline-flex h-11 items-center rounded-xl bg-white/10 px-4 text-sm font-bold text-white"
         >
-          نظرات برنامه
+          نظرات و عکس‌ها
         </Link>
       </div>
       <AdminCard className="mb-4">

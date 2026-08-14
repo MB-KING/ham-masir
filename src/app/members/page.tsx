@@ -109,7 +109,7 @@ export default async function MembersPage({
         title="همراهان"
         subtitle={
           sort === "steps"
-            ? "رتبه‌بندی همراهان بر اساس گام."
+            ? "رتبه‌بندی همراهان بر اساس امتیاز."
             : "اعضایی که می‌خواهند در جامعه دیده شوند."
         }
         backFallbackHref="/me"
@@ -135,7 +135,7 @@ export default async function MembersPage({
           }`}
         >
           <Trophy size={15} aria-hidden="true" />
-          بیشترین گام
+          بیشترین امتیاز
         </Link>
       </div>
 

@@ -79,6 +79,50 @@ describe("resolvePublicAppOrigin", () => {
       })
     ).toBe("https://hammasir.mbking.info");
   });
+
+  it("never emits http for a public host when the proxy forwards http", () => {
+    expect(
+      resolvePublicAppOrigin({
+        forwardedHost: "hammasir.mbking.info",
+        forwardedProto: "http",
+        envUrl: "http://localhost:3000",
+        requestOrigin: "http://127.0.0.1:3000"
+      })
+    ).toBe("https://hammasir.mbking.info");
+  });
+
+  it("upgrades an http APP_URL for public hosts", () => {
+    expect(
+      resolvePublicAppOrigin({
+        forwardedHost: null,
+        forwardedProto: null,
+        envUrl: "http://hammasir.mbking.info",
+        requestOrigin: "http://127.0.0.1:3000"
+      })
+    ).toBe("https://hammasir.mbking.info");
+  });
+
+  it("upgrades an http request origin for public hosts", () => {
+    expect(
+      resolvePublicAppOrigin({
+        forwardedHost: null,
+        forwardedProto: "http",
+        envUrl: "http://localhost:3000",
+        requestOrigin: "http://hammasir.mbking.info"
+      })
+    ).toBe("https://hammasir.mbking.info");
+  });
+
+  it("keeps http for localhost", () => {
+    expect(
+      resolvePublicAppOrigin({
+        forwardedHost: "localhost:3000",
+        forwardedProto: "http",
+        envUrl: "http://localhost:3000",
+        requestOrigin: "http://localhost:3000"
+      })
+    ).toBe("http://localhost:3000");
+  });
 });
 
 describe("mapOidcClaimsToTelegramUser", () => {

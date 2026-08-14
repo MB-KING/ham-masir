@@ -2,16 +2,21 @@ import {
   CalendarDays,
   Clock,
   Flag,
+  Images,
   MapPin,
+  MessageSquareText,
+  Star,
   UsersRound
 } from "lucide-react";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { EventActions } from "@/components/user/event-actions";
+import { EventPhotoUploadForm } from "@/components/user/event-photo-upload";
 import { FeedbackForm } from "@/components/user/feedback-form";
 import { NavigationSheet } from "@/components/user/navigation-sheet";
 import { ParticipantsPreview } from "@/components/user/participants-preview";
 import { ShareCardButton } from "@/components/user/share-card-button";
+import { UserAvatar } from "@/components/user/user-avatar";
 import { UserCard, UserPageHeader } from "@/components/user/user-card";
 import { UserPageShell } from "@/components/user/user-shell";
 import { miniAppWidthClass } from "@/components/user/mini-app";
@@ -21,10 +26,14 @@ import {
   faTehranTimeFormatter
 } from "@/lib/tehran-time";
 import { getOptionalCurrentUser } from "@/modules/auth/session";
+import { EventPhotoService } from "@/modules/events/event-photo.service";
 import { publicEventStatuses } from "@/modules/events/event.repository";
+import { FeedbackService } from "@/modules/feedback/feedback.service";
 import { mediaPublicPath } from "@/modules/media/media.service";
 import { MEETING_TIME_LABEL, START_TIME_LABEL } from "@/shared/copy";
 import { errorMessagesFa, type ErrorCode } from "@/shared/errors";
+import { labelOf, moderationStatusLabels } from "@/shared/labels";
+import { getDisplayName } from "@/shared/privacy";
 
 export const dynamic = "force-dynamic";
 
@@ -98,18 +107,35 @@ export default async function EventDetailsPage({
     ? event.registrations[0]?.status
     : undefined;
 
-  const [attendance, feedback] = user
-    ? await Promise.all([
-        prisma.attendance.findUnique({
-          where: { userId_eventId: { userId: user.id, eventId } }
-        }),
-        prisma.eventFeedback.findUnique({
-          where: { eventId_userId: { eventId, userId: user.id } }
-        })
-      ])
-    : [null, null];
+  const feedbackService = new FeedbackService();
+  const photoService = new EventPhotoService();
+  const [attendance, feedback, approvedFeedback, approvedPhotos, myPhotos, feedbackStats] =
+    await Promise.all([
+      user
+        ? prisma.attendance.findUnique({
+            where: { userId_eventId: { userId: user.id, eventId } }
+          })
+        : Promise.resolve(null),
+      user
+        ? prisma.eventFeedback.findUnique({
+            where: { eventId_userId: { eventId, userId: user.id } }
+          })
+        : Promise.resolve(null),
+      event.status === "COMPLETED"
+        ? feedbackService.listApproved(eventId)
+        : Promise.resolve([]),
+      event.status === "COMPLETED"
+        ? photoService.listApproved(eventId)
+        : Promise.resolve([]),
+      user && event.status === "COMPLETED"
+        ? photoService.listMine(eventId, user.id)
+        : Promise.resolve([]),
+      event.status === "COMPLETED"
+        ? feedbackService.statsForEvent(eventId, true)
+        : Promise.resolve({ average: 0, count: 0 })
+    ]);
 
-  const canFeedback =
+  const canContribute =
     event.status === "COMPLETED" && attendance?.status === "PRESENT";
 
   return (
@@ -141,7 +167,9 @@ export default async function EventDetailsPage({
       ) : null}
       {ok === "feedback" ? (
         <UserCard className="mb-4 border-emerald-400/30 bg-emerald-500/10">
-          <p className="text-sm font-bold text-emerald-200">نظرت ثبت شد.</p>
+          <p className="text-sm font-bold text-emerald-200">
+            نظرت ثبت شد و بعد از تأیید ادمین نمایش داده می‌شود.
+          </p>
         </UserCard>
       ) : null}
 
@@ -248,13 +276,141 @@ export default async function EventDetailsPage({
         <ShareCardButton eventId={event.id} />
       </UserCard>
 
-      {canFeedback ? (
+      {canContribute ? (
         <UserCard className="mt-4">
-          <h2 className="font-black text-white">نظر درباره این برنامه</h2>
+          <h2 className="flex items-center gap-2 font-black text-white">
+            <MessageSquareText size={18} className="text-[#F59E0B]" />
+            نظر درباره این برنامه
+          </h2>
           <p className="mt-1 text-sm text-slate-400">
-            حضورت تأیید شده؛ تجربه‌ات را با بقیه به اشتراک بگذار.
+            حضورت تأیید شده؛ تجربه‌ات را بنویس تا بعد از تأیید ادمین دیده شود.
           </p>
           <FeedbackForm eventId={event.id} existing={feedback} />
+        </UserCard>
+      ) : null}
+
+      {canContribute ? (
+        <UserCard className="mt-4">
+          <h2 className="flex items-center gap-2 font-black text-white">
+            <Images size={18} className="text-[#F59E0B]" />
+            عکس‌های تو از این برنامه
+          </h2>
+          {myPhotos.length > 0 ? (
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              {myPhotos.map((photo) => (
+                <div
+                  key={photo.id}
+                  className="overflow-hidden rounded-xl border border-white/10 bg-black/20"
+                >
+                  <div className="relative aspect-square">
+                    <Image
+                      src={mediaPublicPath(photo.mediaAssetId)}
+                      alt={photo.caption ?? "عکس برنامه"}
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
+                  </div>
+                  <p className="px-2 py-1.5 text-xs font-bold text-slate-300">
+                    {labelOf(moderationStatusLabels, photo.status)}
+                  </p>
+                </div>
+              ))}
+            </div>
+          ) : null}
+          <EventPhotoUploadForm
+            eventId={event.id}
+            uploadedCount={myPhotos.length}
+          />
+        </UserCard>
+      ) : null}
+
+      {event.status === "COMPLETED" ? (
+        <UserCard className="mt-4">
+          <h2 className="flex items-center gap-2 font-black text-white">
+            <Star size={18} className="text-[#F59E0B]" />
+            نظرات همراهان
+          </h2>
+          {feedbackStats.count > 0 ? (
+            <p className="mt-1 text-sm text-slate-400">
+              میانگین {feedbackStats.average.toFixed(1)} از{" "}
+              {feedbackStats.count.toLocaleString("fa-IR")} نظر تأییدشده
+            </p>
+          ) : null}
+          <div className="mt-3 grid gap-3">
+            {approvedFeedback.length === 0 ? (
+              <p className="text-sm text-slate-400">
+                هنوز نظر تأییدشده‌ای نیست.
+              </p>
+            ) : (
+              approvedFeedback.map((item) => (
+                <div
+                  key={item.id}
+                  className="rounded-xl border border-white/10 bg-white/[0.05] p-3"
+                >
+                  <div className="flex items-center gap-2">
+                    <UserAvatar
+                      photoUrl={item.user.photoUrl}
+                      name={getDisplayName(item.user)}
+                      size={36}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-black text-white">
+                        {getDisplayName(item.user)}
+                      </p>
+                      <p className="text-xs font-bold text-[#F59E0B]">
+                        {item.rating} ستاره
+                      </p>
+                    </div>
+                  </div>
+                  {item.comment ? (
+                    <p className="mt-2 text-sm leading-7 text-slate-300">
+                      {item.comment}
+                    </p>
+                  ) : null}
+                </div>
+              ))
+            )}
+          </div>
+        </UserCard>
+      ) : null}
+
+      {event.status === "COMPLETED" ? (
+        <UserCard className="mt-4">
+          <h2 className="flex items-center gap-2 font-black text-white">
+            <Images size={18} className="text-[#F59E0B]" />
+            آرشیو عکس همراهان
+          </h2>
+          {approvedPhotos.length === 0 ? (
+            <p className="mt-3 text-sm text-slate-400">
+              هنوز عکس تأییدشده‌ای در آرشیو نیست.
+            </p>
+          ) : (
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              {approvedPhotos.map((photo) => (
+                <a
+                  key={photo.id}
+                  href={mediaPublicPath(photo.mediaAssetId)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="overflow-hidden rounded-xl border border-white/10 bg-black/20"
+                >
+                  <div className="relative aspect-square">
+                    <Image
+                      src={mediaPublicPath(photo.mediaAssetId)}
+                      alt={photo.caption ?? event.title}
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
+                  </div>
+                  <p className="truncate px-2 py-1.5 text-xs font-bold text-slate-300">
+                    {photo.caption || getDisplayName(photo.user)}
+                  </p>
+                </a>
+              ))}
+            </div>
+          )}
         </UserCard>
       ) : null}
 

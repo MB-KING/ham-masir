@@ -220,6 +220,8 @@ export async function submitEventFeedbackAction(formData: FormData) {
       comment: input.comment
     });
     revalidatePath(`/events/${input.eventId}`);
+    revalidatePath(`/admin/events/${input.eventId}/feedback`);
+    revalidatePath("/admin/moderation");
     revalidatePath("/me");
     redirect(`/events/${input.eventId}?ok=feedback` as `/events/${string}`);
   } catch (error) {

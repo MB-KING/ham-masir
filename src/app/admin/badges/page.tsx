@@ -7,7 +7,7 @@ import { requireSuperAdminPage } from "@/modules/auth/admin-session";
 
 const badgeTypeLabels: Record<BadgeType, string> = {
   ATTENDANCE_COUNT: "تعداد حضور",
-  XP: "گام",
+  XP: "امتیاز",
   SPECIAL: "ویژه"
 };
 

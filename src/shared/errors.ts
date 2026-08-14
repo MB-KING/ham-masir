@@ -11,6 +11,7 @@ export type ErrorCode =
   | "REWARD_OUT_OF_STOCK"
   | "NOT_FOUND"
   | "FEEDBACK_NOT_ALLOWED"
+  | "PHOTO_LIMIT_REACHED"
   | "UNEXPECTED_ERROR";
 
 export class AppError extends Error {
@@ -35,6 +36,8 @@ export const errorMessagesFa: Record<ErrorCode, string> = {
   NOT_ELIGIBLE_FOR_REWARD: "هنوز شرایط دریافت این مزیت را ندارید.",
   REWARD_OUT_OF_STOCK: "ظرفیت این مزیت تکمیل شده است.",
   NOT_FOUND: "مورد درخواستی پیدا نشد.",
-  FEEDBACK_NOT_ALLOWED: "فقط بعد از حضور تأییدشده می‌توانید نظر بدهید.",
+  FEEDBACK_NOT_ALLOWED:
+    "فقط بعد از اتمام برنامه و حضور تأییدشده می‌توانید نظر یا عکس بفرستید.",
+  PHOTO_LIMIT_REACHED: "برای این برنامه بیشتر از این تعداد عکس نمی‌توانی بفرستی.",
   UNEXPECTED_ERROR: "خطای غیرمنتظره رخ داد. لطفا دوباره تلاش کنید."
 };

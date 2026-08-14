@@ -56,8 +56,15 @@ enum XPTransactionType {
   CREATE_REWARD
   COMPLETE_PROFILE
   ATTEND_SPECIAL_EVENT
+  EVENT_PHOTO
   SPEND_REWARD
   ADMIN_ADJUSTMENT
+}
+
+enum ModerationStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 enum BusinessStatus {
@@ -170,7 +177,10 @@ model User {
   notifications       Notification[]
   eventReminders      EventReminder[]
   mediaUploaded       MediaAsset[]               @relation("MediaUploader")
-  feedback            EventFeedback[]
+  feedback            EventFeedback[]            @relation("EventFeedbackAuthor")
+  feedbackReviewed    EventFeedback[]            @relation("FeedbackReviewedBy")
+  eventPhotos         EventPhoto[]               @relation("EventPhotoAuthor")
+  photosReviewed      EventPhoto[]               @relation("PhotoReviewedBy")
   groupMemberships    TelegramGroupMembership[]
 
   @@index([communityId, username])
@@ -249,6 +259,7 @@ model MediaAsset {
   createdAt            DateTime      @default(now())
   uploader             User?         @relation("MediaUploader", fields: [uploaderId], references: [id])
   eventImages          EventImage[]
+  eventPhotos          EventPhoto[]
 
   @@index([provider, createdAt])
 }
@@ -282,6 +293,7 @@ model Event {
   attendance             Attendance[]
   reminders              EventReminder[]
   images                 EventImage[]
+  photos                 EventPhoto[]
   feedback               EventFeedback[]
   announcements          EventAnnouncement[]
 
@@ -334,19 +346,43 @@ model Attendance {
   @@index([eventId, status])
 }
 
+model EventPhoto {
+  id           String           @id @default(uuid())
+  eventId      String
+  userId       String
+  mediaAssetId String
+  caption      String?
+  status       ModerationStatus @default(PENDING)
+  reviewedById String?
+  reviewedAt   DateTime?
+  createdAt    DateTime         @default(now())
+  event        Event            @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user         User             @relation("EventPhotoAuthor", fields: [userId], references: [id], onDelete: Cascade)
+  mediaAsset   MediaAsset       @relation(fields: [mediaAssetId], references: [id], onDelete: Cascade)
+  reviewedBy   User?            @relation("PhotoReviewedBy", fields: [reviewedById], references: [id])
+
+  @@index([eventId, status, createdAt])
+  @@index([userId, eventId])
+}
+
 model EventFeedback {
-  id        String   @id @default(uuid())
-  eventId   String
-  userId    String
-  rating    Int
-  comment   String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id           String           @id @default(uuid())
+  eventId      String
+  userId       String
+  rating       Int
+  comment      String?
+  status       ModerationStatus @default(PENDING)
+  reviewedById String?
+  reviewedAt   DateTime?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  event        Event            @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user         User             @relation("EventFeedbackAuthor", fields: [userId], references: [id], onDelete: Cascade)
+  reviewedBy   User?            @relation("FeedbackReviewedBy", fields: [reviewedById], references: [id])
 
   @@unique([eventId, userId])
   @@index([eventId, createdAt])
+  @@index([eventId, status])
 }
 
 model Badge {

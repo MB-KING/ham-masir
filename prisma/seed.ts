@@ -31,7 +31,9 @@ const stepRules: Array<[XPTransactionType, number]> = [
   [XPTransactionType.REFER_USER, 50],
   [XPTransactionType.CREATE_REWARD, 75],
   [XPTransactionType.COMPLETE_PROFILE, 25],
-  [XPTransactionType.ATTEND_SPECIAL_EVENT, 150]
+  [XPTransactionType.ATTEND_SPECIAL_EVENT, 150],
+  [XPTransactionType.EVENT_PHOTO, 25],
+  [XPTransactionType.EVENT_PHOTO, 25]
 ];
 
 async function main() {

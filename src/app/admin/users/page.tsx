@@ -88,7 +88,7 @@ export default async function AdminUsersPage() {
                       @{user.username ?? "بدون نام کاربری"}
                     </p>
                     <div className="mt-4 grid grid-cols-4 gap-2 text-center text-xs text-slate-300">
-                      <Metric label="گام" value={user.xp} />
+                      <Metric label="امتیاز" value={user.xp} />
                       <Metric label="سطح" value={user.level} />
                       <Metric label="حضور" value={user._count.attendance} />
                       <Metric label="بج" value={user._count.badges} />

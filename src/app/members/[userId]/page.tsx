@@ -94,7 +94,7 @@ export default async function PublicMemberPage({
           <p className="mt-4 text-sm leading-7 text-slate-300">{view.bio}</p>
         ) : null}
         <div className="mt-4 grid grid-cols-2 gap-2">
-          <Metric label="گام" value={formatSteps(view.xp ?? 0)} />
+          <Metric label="امتیاز" value={formatSteps(view.xp ?? 0)} />
           {view.attendanceCount != null ? (
             <Metric
               label="حضور"

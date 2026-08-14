@@ -1,4 +1,8 @@
+import { ModerationStatus, Role } from "@prisma/client";
 import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { hasAnyRole } from "@/modules/auth/authorization";
+import { getOptionalCurrentUser } from "@/modules/auth/session";
 import { MediaService } from "@/modules/media/media.service";
 import { AppError } from "@/shared/errors";
 
@@ -10,6 +14,22 @@ export async function GET(
 ) {
   const { mediaId } = await params;
   try {
+    const photo = await prisma.eventPhoto.findFirst({
+      where: { mediaAssetId: mediaId },
+      select: { userId: true, status: true }
+    });
+
+    if (photo && photo.status !== ModerationStatus.APPROVED) {
+      const user = await getOptionalCurrentUser();
+      const isOwner = user?.id === photo.userId;
+      const isAdmin = user
+        ? hasAnyRole(user, [Role.ADMIN, Role.SUPER_ADMIN])
+        : false;
+      if (!isOwner && !isAdmin) {
+        return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
+      }
+    }
+
     const { buffer, contentType } = await new MediaService().getStreamable(
       mediaId
     );

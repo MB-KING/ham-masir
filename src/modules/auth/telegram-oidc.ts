@@ -89,23 +89,36 @@ export function isPrivateAppHost(value: string) {
   return host === "localhost" || host === "127.0.0.1" || host === "::1" || host === "[::1]";
 }
 
+function publicHttpsOrigin(value: string) {
+  const raw = value.trim();
+  if (!raw) return "";
+  try {
+    const url = new URL(raw.includes("://") ? raw : `https://${raw}`);
+    if (isPrivateAppHost(url.hostname)) return "";
+    return `https://${url.host}`;
+  } catch {
+    return "";
+  }
+}
+
 export function resolvePublicAppOrigin(input: {
   forwardedHost?: string | null;
   forwardedProto?: string | null;
   envUrl?: string | null;
   requestOrigin: string;
 }) {
-  const forwardedHost = input.forwardedHost?.split(",")[0]?.trim();
-  const forwardedProto = input.forwardedProto?.split(",")[0]?.trim();
-  if (forwardedHost && !isPrivateAppHost(forwardedHost)) {
-    const proto = forwardedProto === "http" ? "http" : "https";
-    return `${proto}://${forwardedHost}`.replace(/\/$/, "");
-  }
+  // Telegram BotFather only allows exact HTTPS callback URLs. TLS-terminating
+  // proxies (HAProxy) often forward to Node over HTTP and set
+  // X-Forwarded-Proto: http, which must never produce http://public-host.
+  const fromEnv = publicHttpsOrigin(input.envUrl || "");
+  if (fromEnv) return fromEnv;
 
-  const envUrl = input.envUrl?.trim().replace(/\/$/, "") || "";
-  if (envUrl && !isPrivateAppHost(envUrl)) {
-    return envUrl;
-  }
+  const forwardedHost = input.forwardedHost?.split(",")[0]?.trim() || "";
+  const fromForwarded = publicHttpsOrigin(forwardedHost);
+  if (fromForwarded) return fromForwarded;
+
+  const fromRequest = publicHttpsOrigin(input.requestOrigin);
+  if (fromRequest) return fromRequest;
 
   return input.requestOrigin.replace(/\/$/, "");
 }

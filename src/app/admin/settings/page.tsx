@@ -32,7 +32,7 @@ export default async function AdminSettingsPage() {
     <>
       <PageTitle
         title="تنظیمات جامعه و سطح‌ها"
-        subtitle="نام جامعه، جدول گام، اعلان‌ها و حداقل گام هر سطح را مدیریت کن."
+        subtitle="نام جامعه، جدول امتیاز، اعلان‌ها و حداقل امتیاز هر سطح را مدیریت کن."
       />
       <AdminCard className="mb-5">
         <div className="mb-4 flex items-center gap-2">
@@ -67,7 +67,7 @@ export default async function AdminSettingsPage() {
               defaultChecked={community.leaderboardEnabled}
               className="h-4 w-4 accent-[#F59E0B]"
             />
-            جدول گام فعال باشد
+            جدول امتیاز فعال باشد
           </label>
           <label className="flex items-center gap-2 text-sm font-bold text-slate-200">
             <input
@@ -88,7 +88,7 @@ export default async function AdminSettingsPage() {
       </AdminCard>
 
       <AdminCard className="mb-5">
-        <h2 className="mb-3 font-black text-white">قوانین گام</h2>
+        <h2 className="mb-3 font-black text-white">قوانین امتیاز</h2>
         <div className="grid gap-3">
           {earnStepTypes.map((type) => (
             <form
@@ -126,9 +126,9 @@ export default async function AdminSettingsPage() {
           <div>
             <h2 className="font-black text-white">سطح‌ها چطور محاسبه می‌شوند؟</h2>
             <p className="mt-1 text-sm leading-7 text-slate-300">
-              هر سطح یک حداقل گام دارد. سیستم بعد از ثبت گام، بالاترین سطح فعالی
+              هر سطح یک حداقل امتیاز دارد. سیستم بعد از ثبت امتیاز، بالاترین سطح فعالی
               را که کاربر حدنصابش را دارد انتخاب می‌کند. سطح ۱ بهتر است از صفر
-              گام شروع شود.
+              امتیاز شروع شود.
             </p>
           </div>
         </div>
@@ -178,7 +178,7 @@ function LevelForm({
       />
       <Field
         name="requiredXP"
-        label="حداقل گام"
+        label="حداقل امتیاز"
         type="number"
         defaultValue={String(level?.requiredXP ?? "")}
         required

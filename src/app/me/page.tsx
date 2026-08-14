@@ -126,7 +126,7 @@ export default async function MePage() {
     <UserPageShell>
       <UserPageHeader
         title="پروفایل من"
-        subtitle="گام، سطح و حضورهای تو."
+        subtitle="امتیاز، سطح و حضورهای تو."
         showBack={false}
       />
 
@@ -155,7 +155,7 @@ export default async function MePage() {
           </Link>
         </div>
         <div className="mt-5 grid grid-cols-2 gap-3">
-          <Metric label="گام" value={user.xp} />
+          <Metric label="امتیاز" value={user.xp} />
           <Metric label="سطح" value={user.level} />
           <Metric label="حضور" value={attendanceCount} />
           <Metric label="بج" value={user._count.badges} />
@@ -169,7 +169,7 @@ export default async function MePage() {
             </span>
             <span className="text-slate-400">
               {nextLevel
-                ? `${Math.max(nextLevel.requiredXP - user.xp, 0)} گام مانده`
+                ? `${Math.max(nextLevel.requiredXP - user.xp, 0)} امتیاز مانده`
                 : "تکمیل شده"}
             </span>
           </div>
@@ -218,7 +218,7 @@ export default async function MePage() {
             <div>
               <h2 className="font-black text-white">همراهان</h2>
               <p className="mt-1 text-sm text-slate-400">
-                اعضا و رتبه‌بندی گام
+                اعضا و رتبه‌بندی امتیاز
               </p>
             </div>
           </div>
@@ -266,7 +266,7 @@ export default async function MePage() {
                     {badge.type === BadgeType.SPECIAL
                       ? "ویژه"
                       : badge.type === BadgeType.XP
-                        ? `${badge.remaining} گام`
+                        ? `${badge.remaining} امتیاز`
                         : `${badge.remaining} حضور`}
                   </span>
                 </div>
@@ -314,10 +314,10 @@ export default async function MePage() {
         <UserCard>
           <h2 className="mb-3 flex items-center gap-2 font-black text-white">
             <History size={18} className="text-[#F59E0B]" />
-            آخرین گام‌ها
+            آخرین امتیازها
           </h2>
           {user.xpTransactions.length === 0 ? (
-            <p className="text-sm text-slate-400">هنوز گامی ثبت نشده.</p>
+            <p className="text-sm text-slate-400">هنوز امتیازی ثبت نشده.</p>
           ) : (
             <ul className="grid gap-2">
               {user.xpTransactions.map((item) => (
@@ -346,9 +346,10 @@ function xpTypeLabel(type: string) {
     ATTEND_EVENT: "حضور در برنامه",
     REFER_USER: "دعوت عضو",
     COMPLETE_PROFILE: "تکمیل پروفایل",
-    ATTEND_SPECIAL_EVENT: "حضور ویژه"
+    ATTEND_SPECIAL_EVENT: "حضور ویژه",
+    EVENT_PHOTO: "عکس تأییدشده برنامه"
   };
-  return labels[type] ?? "گام فعالیت";
+  return labels[type] ?? "امتیاز فعالیت";
 }
 
 function Metric({ label, value }: { label: string; value: number }) {

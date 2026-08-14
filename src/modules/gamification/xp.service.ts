@@ -17,7 +17,8 @@ export const xpRules: Record<
   REFER_USER: 50,
   CREATE_REWARD: 75,
   COMPLETE_PROFILE: 25,
-  ATTEND_SPECIAL_EVENT: 150
+  ATTEND_SPECIAL_EVENT: 150,
+  EVENT_PHOTO: 25
 };
 
 type Tx = Prisma.TransactionClient;

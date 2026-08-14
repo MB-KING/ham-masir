@@ -1,6 +1,16 @@
-import { AttendanceStatus, EventStatus } from "@prisma/client";
+import { ModerationStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { logActivity, notifyUser } from "@/modules/activity/activity.service";
+import { assertEventContributionAllowed } from "@/modules/events/event-contribution";
 import { AppError } from "@/shared/errors";
+
+const authorSelect = {
+  id: true,
+  firstName: true,
+  lastName: true,
+  username: true,
+  photoUrl: true
+} as const;
 
 export class FeedbackService {
   async upsert(input: {
@@ -13,25 +23,7 @@ export class FeedbackService {
       throw new AppError("VALIDATION_ERROR", "Rating must be 1-5");
     }
 
-    const [event, attendance] = await Promise.all([
-      prisma.event.findFirst({
-        where: { id: input.eventId, deletedAt: null },
-        select: { id: true, status: true }
-      }),
-      prisma.attendance.findUnique({
-        where: {
-          userId_eventId: { userId: input.userId, eventId: input.eventId }
-        }
-      })
-    ]);
-
-    if (!event) throw new AppError("EVENT_NOT_FOUND", "Event not found");
-    if (event.status !== EventStatus.COMPLETED) {
-      throw new AppError("FEEDBACK_NOT_ALLOWED", "Event not completed");
-    }
-    if (!attendance || attendance.status !== AttendanceStatus.PRESENT) {
-      throw new AppError("FEEDBACK_NOT_ALLOWED", "Attendance required");
-    }
+    await assertEventContributionAllowed(input.userId, input.eventId);
 
     return prisma.eventFeedback.upsert({
       where: {
@@ -41,36 +33,40 @@ export class FeedbackService {
         eventId: input.eventId,
         userId: input.userId,
         rating: input.rating,
-        comment: input.comment?.trim() || null
+        comment: input.comment?.trim() || null,
+        status: ModerationStatus.PENDING,
+        reviewedById: null,
+        reviewedAt: null
       },
       update: {
         rating: input.rating,
-        comment: input.comment?.trim() || null
+        comment: input.comment?.trim() || null,
+        status: ModerationStatus.PENDING,
+        reviewedById: null,
+        reviewedAt: null
       }
     });
   }
 
-  async listForEvent(eventId: string) {
+  async listForEvent(eventId: string, status?: ModerationStatus) {
     return prisma.eventFeedback.findMany({
-      where: { eventId },
-      include: {
-        user: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            username: true,
-            photoUrl: true
-          }
-        }
-      },
+      where: { eventId, ...(status ? { status } : {}) },
+      include: { user: { select: authorSelect } },
       orderBy: { createdAt: "desc" }
     });
   }
 
-  async statsForEvent(eventId: string) {
+  async listApproved(eventId: string) {
+    return this.listForEvent(eventId, ModerationStatus.APPROVED);
+  }
+
+  async statsForEvent(eventId: string, approvedOnly = false) {
+    const where = {
+      eventId,
+      ...(approvedOnly ? { status: ModerationStatus.APPROVED } : {})
+    };
     const agg = await prisma.eventFeedback.aggregate({
-      where: { eventId },
+      where,
       _avg: { rating: true },
       _count: { _all: true }
     });
@@ -78,5 +74,62 @@ export class FeedbackService {
       average: agg._avg.rating ?? 0,
       count: agg._count._all
     };
+  }
+
+  async review(input: {
+    feedbackId: string;
+    reviewerId: string;
+    status: ModerationStatus;
+  }) {
+    if (input.status === ModerationStatus.PENDING) {
+      throw new AppError("VALIDATION_ERROR", "Invalid review status");
+    }
+
+    const feedback = await prisma.eventFeedback.findUnique({
+      where: { id: input.feedbackId },
+      include: {
+        event: { select: { id: true, title: true, eventNumber: true } }
+      }
+    });
+    if (!feedback) throw new AppError("NOT_FOUND", "Feedback not found");
+
+    const updated = await prisma.eventFeedback.update({
+      where: { id: input.feedbackId },
+      data: {
+        status: input.status,
+        reviewedById: input.reviewerId,
+        reviewedAt: new Date()
+      }
+    });
+
+    await notifyUser({
+      userId: feedback.userId,
+      type: "EVENT_FEEDBACK_REVIEWED",
+      title:
+        input.status === ModerationStatus.APPROVED
+          ? "نظرت منتشر شد"
+          : "نظرت تأیید نشد",
+      body:
+        input.status === ModerationStatus.APPROVED
+          ? `نظرت برای «${feedback.event.title}» بعد از بررسی ادمین نمایش داده می‌شود.`
+          : `نظرت برای «${feedback.event.title}» تأیید نشد. می‌توانی دوباره ارسال کنی.`,
+      eventPath: `/events/${feedback.eventId}`,
+      buttonText: "مشاهده برنامه"
+    });
+    await logActivity({
+      actorUserId: input.reviewerId,
+      action: "EVENT_FEEDBACK_REVIEWED",
+      entityType: "EventFeedback",
+      entityId: feedback.id,
+      metadata: { status: input.status, eventId: feedback.eventId }
+    });
+
+    return updated;
+  }
+
+  async pendingCount() {
+    return prisma.eventFeedback.count({
+      where: { status: ModerationStatus.PENDING }
+    });
   }
 }
