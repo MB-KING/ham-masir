@@ -22,6 +22,6 @@ export async function applyReferralCredit(referredUserId: string) {
     XPTransactionType.REFER_USER,
     "User",
     referredUserId,
-    "معرفی عضو جدید"
+    "دعوت همراه جدید"
   );
 }

@@ -21,7 +21,7 @@ export const earnStepTypes: XPTransactionType[] = [
 
 export const stepTypeLabels: Record<XPTransactionType, string> = {
   ATTEND_EVENT: "حضور در برنامه",
-  REFER_USER: "معرفی عضو",
+  REFER_USER: "دعوت همراه",
   CREATE_REWARD: "ایجاد مزیت",
   COMPLETE_PROFILE: "تکمیل پروفایل",
   ATTEND_SPECIAL_EVENT: "حضور در برنامه ویژه",

@@ -55,12 +55,12 @@ export function EventCard({
     <UserCard className="overflow-hidden p-0">
       <div className="border-b border-white/10 p-4">
         <div className="flex items-start gap-3">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#F59E0B]/15 text-[#F59E0B]">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-ember/15 text-ember">
             <Route size={22} aria-hidden="true" />
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <p className="text-xs font-bold text-[#F59E0B]">
+              <p className="text-xs font-bold text-ember">
                 برنامه شماره {event.eventNumber}
               </p>
               {isRegistered ? (
@@ -114,14 +114,14 @@ export function EventCard({
         <Link
           href={`/events/${event.id}` as `/events/${string}`}
           className={cn(
-            "inline-flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-xl px-4 text-sm font-black shadow-sm transition active:scale-[0.99]",
+            "inline-flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-xl px-4 text-sm font-black shadow-sm transition duration-200 active:scale-[0.99]",
             isCompleted
-              ? "border border-[#F59E0B]/35 bg-[#F59E0B]/10 text-[#FDE68A] hover:bg-[#F59E0B]/20"
+              ? "border border-ember/35 bg-ember/10 text-amber-200 hover:bg-ember/20"
               : isRegistered
                 ? "border border-emerald-400/35 bg-emerald-500/15 text-emerald-200 hover:bg-emerald-500/25"
                 : isWaitlisted
                   ? "border border-sky-400/35 bg-sky-500/15 text-sky-200 hover:bg-sky-500/25"
-                  : "bg-[#F59E0B] text-[#061124] shadow-[#F59E0B]/20 hover:bg-[#FBBF24]"
+                  : "bg-ember text-ink shadow-ember/20 hover:bg-amber-400"
           )}
         >
           {isCompleted ? (
@@ -160,7 +160,7 @@ function Meta({
 }) {
   return (
     <span className="flex min-w-0 items-center gap-2 rounded-xl bg-white/[0.05] px-3 py-2">
-      <Icon size={16} className="shrink-0 text-[#F59E0B]" aria-hidden="true" />
+      <Icon size={16} className="shrink-0 text-ember" aria-hidden="true" />
       <span className="truncate">{text}</span>
     </span>
   );

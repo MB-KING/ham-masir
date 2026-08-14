@@ -35,7 +35,7 @@ export function ParticipantsPreview({
             {users.map((user, index) => (
               <div
                 key={user.id}
-                className="relative ring-2 ring-[#0B1E43] rounded-xl"
+                className="relative ring-2 ring-pine rounded-xl"
                 style={{
                   marginInlineStart: index === 0 ? 0 : -10,
                   zIndex: 10 - index
@@ -54,7 +54,7 @@ export function ParticipantsPreview({
           </div>
         )}
       </div>
-      <span className="text-xs font-bold text-[#F59E0B]">مشاهده</span>
+      <span className="text-xs font-bold text-ember">مشاهده</span>
     </Link>
   );
 }

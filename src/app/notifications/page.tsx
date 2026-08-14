@@ -10,6 +10,7 @@ import {
   markAllNotificationsReadAction,
   markNotificationReadAction
 } from "@/app/actions";
+import { EmptyState } from "@/components/user/empty-state";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import { UserCard, UserPageHeader } from "@/components/user/user-card";
 import {
@@ -49,10 +50,10 @@ export default async function NotificationsPage() {
           backFallbackHref="/me"
         />
 
-        <UserCard className="mb-4 border-[#F59E0B]/25 bg-[#0B1E43]">
+        <UserCard className="mb-4 border-ember/25 bg-pine">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex min-w-0 items-start gap-3">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#F59E0B]/15 text-[#F59E0B]">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-ember/15 text-ember">
                 <Bell size={20} aria-hidden="true" />
               </div>
               <div className="min-w-0">
@@ -80,12 +81,11 @@ export default async function NotificationsPage() {
 
         <div className="grid gap-2">
           {notifications.length === 0 ? (
-            <UserCard>
-              <p className="text-sm leading-7 text-slate-300">
-                هنوز اعلانی نداری. وقتی ثبت‌نامت قطعی شود، حضورت تأیید شود یا
-                مزیتی بگیری، اینجا خبرش می‌آید.
-              </p>
-            </UserCard>
+            <EmptyState
+              icon={Bell}
+              title="هنوز اعلانی نداری"
+              description="وقتی ثبت‌نامت قطعی شود، حضورت تأیید شود یا مزیتی بگیری، اینجا خبرش می‌آید."
+            />
           ) : (
             notifications.map((notification) => {
               const Icon = iconForType(notification.type);
@@ -97,7 +97,7 @@ export default async function NotificationsPage() {
                   className={
                     unread
                       ? "rounded-xl border border-sky-400/30 bg-sky-400/10 p-4"
-                      : "rounded-xl border border-white/10 bg-[#0B1E43]/75 p-4"
+                      : "rounded-xl border border-white/10 bg-pine/75 p-4"
                   }
                 >
                   <div className="flex items-start gap-3">

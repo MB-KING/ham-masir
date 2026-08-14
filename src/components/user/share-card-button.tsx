@@ -3,7 +3,10 @@
 import { Loader2, Send, Share2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BottomSheet } from "@/components/user/bottom-sheet";
-import { secondaryActionClass } from "@/components/user/user-action-styles";
+import {
+  primaryActionClass,
+  secondaryActionClass
+} from "@/components/user/user-action-styles";
 import {
   canShareTelegramMessage,
   openExternalHttps,
@@ -219,7 +222,7 @@ export function ShareCardButton({
             type="button"
             disabled={Boolean(busy)}
             onClick={() => void shareOnTelegram()}
-            className="inline-flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#F59E0B] px-4 text-sm font-black text-[#061124] disabled:opacity-60"
+            className={primaryActionClass}
           >
             {busy === "prepare" ? (
               <Loader2 size={16} className="animate-spin" aria-hidden="true" />
@@ -257,12 +260,12 @@ export function ShareCardButton({
                 aria-busy={isBusy || undefined}
                 onClick={() => void loadPreview(format.id)}
                 className={`${secondaryActionClass} cursor-pointer disabled:opacity-60 ${
-                  selected ? "border-[#F59E0B]/50 text-white" : ""
+                  selected ? "border-ember/50 text-white" : ""
                 }`}
               >
                 <span>{isBusy ? "در حال ساخت…" : format.label}</span>
                 {isBusy ? (
-                  <Loader2 size={16} className="animate-spin text-[#F59E0B]" />
+                  <Loader2 size={16} className="animate-spin text-ember" />
                 ) : null}
               </button>
             );
@@ -281,7 +284,7 @@ export function ShareCardButton({
 
           {formatBusy && !preview ? (
             <p className="inline-flex min-h-11 items-center justify-center gap-2 text-sm font-bold text-slate-300">
-              <Loader2 size={16} className="animate-spin text-[#F59E0B]" />
+              <Loader2 size={16} className="animate-spin text-ember" />
               در حال ساخت کارت…
             </p>
           ) : null}
@@ -301,7 +304,7 @@ export function ShareCardButton({
                 className={`${secondaryActionClass} cursor-pointer disabled:opacity-60`}
               >
                 {busy === "dm" ? (
-                  <Loader2 size={16} className="animate-spin text-[#F59E0B]" />
+                  <Loader2 size={16} className="animate-spin text-ember" />
                 ) : (
                   <Send size={16} aria-hidden="true" />
                 )}

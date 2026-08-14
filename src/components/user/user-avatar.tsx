@@ -31,7 +31,7 @@ export function UserAvatar({
           unoptimized
         />
       ) : (
-        <div className="flex h-full w-full items-center justify-center text-[#F59E0B]">
+        <div className="flex h-full w-full items-center justify-center text-ember">
           <UserRound size={Math.round(size * 0.45)} aria-hidden="true" />
         </div>
       )}

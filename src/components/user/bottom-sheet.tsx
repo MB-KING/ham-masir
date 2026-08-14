@@ -22,7 +22,12 @@ export function BottomSheet({
       if (event.key === "Escape") onClose();
     };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = previous;
+    };
   }, [open, onClose]);
 
   if (!open) return null;
@@ -32,7 +37,7 @@ export function BottomSheet({
       <button
         type="button"
         aria-label="بستن"
-        className="absolute inset-0 bg-black/55"
+        className="absolute inset-0 cursor-pointer bg-black/55 animate-fade-in"
         onClick={onClose}
       />
       <div
@@ -41,19 +46,19 @@ export function BottomSheet({
           miniAppWidthClass
         )}
       >
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#07162E] shadow-[0_-12px_40px_rgba(0,0,0,0.45)]">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-white/10 bg-night shadow-[0_-12px_40px_rgba(0,0,0,0.45)] animate-sheet-up">
           <div className="flex shrink-0 items-center justify-between gap-2 px-4 pt-4 pb-3">
             <h3 className="text-base font-black text-white">{title}</h3>
             <button
               type="button"
               onClick={onClose}
-              className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/5 text-slate-300"
+              className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl bg-white/5 text-slate-300 transition duration-200 active:scale-95"
               aria-label="بستن"
             >
               <X size={18} />
             </button>
           </div>
-          <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-4">
             {children}
           </div>
         </div>

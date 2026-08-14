@@ -35,16 +35,16 @@ export function PhotoLightbox({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="block w-full overflow-hidden rounded-xl border border-white/10 bg-black/20 text-right"
+        className="block w-full cursor-pointer overflow-hidden rounded-xl border border-white/10 bg-black/20 text-right transition duration-200"
       >
         {children}
       </button>
       {open ? (
-        <div className="fixed inset-0 z-[80] bg-black/95">
+        <div className="fixed inset-0 z-[80] bg-black/95 animate-fade-in">
           <button
             type="button"
             onClick={() => setOpen(false)}
-            className="absolute right-3 z-[81] inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-xl bg-white/10 px-3 text-sm font-black text-white"
+            className="absolute right-3 z-[81] inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-white/10 px-3 text-sm font-black text-white transition duration-200 active:scale-95"
             style={{ top: "calc(0.75rem + env(safe-area-inset-top))" }}
             aria-label="بازگشت"
           >

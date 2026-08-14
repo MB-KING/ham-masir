@@ -54,7 +54,7 @@ export class RegistrationService {
           : "✅ ثبت‌نام انجام شد",
       body:
         registration.status === RegistrationStatus.WAITLISTED
-          ? `برای «${registration.eventTitle}» در لیست انتظاری. اگر جا باز شود خبرت می‌کنیم.`
+          ? `الان تو لیست انتظار «${registration.eventTitle}» هستی. اگر جا باز شود خبرت می‌کنیم.`
           : `ثبت‌نامت برای «${registration.eventTitle}» قطعی شد. منتظر دیدارت هستیم. 🥾`,
       eventPath: `/events/${eventId}`,
       buttonText: "👀 مشاهده برنامه"

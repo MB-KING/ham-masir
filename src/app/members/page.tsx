@@ -6,9 +6,13 @@ import {
 } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
+import { EmptyState } from "@/components/user/empty-state";
 import { UserAvatar } from "@/components/user/user-avatar";
 import { UserCard, UserPageHeader } from "@/components/user/user-card";
-import { UserPageShell } from "@/components/user/user-shell";
+import {
+  secondaryActionClass,
+  UserPageShell
+} from "@/components/user/user-shell";
 import { prisma } from "@/lib/prisma";
 import { requireCurrentUserPage } from "@/modules/auth/session";
 import { BadgeService } from "@/modules/gamification/badge.service";
@@ -125,9 +129,9 @@ export default async function MembersPage({
       <div className="mb-4 grid grid-cols-2 gap-2">
         <Link
           href={buildMembersHref({ sort: "recent", category })}
-          className={`inline-flex min-h-11 items-center justify-center rounded-xl px-3 text-sm font-bold ${
+          className={`inline-flex min-h-11 cursor-pointer items-center justify-center rounded-xl px-3 text-sm font-bold transition duration-200 ${
             sort === "recent"
-              ? "bg-[#F59E0B] text-[#061124]"
+              ? "bg-ember text-ink"
               : "bg-white/10 text-slate-200"
           }`}
         >
@@ -135,9 +139,9 @@ export default async function MembersPage({
         </Link>
         <Link
           href={buildMembersHref({ sort: "steps", category })}
-          className={`inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl px-3 text-sm font-bold ${
+          className={`inline-flex min-h-11 cursor-pointer items-center justify-center gap-1.5 rounded-xl px-3 text-sm font-bold transition duration-200 ${
             sort === "steps"
-              ? "bg-[#F59E0B] text-[#061124]"
+              ? "bg-ember text-ink"
               : "bg-white/10 text-slate-200"
           }`}
         >
@@ -147,9 +151,9 @@ export default async function MembersPage({
       </div>
 
       {sort === "steps" && myRank ? (
-        <UserCard className="mb-4 border-[#F59E0B]/25 bg-[#0B1E43]">
+        <UserCard className="mb-4 border-ember/25 bg-pine">
           <div className="flex items-center gap-3">
-            <Trophy className="text-[#F59E0B]" size={22} />
+            <Trophy className="text-ember" size={22} />
             <div>
               <p className="font-black text-white">
                 رتبه تو: {myRank.toLocaleString("fa-IR")}
@@ -166,9 +170,9 @@ export default async function MembersPage({
         <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
           <Link
             href={buildMembersHref({ sort })}
-            className={`shrink-0 rounded-xl px-3 py-2 text-xs font-bold ${
+            className={`shrink-0 cursor-pointer rounded-xl px-3 py-2 text-xs font-bold transition duration-200 ${
               !category
-                ? "bg-[#F59E0B] text-[#061124]"
+                ? "bg-ember text-ink"
                 : "bg-white/10 text-slate-200"
             }`}
           >
@@ -178,9 +182,9 @@ export default async function MembersPage({
             <Link
               key={item.id}
               href={buildMembersHref({ sort, category: item.id })}
-              className={`shrink-0 rounded-xl px-3 py-2 text-xs font-bold ${
+              className={`shrink-0 cursor-pointer rounded-xl px-3 py-2 text-xs font-bold transition duration-200 ${
                 category === item.id
-                  ? "bg-[#F59E0B] text-[#061124]"
+                  ? "bg-ember text-ink"
                   : "bg-white/10 text-slate-200"
               }`}
             >
@@ -192,12 +196,16 @@ export default async function MembersPage({
 
       <div className="grid gap-3">
         {members.length === 0 ? (
-          <UserCard className="py-10 text-center">
-            <UsersRound className="mx-auto text-slate-500" size={32} />
-            <h2 className="mt-3 font-black text-white">
-              هنوز پروفایل عمومی وجود ندارد
-            </h2>
-          </UserCard>
+          <EmptyState
+            icon={UsersRound}
+            title="هنوز پروفایل عمومی وجود ندارد"
+            description="از تنظیمات پروفایل می‌توانی خودت را در فهرست همراهان نشان بدهی."
+            action={
+              <Link className={secondaryActionClass} href="/me/settings">
+                تنظیمات پروفایل
+              </Link>
+            }
+          />
         ) : (
           members.map((member, index) => {
             const name =
@@ -206,11 +214,15 @@ export default async function MembersPage({
               "عضو هم مسیر";
             const rank = skip + index + 1;
             return (
-              <Link key={member.id} href={`/members/${member.id}` as Route}>
+              <Link
+                key={member.id}
+                href={`/members/${member.id}` as Route}
+                className="block cursor-pointer"
+              >
                 <UserCard>
                   <div className="flex items-start gap-3">
                     {sort === "steps" ? (
-                      <span className="w-8 shrink-0 pt-2 text-center text-sm font-black text-[#F59E0B]">
+                      <span className="w-8 shrink-0 pt-2 text-center text-sm font-black text-ember">
                         {rank.toLocaleString("fa-IR")}
                       </span>
                     ) : null}
@@ -223,7 +235,7 @@ export default async function MembersPage({
                       <h2 className="font-black text-white">
                         {name}
                         {member.id === currentUser.id ? (
-                          <span className="mr-2 text-xs text-[#F59E0B]">
+                          <span className="mr-2 text-xs text-ember">
                             (خودت)
                           </span>
                         ) : null}
@@ -235,7 +247,7 @@ export default async function MembersPage({
                       ) : null}
                       {member.profile?.showWorkCategory !== false &&
                       member.workCategory ? (
-                        <p className="mt-1 text-xs font-bold text-[#F59E0B]">
+                        <p className="mt-1 text-xs font-bold text-ember">
                           {member.workCategory.name}
                         </p>
                       ) : null}
@@ -250,7 +262,7 @@ export default async function MembersPage({
                           {member.badges.map((item) => (
                             <span
                               key={item.id}
-                              className="rounded-lg bg-[#F59E0B]/15 px-2 py-1 text-[11px] font-bold text-[#FBBF24]"
+                              className="rounded-lg bg-ember/15 px-2 py-1 text-[11px] font-bold text-amber-400"
                             >
                               {item.badge.name}
                             </span>
@@ -268,7 +280,7 @@ export default async function MembersPage({
                     <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-300">
                       {member.profile?.showAttendanceCount ? (
                         <span className="inline-flex items-center gap-1.5 rounded-full bg-white/[0.07] px-3 py-1.5">
-                          <Footprints size={14} className="text-[#F59E0B]" />
+                          <Footprints size={14} className="text-ember" />
                           {member._count.attendance} حضور
                         </span>
                       ) : null}
@@ -280,7 +292,7 @@ export default async function MembersPage({
                             >
                               <BriefcaseBusiness
                                 size={14}
-                                className="text-[#F59E0B]"
+                                className="text-ember"
                               />
                               {business.name}
                             </span>
@@ -299,7 +311,7 @@ export default async function MembersPage({
         {page > 1 ? (
           <Link
             href={buildMembersHref({ sort, category, page: page - 1 })}
-            className="inline-flex h-11 flex-1 items-center justify-center rounded-xl bg-white/10 text-sm font-bold text-white"
+            className="inline-flex h-11 flex-1 cursor-pointer items-center justify-center rounded-xl bg-white/10 text-sm font-bold text-white transition duration-200"
           >
             قبلی
           </Link>
@@ -307,7 +319,7 @@ export default async function MembersPage({
         {page < totalPages ? (
           <Link
             href={buildMembersHref({ sort, category, page: page + 1 })}
-            className="inline-flex h-11 flex-1 items-center justify-center rounded-xl bg-[#F59E0B] text-sm font-black text-[#061124]"
+            className="inline-flex h-11 flex-1 cursor-pointer items-center justify-center rounded-xl bg-ember text-sm font-black text-ink transition duration-200 active:scale-[0.99]"
           >
             بعدی
           </Link>

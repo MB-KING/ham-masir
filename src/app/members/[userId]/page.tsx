@@ -79,7 +79,7 @@ export default async function PublicMemberPage({
               <p className="text-sm text-slate-400">@{view.username}</p>
             ) : null}
             {view.workCategory ? (
-              <p className="mt-1 text-sm font-bold text-[#F59E0B]">
+              <p className="mt-1 text-sm font-bold text-ember">
                 {view.workCategory.name}
               </p>
             ) : null}
@@ -104,7 +104,7 @@ export default async function PublicMemberPage({
         </div>
         {view.skills ? (
           <p className="mt-4 text-sm text-slate-300">
-            <span className="font-bold text-[#F59E0B]">مهارت‌ها: </span>
+            <span className="font-bold text-ember">مهارت‌ها: </span>
             {view.skills}
           </p>
         ) : null}
@@ -118,10 +118,10 @@ export default async function PublicMemberPage({
                   href={value}
                   target="_blank"
                   rel="noreferrer"
-              className="flex min-h-11 w-full items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/[0.05] px-3 text-sm font-bold text-slate-200 transition hover:border-[#F59E0B]/40 hover:text-white"
+              className="flex min-h-11 w-full cursor-pointer items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/[0.05] px-3 text-sm font-bold text-slate-200 transition duration-200 hover:border-ember/40 hover:text-white"
                 >
                   <span>{socialLinkLabel(key)}</span>
-                  <span className="truncate text-xs font-medium text-[#F59E0B]" dir="ltr">
+                  <span className="truncate text-xs font-medium text-ember" dir="ltr">
                     باز کردن
                   </span>
                 </a>
@@ -138,7 +138,7 @@ export default async function PublicMemberPage({
             {member.badges.map((item) => (
               <span
                 key={item.id}
-                className="rounded-lg bg-[#F59E0B]/15 px-3 py-1.5 text-xs font-bold text-[#FBBF24]"
+                className="rounded-lg bg-ember/15 px-3 py-1.5 text-xs font-bold text-amber-400"
               >
                 {item.badge.name}
               </span>
@@ -189,7 +189,7 @@ export default async function PublicMemberPage({
 function Metric({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl bg-white/[0.05] p-3">
-      <p className="text-xs font-bold text-[#F59E0B]">{label}</p>
+      <p className="text-xs font-bold text-ember">{label}</p>
       <p className="mt-1 text-sm font-black text-white">{value}</p>
     </div>
   );

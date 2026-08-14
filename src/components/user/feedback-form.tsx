@@ -28,7 +28,7 @@ export function FeedbackForm({
               ? "rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-sm font-bold text-emerald-200"
               : status === "REJECTED"
                 ? "rounded-xl border border-red-400/30 bg-red-500/10 px-3 py-2 text-sm font-bold text-red-200"
-                : "rounded-xl border border-[#F59E0B]/30 bg-[#F59E0B]/10 px-3 py-2 text-sm font-bold text-[#FDE68A]"
+                : "rounded-xl border border-ember/30 bg-ember/10 px-3 py-2 text-sm font-bold text-amber-200"
           }
         >
           وضعیت نظر: {labelOf(moderationStatusLabels, status)}
@@ -44,11 +44,11 @@ export function FeedbackForm({
         </p>
       )}
       <label className="grid gap-2 text-sm font-bold text-slate-200">
-        امتیاز شما
+        امتیاز تو
         <select
           name="rating"
           defaultValue={existing?.rating ?? 5}
-          className="h-11 cursor-pointer rounded-xl border border-white/10 bg-[#061124] px-3 text-white"
+          className="h-11 cursor-pointer rounded-xl border border-white/10 bg-ink px-3 text-white"
           required
         >
           {[5, 4, 3, 2, 1].map((value) => (
@@ -65,7 +65,7 @@ export function FeedbackForm({
           rows={3}
           maxLength={500}
           defaultValue={existing?.comment ?? ""}
-          className="rounded-xl border border-white/10 bg-[#061124] px-3 py-3 text-white"
+          className="rounded-xl border border-white/10 bg-ink px-3 py-3 text-white"
           placeholder="تجربه‌ات از این برنامه را بنویس"
         />
       </label>

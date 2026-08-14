@@ -146,13 +146,13 @@ export default async function MePage() {
       <div className="mt-4 grid gap-2">
         <Link
           href="/notifications"
-          className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-[#0B1E43]/75 p-4 transition active:scale-[0.99] hover:border-sky-400/40"
+          className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-white/10 bg-pine/75 p-4 transition duration-200 active:scale-[0.99] hover:border-sky-400/40"
         >
           <div className="flex items-center gap-3">
             <div className="relative flex h-11 w-11 items-center justify-center rounded-xl bg-sky-400/15 text-sky-300">
               <Bell size={20} aria-hidden="true" />
               {unreadNotifications > 0 ? (
-                <span className="absolute -left-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-sky-400 px-1 text-[10px] font-black text-[#061124]">
+                <span className="absolute -left-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-sky-400 px-1 text-[10px] font-black text-ink">
                   {unreadNotifications > 99 ? "99+" : unreadNotifications}
                 </span>
               ) : null}
@@ -170,10 +170,10 @@ export default async function MePage() {
         </Link>
         <Link
           href={"/community" as Route}
-          className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-[#0B1E43]/75 p-4 transition active:scale-[0.99] hover:border-[#F59E0B]/35"
+          className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-white/10 bg-pine/75 p-4 transition duration-200 active:scale-[0.99] hover:border-ember/35"
         >
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#F59E0B]/15 text-[#F59E0B]">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-ember/15 text-ember">
               <UsersRound size={20} aria-hidden="true" />
             </div>
             <div>
@@ -187,7 +187,7 @@ export default async function MePage() {
 
       <UserCard className="mt-4">
         <h2 className="flex items-center gap-2 font-black text-white">
-          <Trophy size={18} className="text-[#F59E0B]" />
+          <Trophy size={18} className="text-ember" />
           نشان‌های بعدی
         </h2>
         <div className="mt-4 grid gap-3">
@@ -203,10 +203,10 @@ export default async function MePage() {
               >
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <Award size={16} className="text-[#F59E0B]" />
+                    <Award size={16} className="text-ember" />
                     <h3 className="font-black text-white">{badge.name}</h3>
                   </div>
-                  <span className="text-xs font-bold text-[#F59E0B]">
+                  <span className="text-xs font-bold text-ember">
                     {badge.type === BadgeType.SPECIAL
                       ? "ویژه"
                       : badge.type === BadgeType.XP
@@ -216,7 +216,7 @@ export default async function MePage() {
                 </div>
                 <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/10">
                   <div
-                    className="h-full rounded-full bg-[#F59E0B]"
+                    className="h-full rounded-full bg-ember"
                     style={{ width: `${badge.progress}%` }}
                   />
                 </div>
@@ -259,7 +259,7 @@ export default async function MePage() {
         />
         <UserCard>
           <h2 className="mb-3 flex items-center gap-2 font-black text-white">
-            <History size={18} className="text-[#F59E0B]" />
+            <History size={18} className="text-ember" />
             آخرین امتیازها
           </h2>
           {user.xpTransactions.length === 0 ? (
@@ -290,7 +290,7 @@ export default async function MePage() {
 function xpTypeLabel(type: string) {
   const labels: Record<string, string> = {
     ATTEND_EVENT: "حضور در برنامه",
-    REFER_USER: "دعوت عضو",
+    REFER_USER: "دعوت همراه",
     COMPLETE_PROFILE: "تکمیل پروفایل",
     ATTEND_SPECIAL_EVENT: "حضور ویژه",
     EVENT_PHOTO: "عکس تأییدشده برنامه"
@@ -342,12 +342,12 @@ function SummaryCard({
               {item.href ? (
                 <Link
                   href={item.href as Route}
-                  className="flex min-h-11 items-center justify-between gap-2 rounded-xl bg-white/10 px-3 py-2 text-sm text-slate-200"
+                  className="flex min-h-11 cursor-pointer items-center justify-between gap-2 rounded-xl bg-white/10 px-3 py-2 text-sm text-slate-200 transition duration-200"
                 >
                   <span className="min-w-0 truncate">{item.text}</span>
                   <ChevronLeft
                     size={16}
-                    className="shrink-0 text-[#F59E0B]"
+                    className="shrink-0 text-ember"
                     aria-hidden="true"
                   />
                 </Link>

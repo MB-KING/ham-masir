@@ -43,7 +43,7 @@ export function UserNav() {
     <nav
       aria-label="منوی اصلی"
       className={cn(
-        "fixed bottom-0 left-1/2 z-50 -translate-x-1/2 border-t border-white/10 bg-[#07162E]/95 px-2 pt-1.5 shadow-[0_-8px_30px_rgba(0,0,0,0.35)] backdrop-blur-xl",
+        "fixed bottom-0 left-1/2 z-50 -translate-x-1/2 border-t border-white/10 bg-night/95 px-2 pt-1.5 shadow-[0_-8px_30px_rgba(0,0,0,0.35)] backdrop-blur-xl",
         "pb-[calc(0.45rem+env(safe-area-inset-bottom))]",
         miniAppWidthClass
       )}
@@ -58,9 +58,9 @@ export function UserNav() {
               href={href}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex min-h-14 min-w-0 flex-col items-center justify-center gap-0.5 rounded-xl px-1 text-[10px] font-bold leading-tight transition active:scale-95",
+                "flex min-h-14 min-w-0 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-xl px-1 text-[10px] font-bold leading-tight transition duration-200 active:scale-95",
                 active
-                  ? "bg-[#F59E0B] text-[#061124] shadow-sm shadow-[#F59E0B]/20"
+                  ? "bg-ember text-ink shadow-sm shadow-ember/20"
                   : "text-slate-400 active:bg-white/[0.07] active:text-white"
               )}
             >

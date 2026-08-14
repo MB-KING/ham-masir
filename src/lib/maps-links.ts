@@ -63,7 +63,7 @@ export function buildMapServiceLinks(
     },
     {
       id: "google",
-      name: "Google Maps",
+      name: "گوگل مپ",
       // https://developers.google.com/maps/documentation/urls/ios-urlscheme
       deepLink: `comgooglemaps://?daddr=${latLng}&directionsmode=driving`,
       // https://developers.google.com/maps/documentation/urls/get-started#directions-action
@@ -71,7 +71,7 @@ export function buildMapServiceLinks(
     },
     {
       id: "waze",
-      name: "Waze",
+      name: "ویز",
       // Only when the app is known installed; otherwise prefer HTTPS.
       deepLink: `waze://?ll=${latLng}&navigate=yes`,
       // https://developers.google.com/waze/deeplinks

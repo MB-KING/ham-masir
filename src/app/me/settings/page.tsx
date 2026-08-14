@@ -30,10 +30,10 @@ export default async function ProfileSettingsPage() {
         title="تنظیمات پروفایل"
         subtitle="مشخص کن سایر اعضا چه اطلاعاتی از تو را ببینند."
       />
-      <UserCard className="mb-4 border-[#F59E0B]/25 bg-[#0B1E43]">
+      <UserCard className="mb-4 border-ember/25 bg-pine">
         <div className="flex items-start gap-3">
           <ShieldCheck
-            className="mt-0.5 shrink-0 text-[#F59E0B]"
+            className="mt-0.5 shrink-0 text-ember"
             aria-hidden="true"
           />
           <div>
@@ -55,7 +55,7 @@ export default async function ProfileSettingsPage() {
                 required
                 maxLength={60}
                 defaultValue={user.firstName ?? ""}
-                className="h-11 rounded-xl border border-white/10 bg-[#061124] px-3 text-white outline-none focus:border-[#F59E0B]"
+                className="h-11 rounded-xl border border-white/10 bg-ink px-3 text-white outline-none focus:border-ember"
                 placeholder="مثلاً سارا"
                 autoComplete="given-name"
               />
@@ -67,7 +67,7 @@ export default async function ProfileSettingsPage() {
                 required
                 maxLength={60}
                 defaultValue={user.lastName ?? ""}
-                className="h-11 rounded-xl border border-white/10 bg-[#061124] px-3 text-white outline-none focus:border-[#F59E0B]"
+                className="h-11 rounded-xl border border-white/10 bg-ink px-3 text-white outline-none focus:border-ember"
                 placeholder="مثلاً محمدی"
                 autoComplete="family-name"
               />
@@ -80,7 +80,7 @@ export default async function ProfileSettingsPage() {
               maxLength={400}
               rows={4}
               defaultValue={profile?.bio ?? ""}
-              className="rounded-xl border border-white/10 bg-[#061124] px-3 py-3 text-white outline-none focus:border-[#F59E0B]"
+              className="rounded-xl border border-white/10 bg-ink px-3 py-3 text-white outline-none focus:border-ember"
               placeholder="علاقه‌مندی‌ها و مسیر حرفه‌ای کوتاه"
             />
           </label>
@@ -90,7 +90,7 @@ export default async function ProfileSettingsPage() {
               name="businessName"
               maxLength={120}
               defaultValue={profile?.businessName ?? ""}
-              className="h-11 rounded-xl border border-white/10 bg-[#061124] px-3 text-white outline-none focus:border-[#F59E0B]"
+              className="h-11 rounded-xl border border-white/10 bg-ink px-3 text-white outline-none focus:border-ember"
               placeholder="اگر کسب‌وکاری داری، همین‌جا بنویس"
             />
             <span className="text-xs font-medium text-slate-400">
@@ -102,7 +102,7 @@ export default async function ProfileSettingsPage() {
             <select
               name="workCategoryId"
               defaultValue={user.workCategoryId ?? ""}
-              className="h-11 rounded-xl border border-white/10 bg-[#061124] px-3 text-white"
+              className="h-11 rounded-xl border border-white/10 bg-ink px-3 text-white"
             >
               <option value="">انتخاب نشده</option>
               {categories.map((category) => (
@@ -118,7 +118,7 @@ export default async function ProfileSettingsPage() {
               name="skills"
               maxLength={300}
               defaultValue={profile?.skills ?? ""}
-              className="h-11 rounded-xl border border-white/10 bg-[#061124] px-3 text-white"
+              className="h-11 rounded-xl border border-white/10 bg-ink px-3 text-white"
               placeholder="مثلاً طراحی، فروش، برنامه‌نویسی"
             />
           </label>
@@ -140,7 +140,7 @@ export default async function ProfileSettingsPage() {
                   name={field.key}
                   maxLength={200}
                   defaultValue={social[field.key] ?? ""}
-                  className="h-11 rounded-xl border border-white/10 bg-[#061124] px-3 text-white outline-none focus:border-[#F59E0B]"
+                  className="h-11 rounded-xl border border-white/10 bg-ink px-3 text-white outline-none focus:border-ember"
                   placeholder={field.placeholder}
                   dir="ltr"
                   inputMode="url"
@@ -225,11 +225,11 @@ function Toggle({
         name={name}
         type="checkbox"
         defaultChecked={defaultChecked}
-        className="mt-1 h-4 w-4 shrink-0 accent-[#F59E0B]"
+        className="mt-1 h-4 w-4 shrink-0 accent-ember"
       />
       <Eye
         size={18}
-        className="mt-0.5 shrink-0 text-[#F59E0B]"
+        className="mt-0.5 shrink-0 text-ember"
         aria-hidden="true"
       />
       <span>

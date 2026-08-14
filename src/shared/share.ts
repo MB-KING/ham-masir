@@ -35,7 +35,7 @@ export function shareDetailsFromEvent(event: {
 }
 
 export function eventShareText(eventTitle: string) {
-  return `من توی برنامه «${eventTitle}» شرکت می‌کنم. اگر شما هم هستید خوشحال می‌شم ببینمتون 🥾`;
+  return `من توی برنامه «${eventTitle}» شرکت می‌کنم. اگر تو هم می‌آی خوشحال می‌شم ببینمت 🥾`;
 }
 
 export function eventShareDetailsText(details: EventShareDetails) {

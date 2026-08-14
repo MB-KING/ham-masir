@@ -4,6 +4,7 @@ import { ImagePlus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
+import { primaryActionClass } from "@/components/user/user-action-styles";
 import { MAX_EVENT_PHOTOS_PER_USER } from "@/shared/event-photos";
 import { errorMessagesFa, type ErrorCode } from "@/shared/errors";
 
@@ -93,12 +94,12 @@ export function EventPhotoUploadForm({
           name="caption"
           maxLength={200}
           disabled={pending}
-          className="h-11 rounded-xl border border-white/10 bg-[#061124] px-3 text-white"
+          className="h-11 rounded-xl border border-white/10 bg-ink px-3 text-white"
           placeholder="مثلاً قله، گروه، مسیر"
         />
       </label>
       <PendingSubmitButton
-        className="w-full bg-[#F59E0B] text-[#061124]"
+        className={primaryActionClass}
         pendingLabel="در حال آپلود…"
         disabled={pending}
         idleIcon={<ImagePlus size={16} aria-hidden="true" />}

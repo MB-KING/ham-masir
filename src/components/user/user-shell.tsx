@@ -6,6 +6,7 @@ import { getOptionalCurrentUser } from "@/modules/auth/session";
 
 export { miniAppWidthClass };
 export {
+  primaryActionClass,
   secondaryActionClass,
   secondaryActionInlineClass
 } from "@/components/user/user-action-styles";

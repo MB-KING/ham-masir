@@ -28,6 +28,8 @@ describe("event share copy", () => {
   it("keeps the Telegram caption short without clocks or urls", () => {
     const caption = eventShareTelegramCaption("تست");
     expect(caption).toContain("تست");
+    expect(caption).toContain("اگر تو هم می‌آی");
+    expect(caption).not.toContain("شما");
     expect(caption).not.toContain("۱۹:۴۵");
     expect(caption).not.toContain("http");
   });

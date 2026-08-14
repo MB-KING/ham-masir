@@ -1,4 +1,5 @@
 import { ExternalLink, Megaphone, UsersRound } from "lucide-react";
+import { EmptyState } from "@/components/user/empty-state";
 import { UserCard, UserPageHeader } from "@/components/user/user-card";
 import { UserPageShell } from "@/components/user/user-shell";
 import { defaultCommunitySlug } from "@/lib/config";
@@ -25,15 +26,17 @@ export default async function CommunityResourcesPage() {
   return (
     <UserPageShell>
       <UserPageHeader
-        title="منابع تلگرام"
+        title="گروه و کانال"
         subtitle="گروه‌ها و کانال‌های رسمی هم مسیر."
         backFallbackHref="/me"
       />
       <div className="grid gap-3">
         {resources.length === 0 ? (
-          <UserCard className="py-10 text-center text-sm text-slate-400">
-            هنوز منبع رسمی ثبت نشده است.
-          </UserCard>
+          <EmptyState
+            icon={Megaphone}
+            title="هنوز گروهی ثبت نشده"
+            description="گروه و کانال رسمی هم مسیر به‌زودی همین‌جا می‌آید."
+          />
         ) : (
           resources.map((resource) => (
             <a
@@ -41,10 +44,10 @@ export default async function CommunityResourcesPage() {
               href={resource.link}
               target="_blank"
               rel="noreferrer"
-              className="block"
+              className="block cursor-pointer"
             >
               <UserCard className="flex items-start gap-3">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#F59E0B]/15 text-[#F59E0B]">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-ember/15 text-ember">
                   {resource.type === "CHANNEL" ? (
                     <Megaphone size={20} />
                   ) : (
@@ -54,9 +57,9 @@ export default async function CommunityResourcesPage() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
                     <h2 className="font-black text-white">{resource.name}</h2>
-                    <ExternalLink size={16} className="text-[#F59E0B]" />
+                    <ExternalLink size={16} className="text-ember" />
                   </div>
-                  <p className="mt-1 text-xs font-bold text-[#F59E0B]">
+                  <p className="mt-1 text-xs font-bold text-ember">
                     {resource.type === "CHANNEL" ? "کانال" : "گروه"}
                   </p>
                   {resource.description ? (

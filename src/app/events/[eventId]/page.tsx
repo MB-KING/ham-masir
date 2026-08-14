@@ -259,7 +259,7 @@ export default async function EventDetailsPage({
 
       {event.images.length > 0 ? (
         <UserCard className="mb-4 overflow-hidden p-0">
-          <div className="relative aspect-[16/10] w-full bg-[#0B1E43]">
+          <div className="relative aspect-[16/10] w-full bg-pine">
             <Image
               src={mediaPublicPath(event.images[0].mediaAssetId)}
               alt={event.images[0].caption ?? event.title}
@@ -289,8 +289,8 @@ export default async function EventDetailsPage({
         </UserCard>
       ) : null}
 
-      <UserCard className="mb-4 border-[#F59E0B]/25 bg-[#0B1E43]">
-        <p className="text-sm font-bold text-[#F59E0B]">
+      <UserCard className="mb-4 border-ember/25 bg-pine">
+        <p className="text-sm font-bold text-ember">
           برنامه شماره {event.eventNumber}
         </p>
         <div className="mt-4 grid gap-3">
@@ -315,7 +315,7 @@ export default async function EventDetailsPage({
       </UserCard>
 
       <UserCard>
-        <h2 className="font-black text-white">جزئیات حضور</h2>
+        <h2 className="font-black text-white">اطلاعات برنامه</h2>
         <dl className="mt-4 grid gap-3 text-sm text-slate-300">
           <Info
             icon={<MapPin size={18} />}
@@ -371,7 +371,7 @@ export default async function EventDetailsPage({
       {canContribute ? (
         <UserCard className="mt-4">
           <h2 className="flex items-center gap-2 font-black text-white">
-            <MessageSquareText size={18} className="text-[#F59E0B]" />
+            <MessageSquareText size={18} className="text-ember" />
             نظر درباره این برنامه
           </h2>
           <p className="mt-1 text-sm text-slate-400">
@@ -384,7 +384,7 @@ export default async function EventDetailsPage({
       {canContribute ? (
         <UserCard className="mt-4">
           <h2 className="flex items-center gap-2 font-black text-white">
-            <Images size={18} className="text-[#F59E0B]" />
+            <Images size={18} className="text-ember" />
             عکس‌های تو از این برنامه
           </h2>
           {myPhotos.length > 0 ? (
@@ -422,7 +422,7 @@ export default async function EventDetailsPage({
       {event.status === "COMPLETED" ? (
         <UserCard className="mt-4">
           <h2 className="flex items-center gap-2 font-black text-white">
-            <Star size={18} className="text-[#F59E0B]" />
+            <Star size={18} className="text-ember" />
             نظرات همراهان
           </h2>
           {feedbackStats.count > 0 ? (
@@ -452,7 +452,7 @@ export default async function EventDetailsPage({
                       <p className="truncate font-black text-white">
                         {getDisplayName(item.user)}
                       </p>
-                      <p className="text-xs font-bold text-[#F59E0B]">
+                      <p className="text-xs font-bold text-ember">
                         {item.rating} ستاره
                       </p>
                     </div>
@@ -472,8 +472,8 @@ export default async function EventDetailsPage({
       {event.status === "COMPLETED" ? (
         <UserCard className="mt-4">
           <h2 className="flex items-center gap-2 font-black text-white">
-            <Images size={18} className="text-[#F59E0B]" />
-            آرشیو عکس همراهان
+            <Images size={18} className="text-ember" />
+            آرشیو عکس‌های همراهان
           </h2>
           {approvedPhotos.length === 0 ? (
             <p className="mt-3 text-sm text-slate-400">
@@ -511,7 +511,7 @@ export default async function EventDetailsPage({
         <div
           className={`fixed bottom-[calc(4.1rem+env(safe-area-inset-bottom))] left-1/2 z-40 w-full -translate-x-1/2 px-4 ${miniAppWidthClass}`}
         >
-          <div className="rounded-2xl border border-white/10 bg-[#07162E]/95 p-3 shadow-[0_-8px_24px_rgba(0,0,0,0.35)] backdrop-blur-xl">
+          <div className="rounded-2xl border border-white/10 bg-night/95 p-3 shadow-[0_-8px_24px_rgba(0,0,0,0.35)] backdrop-blur-xl">
             <EventActions
               eventId={event.id}
               registrationStatus={registrationStatus}
@@ -542,11 +542,11 @@ function Info({
     <div
       className={
         tone === "accent"
-          ? "rounded-xl bg-[#F59E0B]/15 p-3 ring-1 ring-[#F59E0B]/25"
+          ? "rounded-xl bg-ember/15 p-3 ring-1 ring-ember/25"
           : "rounded-xl bg-white/10 p-3"
       }
     >
-      <dt className="flex items-center gap-2 text-xs font-bold text-[#F59E0B]">
+      <dt className="flex items-center gap-2 text-xs font-bold text-ember">
         {icon}
         {label}
       </dt>

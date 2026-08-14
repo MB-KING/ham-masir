@@ -12,7 +12,10 @@ import {
 import { TelegramLoginWidget } from "@/components/telegram/telegram-login-widget";
 import { Button } from "@/components/ui/button";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
-import { secondaryActionClass } from "@/components/user/user-action-styles";
+import {
+  primaryActionClass,
+  secondaryActionClass
+} from "@/components/user/user-action-styles";
 
 function readTelegramInitData() {
   if (typeof window === "undefined") return null;
@@ -209,7 +212,7 @@ function LoginThenRegisterButton({ eventId }: { eventId: string }) {
         type="button"
         disabled={pending}
         onClick={handleMiniAppClick}
-        className="inline-flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#F59E0B] px-4 text-sm font-black text-[#061124] disabled:opacity-70"
+        className={primaryActionClass}
       >
         {pending ? (
           <>

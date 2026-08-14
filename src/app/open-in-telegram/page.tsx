@@ -4,7 +4,10 @@ import { redirect } from "next/navigation";
 import { BrandMark } from "@/components/brand/brand-mark";
 import { TelegramLoginWidget } from "@/components/telegram/telegram-login-widget";
 import { UserCard } from "@/components/user/user-card";
-import { UserPageShell } from "@/components/user/user-shell";
+import {
+  secondaryActionClass,
+  UserPageShell
+} from "@/components/user/user-shell";
 import { safeInternalPath } from "@/lib/safe-internal-path";
 import { botUsername } from "@/lib/telegram-format";
 import { getOptionalCurrentUser } from "@/modules/auth/session";
@@ -47,14 +50,14 @@ export default async function OpenInTelegramPage({
           href={botHref}
           target="_blank"
           rel="noreferrer"
-          className="mt-6 inline-flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-white/15 px-4 text-sm font-bold text-slate-200 transition hover:border-[#F59E0B]/40 hover:text-white"
+          className={`${secondaryActionClass} mt-6`}
         >
           <Send size={17} aria-hidden="true" />
           باز کردن ربات @{username ?? "HamMasirClubBot"}
         </a>
         <Link
           href="/"
-          className="mt-3 inline-flex min-h-11 w-full cursor-pointer items-center justify-center rounded-xl border border-white/15 text-sm font-bold text-slate-200"
+          className={`${secondaryActionClass} mt-3`}
         >
           بازگشت به خانه
         </Link>

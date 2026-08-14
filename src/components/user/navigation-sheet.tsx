@@ -73,7 +73,7 @@ export function NavigationSheet({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className={`${secondaryActionClass} mt-3 border-[#F59E0B]/30 text-[#F59E0B]`}
+        className={`${secondaryActionClass} mt-3 border-ember/30 text-ember`}
       >
         <MapPinned size={16} aria-hidden="true" />
         مسیریابی
@@ -95,7 +95,7 @@ export function NavigationSheet({
               className="flex min-h-12 items-center justify-between rounded-xl bg-white/[0.06] px-4 text-sm font-bold text-white transition active:bg-white/10"
             >
               <span>{service.name}</span>
-              <span className="text-xs text-[#F59E0B]">باز کردن</span>
+              <span className="text-xs text-ember">باز کردن</span>
             </button>
           ))}
         </div>

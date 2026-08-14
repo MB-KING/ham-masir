@@ -31,7 +31,7 @@ export function PendingSubmitButton({
       disabled={isDisabled}
       aria-busy={pending || undefined}
       className={cn(
-        "inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl px-4 text-sm font-black transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-70",
+        "inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl px-4 text-sm font-black transition duration-200 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-70",
         className
       )}
       {...props}

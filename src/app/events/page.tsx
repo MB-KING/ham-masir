@@ -1,5 +1,6 @@
 import { EventStatus } from "@prisma/client";
 import { CalendarDays, Info } from "lucide-react";
+import { EmptyState } from "@/components/user/empty-state";
 import { EventCard } from "@/components/user/event-card";
 import { UserCard, UserPageHeader } from "@/components/user/user-card";
 import { UserPageShell } from "@/components/user/user-shell";
@@ -46,9 +47,9 @@ export default async function EventsPage() {
         subtitle="برنامه‌های پیش رو را رزرو کن و آرشیو برگزارشده‌ها را ببین."
         backFallbackHref="/"
       />
-      <UserCard className="mb-4 border-[#F59E0B]/25 bg-[#0B1E43]">
+      <UserCard className="mb-4 border-ember/25 bg-pine">
         <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F59E0B]/15 text-[#F59E0B]">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-ember/15 text-ember">
             <Info size={20} aria-hidden="true" />
           </div>
           <div>
@@ -64,19 +65,11 @@ export default async function EventsPage() {
       <section className="grid gap-3">
         <h2 className="text-lg font-black text-white">برنامه‌های پیش رو</h2>
         {upcoming.length === 0 ? (
-          <UserCard className="py-10 text-center">
-            <CalendarDays
-              className="mx-auto text-slate-500"
-              size={32}
-              aria-hidden="true"
-            />
-            <h3 className="mt-3 font-black text-white">
-              فعلاً برنامه‌ای برای ثبت‌نام نیست
-            </h3>
-            <p className="mt-2 text-sm text-slate-400">
-              برنامه بعدی همین‌جا می‌آید.
-            </p>
-          </UserCard>
+          <EmptyState
+            icon={CalendarDays}
+            title="فعلاً برنامه‌ای برای ثبت‌نام نیست"
+            description="برنامه بعدی همین‌جا می‌آید."
+          />
         ) : (
           upcoming.map((event) => (
             <EventCard

@@ -2,13 +2,13 @@ export const SOCIAL_LINK_FIELDS = [
   {
     key: "website",
     label: "وب‌سایت",
-    placeholder: "example.com",
+    placeholder: "سایت.ir",
     hint: "آدرس سایت شخصی یا کاری"
   },
   {
     key: "linkedin",
     label: "لینکدین",
-    placeholder: "linkedin.com/in/username",
+    placeholder: "linkedin.com/in/نام‌کاربری",
     hint: "لینک پروفایل لینکدین"
   }
 ] as const;

@@ -1,7 +1,8 @@
 import { Role } from "@prisma/client";
-import { ArrowLeft, LayoutDashboard } from "lucide-react";
+import { ArrowLeft, CalendarDays, Images, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
 import { BrandMark } from "@/components/brand/brand-mark";
+import { EmptyState } from "@/components/user/empty-state";
 import { EventCard } from "@/components/user/event-card";
 import { NotificationsBell } from "@/components/user/notifications-bell";
 import {
@@ -78,7 +79,7 @@ export default async function Home() {
 
   return (
     <UserPageShell className="flex flex-col">
-      <header className="mb-5 overflow-hidden rounded-xl border border-white/10 bg-[#0B1E43]">
+      <header className="mb-5 overflow-hidden rounded-xl border border-white/10 bg-pine">
         <div className="p-4">
           <div className="flex items-start justify-between gap-3">
             <div className="flex min-w-0 items-center gap-3">
@@ -87,7 +88,7 @@ export default async function Home() {
                 <h1 className="break-words text-2xl font-black text-white">
                   {communityName}
                 </h1>
-                <p className="mt-1 text-sm font-bold text-[#F59E0B]">
+                <p className="mt-1 text-sm font-bold text-ember">
                   {communityTagline}
                 </p>
               </div>
@@ -101,14 +102,14 @@ export default async function Home() {
             </Link>
           ) : null}
         </div>
-        <div className="h-1.5 w-full bg-gradient-to-l from-[#F59E0B] via-[#FBBF24] to-transparent" />
+        <div className="h-1.5 w-full bg-gradient-to-l from-ember via-amber-400 to-transparent" />
       </header>
 
       <section className="space-y-3">
         <div className="flex items-center justify-between gap-2">
           <h2 className="text-xl font-black text-white">برنامه‌های نزدیک</h2>
           <Link
-            className="inline-flex min-h-11 items-center gap-1 text-sm font-bold text-[#F59E0B]"
+            className="inline-flex min-h-11 cursor-pointer items-center gap-1 text-sm font-bold text-ember transition duration-200"
             href="/events"
           >
             همه
@@ -116,9 +117,11 @@ export default async function Home() {
           </Link>
         </div>
         {events.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-white/15 bg-white/[0.04] p-6 text-center text-sm text-slate-300">
-            فعلا برنامه‌ای برای ثبت‌نام منتشر نشده است.
-          </div>
+          <EmptyState
+            icon={CalendarDays}
+            title="فعلاً برنامه‌ای برای ثبت‌نام نیست"
+            description="برنامه بعدی همین‌جا می‌آید."
+          />
         ) : (
           events.map((event) => (
             <EventCard
@@ -134,19 +137,25 @@ export default async function Home() {
         )}
       </section>
 
-      {completedEvents.length > 0 ? (
-        <section className="mt-8 space-y-3">
-          <div className="flex items-center justify-between gap-2">
-            <h2 className="text-xl font-black text-white">برگزار شده</h2>
-            <Link
-              className="inline-flex min-h-11 items-center gap-1 text-sm font-bold text-[#F59E0B]"
-              href="/events"
-            >
-              آرشیو
-              <ArrowLeft size={15} aria-hidden="true" />
-            </Link>
-          </div>
-          {completedEvents.map((event) => (
+      <section className="mt-8 space-y-3">
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-xl font-black text-white">برگزار شده</h2>
+          <Link
+            className="inline-flex min-h-11 cursor-pointer items-center gap-1 text-sm font-bold text-ember transition duration-200"
+            href="/events"
+          >
+            آرشیو
+            <ArrowLeft size={15} aria-hidden="true" />
+          </Link>
+        </div>
+        {completedEvents.length === 0 ? (
+          <EmptyState
+            icon={Images}
+            title="هنوز برنامه برگزارشده‌ای نیست"
+            description="بعد از برگزاری، آرشیو نظرات و عکس‌ها همین‌جا می‌ماند."
+          />
+        ) : (
+          completedEvents.map((event) => (
             <EventCard
               key={event.id}
               event={event}
@@ -156,9 +165,9 @@ export default async function Home() {
                   : undefined
               }
             />
-          ))}
-        </section>
-      ) : null}
+          ))
+        )}
+      </section>
     </UserPageShell>
   );
 }

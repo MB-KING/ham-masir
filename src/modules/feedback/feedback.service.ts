@@ -111,7 +111,7 @@ export class FeedbackService {
           : "نظرت تأیید نشد",
       body:
         input.status === ModerationStatus.APPROVED
-          ? `نظرت برای «${feedback.event.title}» بعد از بررسی ادمین نمایش داده می‌شود.`
+          ? `نظرت برای «${feedback.event.title}» الان روی صفحه برنامه دیده می‌شود.`
           : `نظرت برای «${feedback.event.title}» تأیید نشد. می‌توانی دوباره ارسال کنی.`,
       eventPath: `/events/${feedback.eventId}`,
       buttonText: "مشاهده برنامه"
