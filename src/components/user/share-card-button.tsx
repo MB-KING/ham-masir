@@ -37,11 +37,13 @@ export function ShareCardButton({
   eventId,
   shareUrl,
   shareText,
+  telegramShareText,
   userId
 }: {
   eventId: string;
   shareUrl: string;
   shareText: string;
+  telegramShareText?: string;
   userId?: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -181,14 +183,16 @@ export function ShareCardButton({
             ? err.message
             : "ارسال در تلگرام انجام نشد."
         );
-        openTelegramShare(telegramShareUrl(shareUrl, shareText));
+        openTelegramShare(telegramShareUrl(shareUrl, telegramText));
       }
     } finally {
       setBusy(null);
     }
   }
 
-  const formatBusy = busy === "story" || busy === "square" || busy === "landscape";
+  const telegramText = telegramShareText?.trim() || shareText.split("\n")[0] || shareText;
+  const formatBusy =
+    busy === "story" || busy === "square" || busy === "landscape";
 
   return (
     <>
@@ -226,7 +230,7 @@ export function ShareCardButton({
           </button>
           <button
             type="button"
-            onClick={() => openExternalHttps(twitterShareUrl(shareUrl, shareText))}
+            onClick={() => openExternalHttps(twitterShareUrl(shareUrl, telegramText))}
             className={`${secondaryActionClass}`}
           >
             اشتراک در ایکس
@@ -288,7 +292,7 @@ export function ShareCardButton({
               <img
                 src={preview.objectUrl}
                 alt="کارت دعوت"
-                className="max-h-[40vh] w-full rounded-xl bg-black/30 object-contain"
+                className="max-h-[min(36vh,28rem)] w-full rounded-xl bg-black/30 object-contain"
               />
               <button
                 type="button"

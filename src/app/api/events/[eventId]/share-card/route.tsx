@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
-import { escapeHtml } from "@/lib/telegram-format";
 import {
   savePreparedInlinePhoto,
   sendTelegramPhotoBuffer
@@ -20,10 +19,8 @@ import { publicEventStatuses } from "@/modules/events/event.repository";
 import { AppError, errorMessagesFa } from "@/shared/errors";
 import {
   eventReferralUrl,
-  eventShareCaption,
   eventShareCardUrl,
-  shareDetailsFromEvent,
-  type EventShareDetails,
+  eventShareTelegramCaption,
   type ShareCardFormat
 } from "@/shared/share";
 
@@ -35,8 +32,8 @@ const postBodySchema = z.object({
   action: z.enum(["dm", "prepare"])
 });
 
-function captionHtml(details: EventShareDetails, shareUrl: string) {
-  return escapeHtml(eventShareCaption(details, shareUrl)).slice(0, 1024);
+function telegramCaption(title: string) {
+  return eventShareTelegramCaption(title).slice(0, 1024);
 }
 
 function telegramDmErrorFa(reason: string) {
@@ -66,12 +63,7 @@ async function loadPublicEvent(eventId: string) {
       status: { in: publicEventStatuses }
     },
     select: {
-      title: true,
-      date: true,
-      meetingTime: true,
-      startTime: true,
-      locationName: true,
-      locationAddress: true
+      title: true
     }
   });
   if (!event) {
@@ -137,7 +129,7 @@ export async function POST(
     const format: ShareCardFormat = parseShareCardFormat(body.format);
     const event = await loadPublicEvent(eventId);
     const shareUrl = eventReferralUrl(eventId, user.id);
-    const caption = captionHtml(shareDetailsFromEvent(event), shareUrl);
+    const caption = telegramCaption(event.title);
     const eventPath = `/events/${eventId}`;
 
     if (body.action === "prepare") {
@@ -151,7 +143,9 @@ export async function POST(
         }),
         photoWidth: size.width,
         photoHeight: size.height,
-        caption
+        caption,
+        buttonUrl: shareUrl,
+        buttonText: "🥾 باز کردن برنامه"
       });
       return NextResponse.json({
         ok: true,

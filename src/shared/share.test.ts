@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { eventShareCaption, eventShareDetailsText } from "@/shared/share";
+import {
+  eventShareCaption,
+  eventShareDetailsText,
+  eventShareTelegramCaption
+} from "@/shared/share";
 
 describe("event share copy", () => {
   const details = {
@@ -21,8 +25,18 @@ describe("event share copy", () => {
     expect(text).toContain("بلوار جنوبی");
   });
 
-  it("appends the referral url in the caption", () => {
-    const caption = eventShareCaption(details, "https://hammasir.mbking.info/events/1");
+  it("keeps the Telegram caption short without clocks or urls", () => {
+    const caption = eventShareTelegramCaption("تست");
+    expect(caption).toContain("تست");
+    expect(caption).not.toContain("۱۹:۴۵");
+    expect(caption).not.toContain("http");
+  });
+
+  it("appends the referral url in the long caption", () => {
+    const caption = eventShareCaption(
+      details,
+      "https://hammasir.mbking.info/events/1"
+    );
     expect(caption).toContain("https://hammasir.mbking.info/events/1");
   });
 });

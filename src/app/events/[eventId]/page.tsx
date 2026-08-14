@@ -16,6 +16,7 @@ import { EventPhotoUploadForm } from "@/components/user/event-photo-upload";
 import { FeedbackForm } from "@/components/user/feedback-form";
 import { NavigationSheet } from "@/components/user/navigation-sheet";
 import { ParticipantsPreview } from "@/components/user/participants-preview";
+import { PhotoLightbox } from "@/components/user/photo-lightbox";
 import { ReferralCapture } from "@/components/user/referral-capture";
 import { ShareCardButton } from "@/components/user/share-card-button";
 import { UserAvatar } from "@/components/user/user-avatar";
@@ -363,6 +364,7 @@ export default async function EventDetailsPage({
           userId={user?.id}
           shareUrl={eventReferralUrl(event.id, user?.id)}
           shareText={eventShareDetailsText(shareDetailsFromEvent(event))}
+          telegramShareText={eventShareText(event.title)}
         />
       </UserCard>
 
@@ -388,9 +390,11 @@ export default async function EventDetailsPage({
           {myPhotos.length > 0 ? (
             <div className="mt-3 grid grid-cols-2 gap-2">
               {myPhotos.map((photo) => (
-                <div
+                <PhotoLightbox
                   key={photo.id}
-                  className="overflow-hidden rounded-xl border border-white/10 bg-black/20"
+                  src={mediaPublicPath(photo.mediaAssetId)}
+                  alt={photo.caption ?? "عکس برنامه"}
+                  caption={labelOf(moderationStatusLabels, photo.status)}
                 >
                   <div className="relative aspect-square">
                     <Image
@@ -404,7 +408,7 @@ export default async function EventDetailsPage({
                   <p className="px-2 py-1.5 text-xs font-bold text-slate-300">
                     {labelOf(moderationStatusLabels, photo.status)}
                   </p>
-                </div>
+                </PhotoLightbox>
               ))}
             </div>
           ) : null}
@@ -478,12 +482,11 @@ export default async function EventDetailsPage({
           ) : (
             <div className="mt-3 grid grid-cols-2 gap-2">
               {approvedPhotos.map((photo) => (
-                <a
+                <PhotoLightbox
                   key={photo.id}
-                  href={mediaPublicPath(photo.mediaAssetId)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="overflow-hidden rounded-xl border border-white/10 bg-black/20"
+                  src={mediaPublicPath(photo.mediaAssetId)}
+                  alt={photo.caption ?? event.title}
+                  caption={photo.caption || getDisplayName(photo.user)}
                 >
                   <div className="relative aspect-square">
                     <Image
@@ -497,7 +500,7 @@ export default async function EventDetailsPage({
                   <p className="truncate px-2 py-1.5 text-xs font-bold text-slate-300">
                     {photo.caption || getDisplayName(photo.user)}
                   </p>
-                </a>
+                </PhotoLightbox>
               ))}
             </div>
           )}

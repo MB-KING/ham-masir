@@ -63,6 +63,11 @@ export function eventShareCaption(
   return `${text}\n\n${shareUrl}`;
 }
 
+/** Telegram captions mix RTL poorly with URLs and clock times; keep those on the image. */
+export function eventShareTelegramCaption(eventTitle: string) {
+  return eventShareText(eventTitle);
+}
+
 export function telegramShareUrl(url: string, text: string) {
   const share = new URL("https://t.me/share/url");
   share.searchParams.set("url", url);

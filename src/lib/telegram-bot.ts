@@ -305,11 +305,13 @@ export async function sendTelegramPhotoBuffer(input: {
     return form;
   };
 
+  const useHtml = /<\/?[a-z][\s\S]*>/i.test(caption);
+
   try {
     try {
       const result = await callTelegramForm<TelegramMessage>(
         "sendPhoto",
-        buildForm(true, caption)
+        buildForm(useHtml, caption)
       );
       return { ok: true, messageId: result.message_id };
     } catch (error) {
@@ -338,8 +340,22 @@ export async function savePreparedInlinePhoto(input: {
   photoWidth?: number;
   photoHeight?: number;
   caption: string;
+  buttonUrl?: string;
+  buttonText?: string;
 }): Promise<{ id: string; expirationDate: number }> {
   const caption = input.caption.slice(0, 1024);
+  const keyboard = input.buttonUrl
+    ? {
+        inline_keyboard: [
+          [
+            {
+              text: input.buttonText ?? "🥾 باز کردن برنامه",
+              url: input.buttonUrl
+            }
+          ]
+        ]
+      }
+    : undefined;
   const result = await callTelegram<{
     id: string;
     expiration_date: number;
@@ -356,7 +372,7 @@ export async function savePreparedInlinePhoto(input: {
       photo_width: input.photoWidth,
       photo_height: input.photoHeight,
       caption,
-      parse_mode: "HTML"
+      reply_markup: keyboard
     }
   });
   return { id: result.id, expirationDate: result.expiration_date };
