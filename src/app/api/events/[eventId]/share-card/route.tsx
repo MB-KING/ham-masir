@@ -22,6 +22,8 @@ import {
   eventReferralUrl,
   eventShareCaption,
   eventShareCardUrl,
+  shareDetailsFromEvent,
+  type EventShareDetails,
   type ShareCardFormat
 } from "@/shared/share";
 
@@ -33,8 +35,8 @@ const postBodySchema = z.object({
   action: z.enum(["dm", "prepare"])
 });
 
-function captionHtml(title: string, shareUrl: string) {
-  return escapeHtml(eventShareCaption(title, shareUrl)).slice(0, 1024);
+function captionHtml(details: EventShareDetails, shareUrl: string) {
+  return escapeHtml(eventShareCaption(details, shareUrl)).slice(0, 1024);
 }
 
 function telegramDmErrorFa(reason: string) {
@@ -56,19 +58,26 @@ function jsonError(message: string, status: number) {
   return NextResponse.json({ ok: false, error: message }, { status });
 }
 
-async function loadPublicEventTitle(eventId: string) {
+async function loadPublicEvent(eventId: string) {
   const event = await prisma.event.findFirst({
     where: {
       id: eventId,
       deletedAt: null,
       status: { in: publicEventStatuses }
     },
-    select: { title: true }
+    select: {
+      title: true,
+      date: true,
+      meetingTime: true,
+      startTime: true,
+      locationName: true,
+      locationAddress: true
+    }
   });
   if (!event) {
     throw new AppError("EVENT_NOT_FOUND", errorMessagesFa.EVENT_NOT_FOUND, 404);
   }
-  return event.title;
+  return event;
 }
 
 export async function GET(
@@ -126,9 +135,9 @@ export async function POST(
       await request.json().catch(() => ({}))
     );
     const format: ShareCardFormat = parseShareCardFormat(body.format);
-    const title = await loadPublicEventTitle(eventId);
+    const event = await loadPublicEvent(eventId);
     const shareUrl = eventReferralUrl(eventId, user.id);
-    const caption = captionHtml(title, shareUrl);
+    const caption = captionHtml(shareDetailsFromEvent(event), shareUrl);
     const eventPath = `/events/${eventId}`;
 
     if (body.action === "prepare") {

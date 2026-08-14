@@ -1,12 +1,66 @@
+import {
+  faTehranDateFormatter,
+  faTehranTimeFormatter
+} from "@/lib/tehran-time";
+import { MEETING_TIME_LABEL, START_TIME_LABEL } from "@/shared/copy";
+
 export const shareCardFormats = ["story", "square", "landscape"] as const;
 export type ShareCardFormat = (typeof shareCardFormats)[number];
+
+export type EventShareDetails = {
+  title: string;
+  dateLabel: string;
+  meetingTime: string;
+  startTime: string;
+  locationName: string;
+  locationAddress?: string | null;
+};
+
+export function shareDetailsFromEvent(event: {
+  title: string;
+  date: Date;
+  meetingTime: Date;
+  startTime: Date;
+  locationName: string;
+  locationAddress?: string | null;
+}): EventShareDetails {
+  return {
+    title: event.title,
+    dateLabel: faTehranDateFormatter.format(event.date),
+    meetingTime: faTehranTimeFormatter.format(event.meetingTime),
+    startTime: faTehranTimeFormatter.format(event.startTime),
+    locationName: event.locationName,
+    locationAddress: event.locationAddress
+  };
+}
 
 export function eventShareText(eventTitle: string) {
   return `من توی برنامه «${eventTitle}» شرکت می‌کنم. اگر شما هم هستید خوشحال می‌شم ببینمتون 🥾`;
 }
 
-export function eventShareCaption(eventTitle: string, shareUrl: string) {
-  return `${eventShareText(eventTitle)}\n\n${shareUrl}`;
+export function eventShareDetailsText(details: EventShareDetails) {
+  const address = details.locationAddress?.replace(/\s+/g, " ").trim();
+  return [
+    eventShareText(details.title),
+    details.dateLabel,
+    `${MEETING_TIME_LABEL} ${details.meetingTime}`,
+    `${START_TIME_LABEL} ${details.startTime}`,
+    details.locationName,
+    address || null
+  ]
+    .filter((line): line is string => Boolean(line))
+    .join("\n");
+}
+
+export function eventShareCaption(
+  details: EventShareDetails | string,
+  shareUrl: string
+) {
+  const text =
+    typeof details === "string"
+      ? eventShareText(details)
+      : eventShareDetailsText(details);
+  return `${text}\n\n${shareUrl}`;
 }
 
 export function telegramShareUrl(url: string, text: string) {

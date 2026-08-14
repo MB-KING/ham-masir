@@ -43,8 +43,10 @@ import { getDisplayName } from "@/shared/privacy";
 import {
   eventReferralUrl,
   eventShareCardUrl,
+  eventShareDetailsText,
   eventShareText,
-  publicAppUrl
+  publicAppUrl,
+  shareDetailsFromEvent
 } from "@/shared/share";
 
 export const dynamic = "force-dynamic";
@@ -360,7 +362,7 @@ export default async function EventDetailsPage({
           eventId={event.id}
           userId={user?.id}
           shareUrl={eventReferralUrl(event.id, user?.id)}
-          shareText={eventShareText(event.title)}
+          shareText={eventShareDetailsText(shareDetailsFromEvent(event))}
         />
       </UserCard>
 

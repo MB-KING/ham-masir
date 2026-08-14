@@ -240,7 +240,7 @@ export function ShareCardButton({
           </button>
 
           <p className="pt-1 text-xs font-bold text-slate-400">
-            قالب کارت را انتخاب کن؛ پیش‌نمایش همین‌جا دیده می‌شود.
+            کارت دعوت با اسم تو، تاریخ، ساعت جمع شدن، ساعت شروع و محل برنامه ساخته می‌شود.
           </p>
           {formats.map((format) => {
             const isBusy = busy === format.id;

@@ -1,10 +1,14 @@
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import { ImageResponse } from "next/og";
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
+import { persianForOg } from "@/lib/persian-og-text";
 import {
-  faTehranDateShortFormatter,
+  faTehranDateFormatter,
   faTehranTimeFormatter
 } from "@/lib/tehran-time";
+import { MEETING_TIME_LABEL, START_TIME_LABEL } from "@/shared/copy";
 import { publicEventStatuses } from "@/modules/events/event.repository";
 import { MediaService } from "@/modules/media/media.service";
 import { getDisplayName } from "@/shared/privacy";
@@ -20,7 +24,6 @@ export const shareCardSizes = {
   landscape: { width: 1200, height: 630 }
 } as const;
 
-const dateFormatter = faTehranDateShortFormatter;
 const timeFormatter = faTehranTimeFormatter;
 
 const UUID_RE = /^[0-9a-f-]{36}$/i;
@@ -39,11 +42,9 @@ export function parseShareCardUserId(value: string | null | undefined) {
   return UUID_RE.test(id) ? id : null;
 }
 
-/** Satori ignores CSS direction; RLE+PDF keeps Persian shaping and bidi. */
+/** Satori needs pre-shaped visual RTL; never inject bidi control chars. */
 export function rtlText(value: string) {
-  const text = value.replace(/\s+/g, " ").trim();
-  if (!text) return "";
-  return `\u200F\u202B${text}\u202C`;
+  return persianForOg(value);
 }
 
 function shorten(text: string, max: number) {
@@ -52,9 +53,47 @@ function shorten(text: string, max: number) {
   return `${trimmed.slice(0, Math.max(0, max - 1)).trimEnd()}…`;
 }
 
+function wrapWords(text: string, maxChars: number, maxLines = 2) {
+  const words = text.replace(/\s+/g, " ").trim().split(" ").filter(Boolean);
+  if (words.length === 0) return [];
+  const lines: string[] = [];
+  let current = "";
+  for (let i = 0; i < words.length; i += 1) {
+    const word = words[i];
+    const next = current ? `${current} ${word}` : word;
+    if (next.length <= maxChars) {
+      current = next;
+      continue;
+    }
+    if (current) lines.push(current);
+    const remaining = [word, ...words.slice(i + 1)].join(" ");
+    if (lines.length >= maxLines - 1) {
+      lines.push(shorten(remaining, maxChars));
+      return lines;
+    }
+    current = word.length > maxChars ? shorten(word, maxChars) : word;
+  }
+  if (current) lines.push(current);
+  return lines;
+}
+
 async function loadVazirmatnFont() {
+  const localCandidates = [
+    join(process.cwd(), "public/fonts/Vazirmatn-Bold.ttf"),
+    join(process.cwd(), "fonts/Vazirmatn-Bold.ttf")
+  ];
+
+  for (const file of localCandidates) {
+    try {
+      const data = await readFile(file);
+      if (data.byteLength > 10_000) return data;
+    } catch {
+      // try next
+    }
+  }
+
   const sources = [
-    "https://cdn.jsdelivr.net/fontsource/fonts/vazirmatn@latest/arabic-700-normal.woff",
+    "https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/fonts/ttf/Vazirmatn-Bold.ttf",
     "https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/fonts/webfonts/Vazirmatn-Bold.woff"
   ];
 
@@ -63,7 +102,7 @@ async function loadVazirmatnFont() {
       const response = await fetch(url, { cache: "force-cache" });
       if (!response.ok) continue;
       const data = await response.arrayBuffer();
-      if (data.byteLength > 0 && data.byteLength < 400_000) return data;
+      if (data.byteLength > 10_000 && data.byteLength < 2_000_000) return data;
     } catch {
       // try next source
     }
@@ -170,13 +209,13 @@ function RtlLine({
       <div
         style={{
           display: "flex",
-          width: "100%",
           justifyContent: "flex-end",
-          flexWrap: "wrap",
+          flexWrap: "nowrap",
           fontSize,
           color,
           fontWeight,
-          lineHeight: 1.35
+          lineHeight: 1.35,
+          direction: "ltr"
         }}
       >
         {rtlText(text)}
@@ -226,7 +265,8 @@ function AvatarBadge({
             display: "flex",
             fontSize: Math.round(size * 0.42),
             color: "#061124",
-            fontWeight: 700
+            fontWeight: 700,
+            direction: "ltr"
           }}
         >
           {rtlText(sharer.initial)}
@@ -289,21 +329,26 @@ export async function renderShareCard(input: RenderShareCardInput) {
 
   const sharer = await loadSharer(userId);
   const fontData = await loadVazirmatnFont();
-  const titleSize = format === "landscape" ? 42 : format === "story" ? 60 : 54;
-  const pad = format === "story" ? 72 : format === "landscape" ? 44 : 56;
-  const avatarSize = format === "landscape" ? 72 : format === "story" ? 104 : 88;
-  const metaSize = format === "landscape" ? 22 : 26;
-  const titleMax = format === "landscape" ? 70 : 100;
-  const descMax = format === "landscape" ? 70 : 110;
-  const dateLine = `${dateFormatter.format(event.date)} · ${timeFormatter.format(event.meetingTime)}`;
-  const countLine = `${event._count.registrations.toLocaleString("fa-IR")} همراه`;
-  const brandLine = `هم مسیر · برنامه ${event.eventNumber.toLocaleString("fa-IR")}`;
-  const description =
-    format === "landscape"
-      ? null
-      : event.description
-        ? shorten(event.description, descMax)
-        : null;
+  const compact = format === "landscape";
+  const titleSize = compact ? 36 : format === "story" ? 56 : 48;
+  const pad = format === "story" ? 72 : compact ? 40 : 52;
+  const avatarSize = compact ? 68 : format === "story" ? 104 : 88;
+  const metaSize = compact ? 20 : 24;
+  const eventNumber = event.eventNumber.toLocaleString("fa-IR");
+  const companions = `${event._count.registrations.toLocaleString("fa-IR")} نفر همراه`;
+  const dateLabel = faTehranDateFormatter.format(event.date);
+  const meetingLine = `${MEETING_TIME_LABEL} ${timeFormatter.format(event.meetingTime)}`;
+  const startLine = `${START_TIME_LABEL} ${timeFormatter.format(event.startTime)}`;
+  const titleLines = wrapWords(event.title, compact ? 32 : 24, compact ? 2 : 3);
+  const locationLines = wrapWords(event.locationName, compact ? 36 : 28, 2);
+  const address = event.locationAddress?.replace(/\s+/g, " ").trim();
+  const addressLines =
+    address && !compact
+      ? wrapWords(`نشانی ${address}`, 32, 2)
+      : [];
+  const brandLines = compact
+    ? [`هم مسیر · برنامه ${eventNumber}`]
+    : ["هم مسیر", `برنامه شماره ${eventNumber}`];
 
   return new ImageResponse(
     (
@@ -356,7 +401,7 @@ export async function renderShareCard(input: RenderShareCardInput) {
             display: "flex",
             flexDirection: "column",
             alignItems: "flex-end",
-            gap: format === "landscape" ? 10 : 14,
+            gap: compact ? 8 : 12,
             width: "100%"
           }}
         >
@@ -384,9 +429,10 @@ export async function renderShareCard(input: RenderShareCardInput) {
                     display: "flex",
                     width: "100%",
                     justifyContent: "flex-end",
-                    fontSize: format === "landscape" ? 26 : 32,
+                    fontSize: compact ? 24 : 32,
                     fontWeight: 700,
-                    color: "#FFFFFF"
+                    color: "#FFFFFF",
+                    direction: "ltr"
                   }}
                 >
                   {rtlText(sharer.displayName)}
@@ -396,33 +442,44 @@ export async function renderShareCard(input: RenderShareCardInput) {
                     display: "flex",
                     width: "100%",
                     justifyContent: "flex-end",
-                    fontSize: format === "landscape" ? 18 : 22,
+                    fontSize: compact ? 16 : 22,
                     fontWeight: 700,
-                    color: "#FDE68A"
+                    color: "#FDE68A",
+                    direction: "ltr"
                   }}
                 >
-                  {rtlText("من در این برنامه هستم")}
+                  {rtlText("من توی این برنامه شرکت می‌کنم")}
                 </div>
               </div>
               <AvatarBadge sharer={sharer} size={avatarSize} />
             </div>
           ) : null}
-          <RtlLine text={brandLine} fontSize={metaSize} color="#F59E0B" />
-          <RtlLine
-            text={shorten(event.title, titleMax)}
-            fontSize={titleSize}
-            color="#FFFFFF"
-          />
-          <RtlLine text={dateLine} fontSize={metaSize} color="#E2E8F0" />
-          <RtlLine
-            text={event.locationName}
-            fontSize={format === "landscape" ? 20 : 24}
-            color="#CBD5E1"
-          />
-          {description ? (
-            <RtlLine text={description} fontSize={20} color="#94A3B8" />
-          ) : null}
-          <RtlLine text={countLine} fontSize={metaSize} color="#FBBF24" />
+          {brandLines.map((line) => (
+            <RtlLine key={line} text={line} fontSize={metaSize} color="#F59E0B" />
+          ))}
+          {titleLines.map((line) => (
+            <RtlLine
+              key={line}
+              text={line}
+              fontSize={titleSize}
+              color="#FFFFFF"
+            />
+          ))}
+          <RtlLine text={dateLabel} fontSize={metaSize} color="#E2E8F0" />
+          <RtlLine text={meetingLine} fontSize={metaSize} color="#E2E8F0" />
+          <RtlLine text={startLine} fontSize={metaSize} color="#E2E8F0" />
+          {locationLines.map((line) => (
+            <RtlLine
+              key={line}
+              text={line}
+              fontSize={compact ? 20 : 24}
+              color="#CBD5E1"
+            />
+          ))}
+          {addressLines.map((line) => (
+            <RtlLine key={line} text={line} fontSize={20} color="#94A3B8" />
+          ))}
+          <RtlLine text={companions} fontSize={metaSize} color="#FBBF24" />
         </div>
       </div>
     ),
