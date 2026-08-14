@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { updateEventAction } from "@/app/admin/actions";
 import { AdminCard, PageTitle } from "@/components/admin/admin-card";
 import { EventImageUploadForm } from "@/components/admin/event-image-upload-form";
+import { LocationMapPicker } from "@/components/admin/location-map-picker";
 import { PersianDateField } from "@/components/admin/persian-date-field";
 import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/prisma";
@@ -126,19 +127,9 @@ export default async function EditEventPage({
             type="number"
             defaultValue={event.capacity ? String(event.capacity) : ""}
           />
-          <Field
-            label="عرض جغرافیایی"
-            name="latitude"
-            type="number"
-            step="any"
-            defaultValue={event.latitude?.toString() ?? ""}
-          />
-          <Field
-            label="طول جغرافیایی"
-            name="longitude"
-            type="number"
-            step="any"
-            defaultValue={event.longitude?.toString() ?? ""}
+          <LocationMapPicker
+            latitude={event.latitude != null ? Number(event.latitude) : null}
+            longitude={event.longitude != null ? Number(event.longitude) : null}
           />
           <label className="grid gap-2 text-sm font-bold text-slate-200">
             وضعیت نمایش

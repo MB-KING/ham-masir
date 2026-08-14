@@ -16,8 +16,8 @@ const actionLabels: Record<string, string> = {
   REWARD_STATUS_CHANGED: "وضعیت مزیت تغییر کرد",
   REWARD_CODES_ADDED: "کد مزیت اضافه شد",
   USER_ROLE_CHANGED: "نقش کاربر تغییر کرد",
-  BADGE_CREATED: "بج ساخته شد",
-  BADGE_UPDATED: "بج ویرایش شد",
+  BADGE_CREATED: "نشان ساخته شد",
+  BADGE_UPDATED: "نشان ویرایش شد",
   COMMUNITY_UPDATED: "تنظیمات جامعه تغییر کرد",
   LEVEL_SAVED: "سطح ذخیره شد"
 };

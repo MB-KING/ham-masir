@@ -60,8 +60,6 @@ const profileSchema = z.object({
   bio: z.string().max(400).optional(),
   skills: z.string().max(300).optional(),
   businessName: z.string().max(120).optional(),
-  instagram: z.string().max(200).optional(),
-  telegram: z.string().max(200).optional(),
   website: z.string().max(200).optional(),
   linkedin: z.string().max(200).optional(),
   workCategoryId: z.string().uuid().optional().or(z.literal("")),
@@ -94,6 +92,10 @@ export async function registerForEventAction(formData: FormData) {
       );
     }
     await new RegistrationService().register(user.id, eventId);
+    const { applyReferralCredit } = await import(
+      "@/modules/referrals/referral.service"
+    );
+    await applyReferralCredit(user.id);
     revalidatePath("/");
     revalidatePath("/events");
     revalidatePath(`/events/${eventId}`);
@@ -158,8 +160,6 @@ export async function updateProfileAction(formData: FormData) {
   const user = await requireCurrentUserPage();
   const input = profileSchema.parse(Object.fromEntries(formData));
   const socialLinks = buildSocialLinks({
-    instagram: input.instagram,
-    telegram: input.telegram,
     website: input.website,
     linkedin: input.linkedin
   });

@@ -1,6 +1,7 @@
 import { EventStatus } from "@prisma/client";
 import { createEventAction } from "@/app/admin/actions";
 import { AdminCard, PageTitle } from "@/components/admin/admin-card";
+import { LocationMapPicker } from "@/components/admin/location-map-picker";
 import { PersianDateField } from "@/components/admin/persian-date-field";
 import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/prisma";
@@ -71,20 +72,7 @@ export default async function NewEventPage({
             placeholder="بوستان آب و آتش"
           />
           <Field label="ظرفیت" name="capacity" type="number" placeholder="80" />
-          <Field
-            label="عرض جغرافیایی"
-            name="latitude"
-            type="number"
-            placeholder="35.744"
-            step="any"
-          />
-          <Field
-            label="طول جغرافیایی"
-            name="longitude"
-            type="number"
-            placeholder="51.410"
-            step="any"
-          />
+          <LocationMapPicker />
           <label className="grid gap-2 text-sm font-bold text-slate-200">
             وضعیت نمایش
             <select

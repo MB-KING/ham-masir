@@ -61,7 +61,7 @@ export default async function AdminUsersPage() {
         <p className="mt-2 text-sm leading-7 text-slate-300">
           عضو فقط بخش‌های معمولی را می‌بیند. ادمین می‌تواند برنامه بسازد، وضعیت
           برنامه را تغییر دهد و حضور و غیاب را ثبت کند. سوپرادمین به همه چیز
-          دسترسی دارد؛ از نقش کاربران تا بج‌ها و ویرایش کامل.
+          دسترسی دارد؛ از نقش کاربران تا نشان‌ها و ویرایش کامل.
         </p>
       </AdminCard>
       <div className="grid gap-3">
@@ -87,11 +87,10 @@ export default async function AdminUsersPage() {
                     <p className="mt-1 text-sm text-slate-400">
                       @{user.username ?? "بدون نام کاربری"}
                     </p>
-                    <div className="mt-4 grid grid-cols-4 gap-2 text-center text-xs text-slate-300">
+                    <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs text-slate-300">
                       <Metric label="امتیاز" value={user.xp} />
-                      <Metric label="سطح" value={user.level} />
                       <Metric label="حضور" value={user._count.attendance} />
-                      <Metric label="بج" value={user._count.badges} />
+                      <Metric label="نشان" value={user._count.badges} />
                     </div>
                   </div>
 
@@ -104,12 +103,12 @@ export default async function AdminUsersPage() {
                   />
                 </div>
                 <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.04] p-3">
-                  <p className="text-sm font-bold text-white">بج‌های ویژه</p>
+                  <p className="text-sm font-bold text-white">نشان‌های ویژه</p>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {user.badges.filter((item) => item.badge.type === "SPECIAL")
                       .length === 0 ? (
                       <span className="text-xs text-slate-500">
-                        بج ویژه‌ای ندارد.
+                        نشان ویژه‌ای ندارد.
                       </span>
                     ) : (
                       user.badges
@@ -132,7 +131,7 @@ export default async function AdminUsersPage() {
                             />
                             <span>{item.badge.name}</span>
                             <PendingSubmitButton
-                              title="پس گرفتن بج"
+                              title="پس گرفتن نشان"
                               className="min-h-8 px-1 text-red-300 shadow-none"
                               pendingLabel="…"
                             >
@@ -145,12 +144,12 @@ export default async function AdminUsersPage() {
                   {specialBadges.length > 0 ? (
                     <form
                       action={assignSpecialBadgeAction}
-                      className="mt-3 flex flex-wrap gap-2"
+                      className="mt-3 grid gap-2"
                     >
                       <input type="hidden" name="userId" value={user.id} />
                       <select
                         name="badgeId"
-                        className="h-10 min-w-48 rounded-xl border border-white/10 bg-[#061124] px-3 text-sm text-white"
+                        className="h-11 w-full rounded-xl border border-white/10 bg-[#061124] px-3 text-sm text-white"
                       >
                         {specialBadges.map((badge) => (
                           <option key={badge.id} value={badge.id}>
@@ -160,15 +159,15 @@ export default async function AdminUsersPage() {
                       </select>
                       <Button
                         type="submit"
-                        className="h-10"
+                        className="w-full"
                         pendingLabel="…"
                       >
-                        اختصاص بج
+                        اختصاص نشان
                       </Button>
                     </form>
                   ) : (
                     <p className="mt-2 text-xs text-slate-500">
-                      برای اختصاص دستی، ابتدا یک بج از نوع «ویژه» بساز.
+                      برای اختصاص دستی، ابتدا یک نشان از نوع «ویژه» بساز.
                     </p>
                   )}
                 </div>

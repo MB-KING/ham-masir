@@ -24,6 +24,10 @@ declare global {
           options?: { try_instant_view?: boolean }
         ) => void;
         openTelegramLink?: (url: string) => void;
+        downloadFile?: (
+          params: { url: string; file_name: string },
+          callback?: (ok: boolean) => void
+        ) => void;
       };
     };
   }

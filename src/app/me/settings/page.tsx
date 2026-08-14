@@ -190,7 +190,7 @@ export default async function ProfileSettingsPage() {
             <Toggle
               name="showSocialLinks"
               label="نمایش لینک‌ها"
-              description="لینک‌های اینستاگرام، تلگرام و بقیه در پروفایل عمومی دیده شوند."
+              description="وب‌سایت و لینکدین در پروفایل عمومی دیده شوند."
               defaultChecked={profile?.showSocialLinks ?? true}
             />
           </div>

@@ -11,6 +11,7 @@ import { UserCard, UserPageHeader } from "@/components/user/user-card";
 import { UserPageShell } from "@/components/user/user-shell";
 import { prisma } from "@/lib/prisma";
 import { requireCurrentUserPage } from "@/modules/auth/session";
+import { BadgeService } from "@/modules/gamification/badge.service";
 import { formatSteps } from "@/shared/steps";
 
 export const dynamic = "force-dynamic";
@@ -36,6 +37,7 @@ export default async function MembersPage({
   searchParams: Promise<{ category?: string; sort?: string; page?: string }>;
 }) {
   const currentUser = await requireCurrentUserPage();
+  await new BadgeService().syncCommunityRoleBadges(currentUser.communityId);
   const { category, sort: sortRaw, page: pageRaw } = await searchParams;
   const sort: SortMode = sortRaw === "steps" ? "steps" : "recent";
   const page = Math.max(Number(pageRaw ?? 1) || 1, 1);
@@ -76,6 +78,11 @@ export default async function MembersPage({
       include: {
         profile: true,
         workCategory: true,
+        badges: {
+          include: { badge: true },
+          orderBy: { earnedAt: "desc" },
+          take: 4
+        },
         _count: { select: { attendance: { where: { status: "PRESENT" } } } },
         businessMemberships: {
           where: { business: { status: "APPROVED", deletedAt: null } },
@@ -237,6 +244,18 @@ export default async function MembersPage({
                         <p className="mt-1 text-sm text-slate-400" dir="ltr">
                           @{member.username}
                         </p>
+                      ) : null}
+                      {member.badges.length > 0 ? (
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          {member.badges.map((item) => (
+                            <span
+                              key={item.id}
+                              className="rounded-lg bg-[#F59E0B]/15 px-2 py-1 text-[11px] font-bold text-[#FBBF24]"
+                            >
+                              {item.badge.name}
+                            </span>
+                          ))}
+                        </div>
                       ) : null}
                     </div>
                   </div>

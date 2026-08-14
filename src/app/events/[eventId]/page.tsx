@@ -15,6 +15,7 @@ import { EventPhotoUploadForm } from "@/components/user/event-photo-upload";
 import { FeedbackForm } from "@/components/user/feedback-form";
 import { NavigationSheet } from "@/components/user/navigation-sheet";
 import { ParticipantsPreview } from "@/components/user/participants-preview";
+import { ReferralCapture } from "@/components/user/referral-capture";
 import { ShareCardButton } from "@/components/user/share-card-button";
 import { UserAvatar } from "@/components/user/user-avatar";
 import { UserCard, UserPageHeader } from "@/components/user/user-card";
@@ -34,6 +35,7 @@ import { MEETING_TIME_LABEL, START_TIME_LABEL } from "@/shared/copy";
 import { errorMessagesFa, type ErrorCode } from "@/shared/errors";
 import { labelOf, moderationStatusLabels } from "@/shared/labels";
 import { getDisplayName } from "@/shared/privacy";
+import { eventReferralUrl, eventShareText } from "@/shared/share";
 
 export const dynamic = "force-dynamic";
 
@@ -140,6 +142,7 @@ export default async function EventDetailsPage({
 
   return (
     <UserPageShell contentClassName="pb-[calc(10.5rem+env(safe-area-inset-bottom))]">
+      <ReferralCapture />
       <UserPageHeader
         title={event.title}
         subtitle={event.description ?? undefined}
@@ -273,7 +276,11 @@ export default async function EventDetailsPage({
             longitude={Number(event.longitude)}
           />
         ) : null}
-        <ShareCardButton eventId={event.id} />
+        <ShareCardButton
+          eventId={event.id}
+          shareUrl={eventReferralUrl(event.id, user?.id)}
+          shareText={eventShareText(event.title)}
+        />
       </UserCard>
 
       {canContribute ? (

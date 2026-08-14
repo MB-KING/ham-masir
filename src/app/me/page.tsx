@@ -25,7 +25,7 @@ export const dynamic = "force-dynamic";
 
 export default async function MePage() {
   const currentUser = await requireCurrentUserPage();
-  const [user, badges, levels, unreadNotifications] = await Promise.all([
+  const [user, badges, unreadNotifications] = await Promise.all([
     prisma.user.findUnique({
       where: { id: currentUser.id },
       include: {
@@ -64,10 +64,6 @@ export default async function MePage() {
         { createdAt: "asc" }
       ]
     }),
-    prisma.level.findMany({
-      where: { communityId: currentUser.communityId, isActive: true },
-      orderBy: { requiredXP: "asc" }
-    }),
     prisma.notification.count({
       where: { userId: currentUser.id, readAt: null }
     })
@@ -83,20 +79,6 @@ export default async function MePage() {
     "عضو هم مسیر";
   const earnedBadgeIds = new Set(user.badges.map((item) => item.badgeId));
   const attendanceCount = user._count.attendance;
-  const nextLevel = levels.find((level) => level.requiredXP > user.xp);
-  const currentLevelFloor =
-    [...levels].reverse().find((level) => level.requiredXP <= user.xp)
-      ?.requiredXP ?? 0;
-  const levelProgress = nextLevel
-    ? Math.min(
-        100,
-        Math.round(
-          ((user.xp - currentLevelFloor) /
-            Math.max(nextLevel.requiredXP - currentLevelFloor, 1)) *
-            100
-        )
-      )
-    : 100;
 
   const nextBadges = badges
     .filter((badge) => !earnedBadgeIds.has(badge.id))
@@ -126,7 +108,7 @@ export default async function MePage() {
     <UserPageShell>
       <UserPageHeader
         title="پروفایل من"
-        subtitle="امتیاز، سطح و حضورهای تو."
+        subtitle="امتیاز، نشان و حضورهای تو."
         showBack={false}
       />
 
@@ -154,31 +136,10 @@ export default async function MePage() {
             <Settings size={16} aria-hidden="true" />
           </Link>
         </div>
-        <div className="mt-5 grid grid-cols-2 gap-3">
+        <div className="mt-5 grid grid-cols-3 gap-3">
           <Metric label="امتیاز" value={user.xp} />
-          <Metric label="سطح" value={user.level} />
           <Metric label="حضور" value={attendanceCount} />
-          <Metric label="بج" value={user._count.badges} />
-        </div>
-        <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.05] p-3">
-          <div className="flex items-center justify-between gap-3 text-xs">
-            <span className="font-bold text-white">
-              {nextLevel
-                ? `تا ${nextLevel.name ?? `سطح ${nextLevel.level}`}`
-                : "بالاترین سطح فعال"}
-            </span>
-            <span className="text-slate-400">
-              {nextLevel
-                ? `${Math.max(nextLevel.requiredXP - user.xp, 0)} امتیاز مانده`
-                : "تکمیل شده"}
-            </span>
-          </div>
-          <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/10">
-            <div
-              className="h-full rounded-full bg-[#F59E0B]"
-              style={{ width: `${levelProgress}%` }}
-            />
-          </div>
+          <Metric label="نشان" value={user._count.badges} />
         </div>
       </UserCard>
 
@@ -208,23 +169,6 @@ export default async function MePage() {
           <ChevronLeft size={18} className="text-slate-400" aria-hidden="true" />
         </Link>
         <Link
-          href="/members"
-          className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-[#0B1E43]/75 p-4 transition active:scale-[0.99] hover:border-[#F59E0B]/35"
-        >
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#F59E0B]/15 text-[#F59E0B]">
-              <UsersRound size={20} aria-hidden="true" />
-            </div>
-            <div>
-              <h2 className="font-black text-white">همراهان</h2>
-              <p className="mt-1 text-sm text-slate-400">
-                اعضا و رتبه‌بندی امتیاز
-              </p>
-            </div>
-          </div>
-          <ChevronLeft size={18} className="text-slate-400" aria-hidden="true" />
-        </Link>
-        <Link
           href={"/community" as Route}
           className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-[#0B1E43]/75 p-4 transition active:scale-[0.99] hover:border-[#F59E0B]/35"
         >
@@ -244,12 +188,12 @@ export default async function MePage() {
       <UserCard className="mt-4">
         <h2 className="flex items-center gap-2 font-black text-white">
           <Trophy size={18} className="text-[#F59E0B]" />
-          بج‌های بعدی
+          نشان‌های بعدی
         </h2>
         <div className="mt-4 grid gap-3">
           {nextBadges.length === 0 ? (
             <p className="text-sm text-slate-300">
-              همه بج‌های فعال را گرفته‌ای یا بج فعالی نیست.
+              همه نشان‌های فعال را گرفته‌ای یا نشانی فعال نیست.
             </p>
           ) : (
             nextBadges.map((badge) => (
@@ -302,14 +246,14 @@ export default async function MePage() {
           empty="هنوز حضور تأییدشده‌ای نداری."
         />
         <SummaryCard
-          title="بج‌های گرفته‌شده"
+          title="نشان‌های گرفته‌شده"
           icon={<CheckCircle2 size={18} className="text-emerald-300" />}
           total={user._count.badges}
           items={user.badges.map((item) => ({
             id: item.id,
             text: item.badge.name
           }))}
-          empty="با اولین حضور، اولین بجت می‌آید."
+          empty="با اولین حضور، اولین نشانت می‌آید."
         />
         <UserCard>
           <h2 className="mb-3 flex items-center gap-2 font-black text-white">

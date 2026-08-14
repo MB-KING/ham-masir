@@ -1,0 +1,1 @@
+ALTER TYPE "EventReminderKind" ADD VALUE 'FEEDBACK_REQUEST';

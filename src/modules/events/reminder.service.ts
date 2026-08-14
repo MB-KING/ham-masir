@@ -85,7 +85,8 @@ export async function processEventReminders(now = new Date()) {
           `🕐 جمع شدن: ${faTimeFormatter.format(event.meetingTime)}`,
           `📍 ${event.locationName}`,
           "",
-          "۲ ساعت قبل از قرار هم دوباره یادآوری می‌فرستیم."
+          "۲ ساعت قبل از قرار هم دوباره یادآوری می‌فرستیم.",
+          "از مسیر، منظره و جمع عکس بگیر؛ بعد از برنامه می‌توانی در صفحه همان برنامه آپلود کنی."
         ].join("\n"),
         eventPath: `/events/${event.id}`
       });
@@ -101,7 +102,9 @@ export async function processEventReminders(now = new Date()) {
           `🥾 حدود ۲ ساعت دیگر قرار «${event.title}» است.`,
           `📅 ${faDateFormatter.format(event.date)}`,
           `🕐 جمع شدن: ${faTimeFormatter.format(event.meetingTime)}`,
-          `📍 ${event.locationName}`
+          `📍 ${event.locationName}`,
+          "",
+          "از منظره‌ها عکس بگیر تا بعد از برنامه در آرشیو همان برنامه ثبت شود."
         ].join("\n"),
         eventPath: `/events/${event.id}`
       });

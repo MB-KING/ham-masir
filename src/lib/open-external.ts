@@ -6,11 +6,16 @@ type TelegramWebAppLite = {
  * Open an HTTPS URL outside the Mini App WebView.
  * Custom schemes (neshan://, waze://, …) are blocked or error in Telegram.
  */
+type TelegramWebAppShare = TelegramWebAppLite & {
+  openTelegramLink?: (url: string) => void;
+};
+
 export function openExternalHttps(url: string) {
   if (typeof window === "undefined") return;
 
-  const tg = (window as unknown as { Telegram?: { WebApp?: TelegramWebAppLite } })
-    .Telegram?.WebApp;
+  const tg = (
+    window as unknown as { Telegram?: { WebApp?: TelegramWebAppShare } }
+  ).Telegram?.WebApp;
 
   if (tg?.openLink && /^https?:\/\//i.test(url)) {
     tg.openLink(url, { try_instant_view: false });
@@ -21,4 +26,16 @@ export function openExternalHttps(url: string) {
   if (!opened) {
     window.location.assign(url);
   }
+}
+
+export function openTelegramShare(url: string) {
+  if (typeof window === "undefined") return;
+  const tg = (
+    window as unknown as { Telegram?: { WebApp?: TelegramWebAppShare } }
+  ).Telegram?.WebApp;
+  if (tg?.openTelegramLink && url.startsWith("https://t.me/")) {
+    tg.openTelegramLink(url);
+    return;
+  }
+  openExternalHttps(url);
 }

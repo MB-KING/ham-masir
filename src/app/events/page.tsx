@@ -45,7 +45,7 @@ export default async function EventsPage() {
           <div>
             <h2 className="font-black text-white">ثبت‌نام یعنی رزرو جا</h2>
             <p className="mt-1 text-sm leading-7 text-slate-300">
-              بعد از برنامه، حضور تأییدشده به امتیاز و بج‌هایت اضافه می‌شود.
+              بعد از برنامه، حضور تأییدشده به امتیاز و نشان‌هایت اضافه می‌شود.
             </p>
           </div>
         </div>

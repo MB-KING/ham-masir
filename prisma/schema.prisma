@@ -122,6 +122,7 @@ enum TelegramMembershipStatus {
 enum EventReminderKind {
   DAY_OF
   TWO_HOURS_BEFORE
+  FEEDBACK_REQUEST
 }
 
 model Community {

@@ -138,7 +138,8 @@ export async function GET(
             background: "#061124",
             color: "white",
             padding: pad,
-            fontFamily: fontData ? "Vazirmatn" : "sans-serif"
+            fontFamily: fontData ? "Vazirmatn" : "sans-serif",
+            direction: "rtl"
           }}
         >
           {coverDataUrl ? (
@@ -177,7 +178,8 @@ export async function GET(
               flexDirection: "column",
               gap: 16,
               width: "100%",
-              alignItems: "flex-end"
+              alignItems: "stretch",
+              direction: "rtl"
             }}
           >
             <div

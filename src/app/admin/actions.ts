@@ -31,6 +31,8 @@ import {
   announcePublishedEvent
 } from "@/modules/events/announce.service";
 import { EventService } from "@/modules/events/event.service";
+import { invitePresentMembersToFeedback } from "@/modules/events/feedback-invite.service";
+import { BadgeService } from "@/modules/gamification/badge.service";
 import { MediaService } from "@/modules/media/media.service";
 import { logActivity, notifyUser } from "@/modules/activity/activity.service";
 import { meetingTimeFromStart } from "@/shared/event-timing";
@@ -288,6 +290,9 @@ export async function setEventStatusAction(formData: FormData) {
   if (status === EventStatus.PUBLISHED) {
     announceQuery = announceFlashQuery(await announcePublishedEvent(event));
   }
+  if (status === EventStatus.COMPLETED) {
+    await invitePresentMembersToFeedback(eventId);
+  }
   revalidatePath("/");
   revalidatePath("/admin/events");
   if (announceQuery) {
@@ -466,6 +471,7 @@ export async function setUserRoleAction(formData: FormData) {
     prisma.userRole.deleteMany({ where: { userId } }),
     prisma.userRole.create({ data: { userId, role } })
   ]);
+  await new BadgeService().syncUserRoleBadges(userId);
   await logActivity({
     actorUserId: admin.id,
     action: "USER_ROLE_CHANGED",
@@ -705,7 +711,7 @@ export async function assignSpecialBadgeAction(formData: FormData) {
       isActive: true
     }
   });
-  if (!badge) throw new Error("بج ویژه معتبر نیست.");
+  if (!badge) throw new Error("نشان ویژه معتبر نیست.");
   await prisma.userBadge.upsert({
     where: { userId_badgeId: { userId, badgeId } },
     update: {},
@@ -722,8 +728,8 @@ export async function assignSpecialBadgeAction(formData: FormData) {
     notifyUser({
       userId,
       type: "BADGE_EARNED",
-      title: "🏅 بج ویژه گرفتی",
-      body: `بج «${badge.name}» به پروفایلت اضافه شد. دمت گرم!`,
+      title: "🏅 نشان ویژه گرفتی",
+      body: `نشان «${badge.name}» به پروفایلت اضافه شد. دمت گرم!`,
       eventPath: "/me",
       buttonText: "👤 مشاهده پروفایل"
     })

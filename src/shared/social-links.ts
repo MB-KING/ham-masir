@@ -1,17 +1,5 @@
 export const SOCIAL_LINK_FIELDS = [
   {
-    key: "instagram",
-    label: "اینستاگرام",
-    placeholder: "@username یا لینک صفحه",
-    hint: "نام کاربری یا لینک صفحه"
-  },
-  {
-    key: "telegram",
-    label: "تلگرام",
-    placeholder: "@username یا t.me/…",
-    hint: "آیدی یا لینک"
-  },
-  {
     key: "website",
     label: "وب‌سایت",
     placeholder: "example.com",
@@ -45,8 +33,6 @@ export function readSocialLinks(
 }
 
 export function buildSocialLinks(input: {
-  instagram?: string;
-  telegram?: string;
   website?: string;
   linkedin?: string;
 }): Record<string, string> | null {
@@ -60,9 +46,7 @@ export function buildSocialLinks(input: {
 }
 
 export function socialLinkLabel(key: string) {
-  return (
-    SOCIAL_LINK_FIELDS.find((field) => field.key === key)?.label ?? key
-  );
+  return SOCIAL_LINK_FIELDS.find((field) => field.key === key)?.label ?? key;
 }
 
 function normalizeSocialLink(key: SocialLinkKey, value: string) {
@@ -70,23 +54,14 @@ function normalizeSocialLink(key: SocialLinkKey, value: string) {
   if (/^https?:\/\//i.test(trimmed)) {
     return trimmed;
   }
-  if (trimmed.startsWith("@")) {
-    const handle = trimmed.slice(1);
-    if (key === "instagram") return `https://instagram.com/${handle}`;
-    if (key === "telegram") return `https://t.me/${handle}`;
-    if (key === "linkedin") return `https://linkedin.com/in/${handle}`;
-  }
-  if (key === "instagram" && !trimmed.includes(".")) {
-    return `https://instagram.com/${trimmed}`;
-  }
-  if (key === "telegram" && !trimmed.includes(".")) {
-    return `https://t.me/${trimmed}`;
-  }
   if (key === "website") {
     return `https://${trimmed}`;
   }
-  if (key === "linkedin" && !trimmed.includes("linkedin.com")) {
-    return `https://linkedin.com/in/${trimmed.replace(/^\/+/, "")}`;
+  if (key === "linkedin") {
+    const handle = trimmed.replace(/^@/, "").replace(/^\/+/, "");
+    if (!handle.includes("linkedin.com")) {
+      return `https://linkedin.com/in/${handle}`;
+    }
   }
   return `https://${trimmed}`;
 }

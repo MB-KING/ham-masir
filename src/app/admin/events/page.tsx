@@ -4,6 +4,7 @@ import { AdminCard, PageTitle } from "@/components/admin/admin-card";
 import { EventStatusActions } from "@/components/admin/event-status-actions";
 import { Button } from "@/components/ui/button";
 import { StatusPill } from "@/components/ui/status-pill";
+import { secondaryActionClass } from "@/components/user/user-action-styles";
 import { prisma } from "@/lib/prisma";
 import { faTehranDayFormatter } from "@/lib/tehran-time";
 import { requireEventManagerPage } from "@/modules/auth/admin-session";
@@ -108,23 +109,23 @@ export default async function AdminEventsPage({
                 {event._count.registrations} ثبت‌نام، {event._count.attendance}{" "}
                 حضور
               </p>
-              <div className="mt-4 grid grid-cols-2 gap-2">
+              <div className="mt-4 grid gap-2">
                 <Link
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-white/15 px-3 text-sm font-bold text-slate-200"
+                  className={secondaryActionClass}
                   href={`/admin/events/${event.id}/edit`}
                 >
                   <Pencil size={16} aria-hidden="true" />
                   ویرایش
                 </Link>
                 <Link
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#F59E0B]/30 px-3 text-sm font-bold text-[#F59E0B]"
+                  className={`${secondaryActionClass} border-[#F59E0B]/30 text-[#F59E0B]`}
                   href={`/admin/events/${event.id}/attendance`}
                 >
                   <ClipboardCheck size={16} aria-hidden="true" />
                   حضور و غیاب
                 </Link>
                 <Link
-                  className="col-span-2 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-white/15 px-3 text-sm font-bold text-slate-200"
+                  className={secondaryActionClass}
                   href={`/admin/events/${event.id}/feedback`}
                 >
                   <Images size={16} aria-hidden="true" />

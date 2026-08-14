@@ -111,14 +111,14 @@ export default async function PublicMemberPage({
         {Object.keys(social).length > 0 ? (
           <div className="mt-4 grid gap-2">
             <p className="text-xs font-bold text-slate-400">لینک‌ها</p>
-            <div className="grid gap-2 sm:grid-cols-2">
+            <div className="grid gap-2">
               {Object.entries(social).map(([key, value]) => (
                 <a
                   key={key}
                   href={value}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex min-h-11 items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/[0.05] px-3 text-sm font-bold text-slate-200 transition hover:border-[#F59E0B]/40 hover:text-white"
+              className="flex min-h-11 w-full items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/[0.05] px-3 text-sm font-bold text-slate-200 transition hover:border-[#F59E0B]/40 hover:text-white"
                 >
                   <span>{socialLinkLabel(key)}</span>
                   <span className="truncate text-xs font-medium text-[#F59E0B]" dir="ltr">
@@ -133,7 +133,7 @@ export default async function PublicMemberPage({
 
       {member.badges.length > 0 ? (
         <UserCard className="mb-4">
-          <h3 className="font-black text-white">بج‌ها</h3>
+          <h3 className="font-black text-white">نشان‌ها</h3>
           <div className="mt-3 flex flex-wrap gap-2">
             {member.badges.map((item) => (
               <span

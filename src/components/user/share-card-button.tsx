@@ -4,11 +4,17 @@ import { Download, Loader2, Share2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { BottomSheet } from "@/components/user/bottom-sheet";
 import { secondaryActionClass } from "@/components/user/user-action-styles";
+import { openExternalHttps, openTelegramShare } from "@/lib/open-external";
+import {
+  linkedinShareUrl,
+  telegramShareUrl,
+  twitterShareUrl
+} from "@/shared/share";
 
 const formats = [
-  { id: "story", label: "استوری ۹:۱۶" },
-  { id: "square", label: "مربع ۱:۱" },
-  { id: "landscape", label: "افقی" }
+  { id: "story", label: "کارت استوری" },
+  { id: "square", label: "کارت مربعی" },
+  { id: "landscape", label: "کارت افقی" }
 ] as const;
 
 type Preview = {
@@ -18,7 +24,15 @@ type Preview = {
   filename: string;
 };
 
-export function ShareCardButton({ eventId }: { eventId: string }) {
+export function ShareCardButton({
+  eventId,
+  shareUrl,
+  shareText
+}: {
+  eventId: string;
+  shareUrl: string;
+  shareText: string;
+}) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -60,31 +74,30 @@ export function ShareCardButton({ eventId }: { eventId: string }) {
     }
   }
 
-  async function sharePreview() {
+  async function downloadPreview() {
     if (!preview) return;
     setError(null);
     try {
-      const file = new File([preview.blob], preview.filename, {
-        type: preview.blob.type || "image/png"
-      });
-      if (navigator.share && navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], title: "هم مسیر" });
+      const tg = window.Telegram?.WebApp as
+        | {
+            downloadFile?: (
+              params: { url: string; file_name: string },
+              callback?: (ok: boolean) => void
+            ) => void;
+          }
+        | undefined;
+      if (tg?.downloadFile) {
+        tg.downloadFile(
+          { url: preview.objectUrl, file_name: preview.filename },
+          (ok) => {
+            if (!ok) downloadWithAnchor(preview.objectUrl, preview.filename);
+          }
+        );
         return;
       }
-
-      const anchor = document.createElement("a");
-      anchor.href = preview.objectUrl;
-      anchor.download = preview.filename;
-      anchor.rel = "noopener";
-      document.body.appendChild(anchor);
-      anchor.click();
-      anchor.remove();
+      downloadWithAnchor(preview.objectUrl, preview.filename);
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "برای ذخیره، روی تصویر انگشت بگذار و Save image را بزن."
-      );
+      setError(err instanceof Error ? err.message : "دانلود تصویر انجام نشد.");
     }
   }
 
@@ -96,7 +109,7 @@ export function ShareCardButton({ eventId }: { eventId: string }) {
         className={`${secondaryActionClass} mt-3`}
       >
         <Share2 size={16} aria-hidden="true" />
-        کارت اشتراک
+        دعوت دوستان
       </button>
       <BottomSheet
         open={open}
@@ -104,9 +117,37 @@ export function ShareCardButton({ eventId }: { eventId: string }) {
           setOpen(false);
           setError(null);
         }}
-        title="ساخت کارت اشتراک"
+        title="دعوت به برنامه"
       >
-        <div className="grid gap-3">
+        <div className="grid gap-3" dir="rtl">
+          <p className="text-sm leading-7 text-slate-300">{shareText}</p>
+          <button
+            type="button"
+            onClick={() =>
+              openTelegramShare(telegramShareUrl(shareUrl, shareText))
+            }
+            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#F59E0B] px-4 text-sm font-black text-[#061124]"
+          >
+            ارسال در تلگرام
+          </button>
+          <button
+            type="button"
+            onClick={() => openExternalHttps(twitterShareUrl(shareUrl, shareText))}
+            className={`${secondaryActionClass}`}
+          >
+            اشتراک در ایکس
+          </button>
+          <button
+            type="button"
+            onClick={() => openExternalHttps(linkedinShareUrl(shareUrl))}
+            className={`${secondaryActionClass}`}
+          >
+            اشتراک در لینکدین
+          </button>
+
+          <p className="pt-1 text-xs font-bold text-slate-400">
+            اگر کارت تصویری می‌خواهی، یکی از قالب‌ها را بساز.
+          </p>
           {formats.map((format) => {
             const isBusy = busy === format.id;
             return (
@@ -116,7 +157,7 @@ export function ShareCardButton({ eventId }: { eventId: string }) {
                 disabled={Boolean(busy)}
                 aria-busy={isBusy || undefined}
                 onClick={() => handleFormat(format.id)}
-                className="flex min-h-12 items-center justify-between rounded-xl bg-white/[0.06] px-4 text-sm font-bold text-white disabled:opacity-60"
+                className={`${secondaryActionClass} disabled:opacity-60`}
               >
                 <span>{isBusy ? "در حال ساخت…" : format.label}</span>
                 {isBusy ? (
@@ -139,20 +180,16 @@ export function ShareCardButton({ eventId }: { eventId: string }) {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={preview.objectUrl}
-                alt="کارت اشتراک"
-                className="max-h-[50vh] w-full rounded-xl object-contain bg-black/30"
+                alt="کارت دعوت"
+                className="max-h-[40vh] w-full rounded-xl bg-black/30 object-contain"
               />
-              <p className="text-xs leading-6 text-slate-400">
-                اگر دکمه ذخیره کار نکرد، روی تصویر انگشت بگذار و Save image را
-                بزن.
-              </p>
               <button
                 type="button"
-                onClick={sharePreview}
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#F59E0B] px-4 text-sm font-black text-[#061124]"
+                onClick={() => void downloadPreview()}
+                className={`${secondaryActionClass}`}
               >
                 <Download size={16} aria-hidden="true" />
-                ذخیره / اشتراک
+                دانلود تصویر کارت
               </button>
             </div>
           ) : null}
@@ -160,4 +197,14 @@ export function ShareCardButton({ eventId }: { eventId: string }) {
       </BottomSheet>
     </>
   );
+}
+
+function downloadWithAnchor(href: string, filename: string) {
+  const anchor = document.createElement("a");
+  anchor.href = href;
+  anchor.download = filename;
+  anchor.rel = "noopener";
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
 }

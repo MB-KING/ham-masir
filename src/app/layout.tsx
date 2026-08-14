@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Vazirmatn } from "next/font/google";
 import { QueryProvider } from "@/components/query-provider";
 import { TelegramProvider } from "@/components/telegram/telegram-provider";
+import { ReferralCapture } from "@/components/user/referral-capture";
 import "./globals.css";
 
 const vazirmatn = Vazirmatn({
@@ -33,7 +34,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="fa" dir="rtl" className={vazirmatn.variable}>
       <body>
         <QueryProvider>
-          <TelegramProvider>{children}</TelegramProvider>
+          <TelegramProvider>
+            <ReferralCapture />
+            {children}
+          </TelegramProvider>
         </QueryProvider>
       </body>
     </html>

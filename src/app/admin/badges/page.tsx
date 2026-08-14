@@ -20,23 +20,23 @@ export default async function AdminBadgesPage() {
 
   return (
     <>
-      <PageTitle title="مدیریت بج‌ها" subtitle="بج‌ها همان نشان‌هایی هستند که اعضا با حضور، امتیاز یا انتخاب ویژه دریافت می‌کنند." />
+      <PageTitle title="مدیریت نشان‌ها" subtitle="نشان‌ها افتخارهایی هستند که اعضا با حضور، امتیاز یا انتخاب ویژه دریافت می‌کنند." />
       <AdminCard className="mb-4 border-[#F59E0B]/25 bg-[#0B1E43]">
-        <h2 className="font-black text-white">بج به چه درد می‌خورد؟</h2>
+        <h2 className="font-black text-white">نشان به چه درد می‌خورد؟</h2>
         <p className="mt-2 text-sm leading-7 text-slate-300">
-          بج یک نشان افتخار داخل پروفایل عضو است. مثلا «قدم اول» برای اولین حضور یا «هم‌قدم» برای چند حضور پشت سر هم. بج‌ها حس پیشرفت می‌دهند و کمک می‌کنند اعضای فعال دیده شوند.
+          نشان یک افتخار داخل پروفایل عضو است. مثلا «قدم اول» برای اولین حضور یا «هم‌قدم» برای چند حضور پشت سر هم. نشان‌ها حس پیشرفت می‌دهند و کمک می‌کنند اعضای فعال دیده شوند.
         </p>
       </AdminCard>
 
       <AdminCard className="mb-4">
-        <h2 className="mb-4 font-black text-white">بج جدید</h2>
-        <BadgeForm action={createBadgeAction} submitLabel="ساخت بج" />
+        <h2 className="mb-4 font-black text-white">نشان جدید</h2>
+        <BadgeForm action={createBadgeAction} submitLabel="ساخت نشان" />
       </AdminCard>
 
       <div className="grid gap-3">
         {badges.length === 0 ? (
           <AdminCard>
-            <p className="text-sm text-slate-300">هنوز بجی تعریف نشده است.</p>
+            <p className="text-sm text-slate-300">هنوز نشانی تعریف نشده است.</p>
           </AdminCard>
         ) : (
           badges.map((badge) => (
@@ -82,10 +82,10 @@ function BadgeForm({
   return (
     <form action={action} className="grid gap-3">
       {badge ? <input type="hidden" name="badgeId" value={badge.id} /> : null}
-      <Field name="name" label="نام بج" defaultValue={badge?.name} placeholder="قدم اول" required />
+      <Field name="name" label="نام نشان" defaultValue={badge?.name} placeholder="قدم اول" required />
       <Field name="slug" label="شناسه انگلیسی" defaultValue={badge?.slug} placeholder="first-step" required />
       <label className="grid gap-2 text-sm font-bold text-slate-200">
-        نوع بج
+        نوع نشان
         <select name="type" defaultValue={badge?.type ?? BadgeType.ATTENDANCE_COUNT} className="h-11 rounded-xl border border-white/10 bg-[#061124] px-3 text-white outline-none focus:border-[#F59E0B]">
           {Object.entries(badgeTypeLabels).map(([value, label]) => (
             <option key={value} value={value}>
@@ -106,7 +106,7 @@ function BadgeForm({
         فعال باشد
       </label>
       <div>
-        <Button type="submit" pendingLabel="در حال ذخیره…">
+        <Button type="submit" className="w-full" pendingLabel="در حال ذخیره…">
           {submitLabel}
         </Button>
       </div>
