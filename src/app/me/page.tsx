@@ -19,6 +19,7 @@ import {
 } from "@/components/user/user-shell";
 import { prisma } from "@/lib/prisma";
 import { requireCurrentUserPage } from "@/modules/auth/session";
+import { formatAppVersion } from "@/shared/app-version";
 import { labelOf, registrationStatusLabels } from "@/shared/labels";
 
 export const dynamic = "force-dynamic";
@@ -283,6 +284,16 @@ export default async function MePage() {
           )}
         </UserCard>
       </section>
+
+      <p className="mt-8 text-center">
+        <Link
+          href={"/me/changelog" as Route}
+          aria-label={`تغییرات نسخه ${formatAppVersion()}`}
+          className="text-[10px] font-medium text-slate-600 transition duration-200 hover:text-slate-500"
+        >
+          {formatAppVersion()}
+        </Link>
+      </p>
     </UserPageShell>
   );
 }
