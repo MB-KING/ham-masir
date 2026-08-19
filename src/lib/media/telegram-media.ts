@@ -90,7 +90,7 @@ export async function uploadPhotoToTelegramStorage(input: {
   if (input.caption) form.append("caption", input.caption);
 
   // Copy into a plain ArrayBuffer-backed Uint8Array so undici FormData
-  // reliably includes the binary payload on Node/Vercel.
+  // reliably includes the binary payload on Node.
   const bytes = new Uint8Array(input.buffer.byteLength);
   bytes.set(input.buffer);
   const filename = sanitizeFilename(input.filename, input.contentType);

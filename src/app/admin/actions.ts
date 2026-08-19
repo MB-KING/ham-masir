@@ -154,7 +154,7 @@ function normalizeTime(time: string) {
 function toDate(date: string, time = "00:00") {
   const normalizedTime =
     time.includes(":") && time.length < 8 ? normalizeTime(time) : time;
-  // Admin times are Tehran wall-clock (not Vercel UTC server local).
+  // Admin times are Tehran wall-clock, not the server's local timezone.
   return tehranWallTimeToUtc(
     date,
     normalizedTime.length >= 8 ? normalizedTime.slice(0, 5) : normalizedTime

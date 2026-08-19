@@ -73,7 +73,7 @@ export async function processEventReminders(now = new Date()) {
       msUntilMeeting <= 2.25 * 60 * 60 * 1000 &&
       msUntilMeeting > 1 * 60 * 60 * 1000;
 
-    // Morning/day reminder (daily Vercel cron around 07:00 Asia/Tehran).
+    // Morning/day reminder (VPS cron, Tehran daytime window).
     if (isDayOf && hour >= 6 && hour <= 22) {
       dayOfSent += await sendKindReminders({
         eventId: event.id,
